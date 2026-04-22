@@ -1,6 +1,5 @@
 'use client'
 import { useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/Button'
@@ -41,11 +40,13 @@ export default function RegisterPage() {
     }
 
     // Nach erfolgreicher Registrierung einloggen
-    const supabase = createClient()
-    const { error: loginError } = await supabase.auth.signInWithPassword({ email, password })
+    const loginRes = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    })
 
-    if (loginError) {
-      setError('Konto erstellt — bitte jetzt einloggen.')
+    if (!loginRes.ok) {
       router.push('/login')
       return
     }

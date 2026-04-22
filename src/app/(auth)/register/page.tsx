@@ -34,7 +34,7 @@ export default function RegisterPage() {
     })
 
     if (signUpError) {
-      setError(signUpError.message)
+      setError(`Fehler: ${signUpError.message} (Code: ${signUpError.status ?? 'n/a'})`)
       setLoading(false)
       return
     }

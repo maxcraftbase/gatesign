@@ -1,6 +1,5 @@
 'use client'
 import { useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
@@ -19,6 +18,7 @@ export function BriefingEditor({ siteId, existingBriefing, languages }: Props) {
   const [activeTab, setActiveTab] = useState('de')
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
+  const [error, setError] = useState('')
 
   const initialTexts = Object.fromEntries(
     languages.map(l => [
@@ -33,35 +33,24 @@ export function BriefingEditor({ siteId, existingBriefing, languages }: Props) {
     if (filled.length === 0) return
 
     setLoading(true)
-    const supabase = createClient()
+    setError('')
 
-    if (existingBriefing) {
-      await supabase
-        .from('safety_briefings')
-        .update({ is_active: false })
-        .eq('id', existingBriefing.id)
-    }
+    const res = await fetch('/api/briefing', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        siteId,
+        texts,
+        existingBriefingId: existingBriefing?.id ?? null,
+        existingVersion: existingBriefing?.version ?? 0,
+      }),
+    })
 
-    const newVersion = (existingBriefing?.version ?? 0) + 1
-
-    const { data: newBriefing, error } = await supabase
-      .from('safety_briefings')
-      .insert({ site_id: siteId, version: newVersion, is_active: true })
-      .select()
-      .single()
-
-    if (error || !newBriefing) {
+    if (!res.ok) {
+      setError('Speichern fehlgeschlagen.')
       setLoading(false)
       return
     }
-
-    const translations = filled.map(([language, content]) => ({
-      briefing_id: newBriefing.id,
-      language,
-      content,
-    }))
-
-    await supabase.from('briefing_translations').insert(translations)
 
     setSuccess(true)
     setLoading(false)
@@ -71,12 +60,10 @@ export function BriefingEditor({ siteId, existingBriefing, languages }: Props) {
 
   return (
     <Card className="flex flex-col gap-4">
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-slate-500">
-          Hinterlegen Sie die Sicherheitsbelehrung in den gewünschten Sprachen.
-          Jede Speicherung erstellt eine neue Version — Fahrer müssen dann einmalig neu bestätigen.
-        </p>
-      </div>
+      <p className="text-sm text-slate-500">
+        Hinterlegen Sie die Sicherheitsbelehrung in den gewünschten Sprachen.
+        Jede Speicherung erstellt eine neue Version — Fahrer müssen dann einmalig neu bestätigen.
+      </p>
 
       <div className="flex flex-wrap gap-2 border-b border-slate-100 pb-3">
         {languages.map(l => (
@@ -112,9 +99,12 @@ export function BriefingEditor({ siteId, existingBriefing, languages }: Props) {
         <p className="text-xs text-slate-400">
           {Object.values(texts).filter(v => v.trim()).length} von {languages.length} Sprachen ausgefüllt
         </p>
-        <Button onClick={handleSave} loading={loading} size="md">
-          {success ? '✓ Gespeichert' : 'Neue Version speichern'}
-        </Button>
+        <div className="flex items-center gap-3">
+          {error && <p className="text-sm text-red-500">{error}</p>}
+          <Button onClick={handleSave} loading={loading} size="md">
+            {success ? '✓ Gespeichert' : 'Neue Version speichern'}
+          </Button>
+        </div>
       </div>
     </Card>
   )

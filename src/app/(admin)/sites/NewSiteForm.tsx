@@ -1,6 +1,5 @@
 'use client'
 import { useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
@@ -18,14 +17,13 @@ export function NewSiteForm({ companyId }: { companyId: string }) {
     setLoading(true)
     setError('')
 
-    const supabase = createClient()
-    const { error } = await supabase.from('sites').insert({
-      company_id: companyId,
-      name: name.trim(),
-      address: address.trim() || null,
+    const res = await fetch('/api/sites', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, address, companyId }),
     })
 
-    if (error) {
+    if (!res.ok) {
       setError('Standort konnte nicht angelegt werden.')
       setLoading(false)
       return

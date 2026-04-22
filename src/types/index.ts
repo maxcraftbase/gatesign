@@ -42,6 +42,7 @@ export interface Driver {
   company_name: string
   phone: string
   license_plate: string
+  trailer_plate: string | null
   preferred_language: string
   device_token: string
   created_at: string
@@ -68,6 +69,8 @@ export interface CheckIn {
   driver_company: string
   driver_phone: string
   license_plate: string
+  trailer_plate: string | null
+  reference_number: string | null
   language: string
   briefing_confirmed: boolean
   briefing_confirmed_at: string | null

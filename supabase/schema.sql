@@ -49,6 +49,7 @@ create table public.drivers (
   company_name text not null,
   phone text not null,
   license_plate text not null,
+  trailer_plate text,
   preferred_language text not null default 'de',
   device_token text unique not null,
   created_at timestamptz not null default now()
@@ -79,6 +80,8 @@ create table public.check_ins (
   driver_company text not null,
   driver_phone text not null,
   license_plate text not null,
+  trailer_plate text,
+  reference_number text,
   language text not null,
   briefing_confirmed boolean not null default false,
   briefing_confirmed_at timestamptz

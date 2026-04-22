@@ -2,8 +2,14 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Card } from '@/components/ui/Card'
+import { SubscribeButton } from './SubscribeButton'
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ subscribed?: string }>
+}) {
+  const { subscribed } = await searchParams
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
@@ -31,6 +37,24 @@ export default async function DashboardPage() {
         </h1>
         <p className="text-slate-500 mt-1">Ihr GateSign-Überblick</p>
       </div>
+
+      {subscribed === '1' && (
+        <div className="bg-green-50 border border-green-200 rounded-xl px-5 py-4 text-green-800 font-medium">
+          Ihr Abonnement ist aktiv — GateSign ist einsatzbereit.
+        </div>
+      )}
+
+      {!company?.subscription_active && (
+        <Card className="bg-amber-50 border-amber-200">
+          <div className="flex items-center justify-between gap-4 flex-wrap">
+            <div>
+              <p className="font-semibold text-amber-900">Testphase — noch kein Abo aktiv</p>
+              <p className="text-sm text-amber-700 mt-0.5">Alle Features verfügbar, Abo für den Produktivbetrieb erforderlich.</p>
+            </div>
+            <SubscribeButton />
+          </div>
+        </Card>
+      )}
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card>
@@ -72,7 +96,11 @@ export default async function DashboardPage() {
                 <div key={c.id} className="flex items-center justify-between py-2 border-b border-slate-50 last:border-0">
                   <div>
                     <p className="font-medium text-slate-900 text-sm">{c.driver_name}</p>
-                    <p className="text-xs text-slate-500">{c.driver_company} · {c.license_plate}</p>
+                    <p className="text-xs text-slate-500">
+                      {c.driver_company} · {c.license_plate}
+                      {c.trailer_plate ? ` · ${c.trailer_plate}` : ''}
+                      {c.reference_number ? ` · Ref: ${c.reference_number}` : ''}
+                    </p>
                   </div>
                   <p className="text-xs text-slate-400">
                     {new Date(c.timestamp).toLocaleString('de-DE', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' })}

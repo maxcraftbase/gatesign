@@ -1,6 +1,5 @@
 'use client'
 import { useState, useEffect } from 'react'
-import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { SUPPORTED_LANGUAGES } from '@/types'
@@ -17,14 +16,25 @@ interface BriefingInfo {
   briefing_translations: { language: string; content: string }[]
 }
 
+interface DriverState {
+  id: string
+  name: string
+  company_name: string
+  phone: string
+  license_plate: string
+  trailer_plate: string | null
+  preferred_language: string
+}
+
 const DRIVER_TOKEN_KEY = 'gatesign_driver_token'
 
 const UI_TEXT: Record<string, Record<string, string>> = {
-  welcome: { de: 'Willkommen', en: 'Welcome', pl: 'Witaj', ro: 'Bun venit', cs: 'Vítejte', hu: 'Üdvözöljük', bg: 'Добре дошли', uk: 'Ласкаво просимо', ru: 'Добро пожаловать', tr: 'Hoş geldiniz' },
-  arrive: { de: 'Ankunft bestätigen', en: 'Confirm Arrival', pl: 'Potwierdź przyjazd', ro: 'Confirmați sosirea', cs: 'Potvrdit příjezd', hu: 'Érkezés megerősítése', bg: 'Потвърди пристигане', uk: 'Підтвердити прибуття', ru: 'Подтвердить прибытие', tr: 'Varışı Onayla' },
+  welcome:     { de: 'Willkommen', en: 'Welcome', pl: 'Witaj', ro: 'Bun venit', cs: 'Vítejte', hu: 'Üdvözöljük', bg: 'Добре дошли', uk: 'Ласкаво просимо', ru: 'Добро пожаловать', tr: 'Hoş geldiniz' },
+  arrive:      { de: 'Ankunft bestätigen', en: 'Confirm Arrival', pl: 'Potwierdź przyjazd', ro: 'Confirmați sosirea', cs: 'Potvrdit příjezd', hu: 'Érkezés megerősítése', bg: 'Потвърди пристигане', uk: 'Підтвердити прибуття', ru: 'Подтвердить прибытие', tr: 'Varışı Onayla' },
   readConfirm: { de: 'Ich habe die Sicherheitsbelehrung gelesen und verstanden.', en: 'I have read and understood the safety instructions.', pl: 'Przeczytałem i zrozumiałem instrukcje bezpieczeństwa.', ro: 'Am citit și înțeles instrucțiunile de siguranță.', cs: 'Přečetl jsem bezpečnostní pokyny a porozuměl jim.', hu: 'Elolvastam és megértettem a biztonsági utasításokat.', bg: 'Прочетох и разбрах инструкциите за безопасност.', uk: 'Я прочитав та зрозумів інструкції з безпеки.', ru: 'Я прочитал и понял инструкции по технике безопасности.', tr: 'Güvenlik talimatlarını okudum ve anladım.' },
-  confirm: { de: 'Bestätigen & Anmelden', en: 'Confirm & Check In', pl: 'Potwierdź i zamelduj', ro: 'Confirmați și înregistrați', cs: 'Potvrdit a přihlásit', hu: 'Megerősítés és bejelentkezés', bg: 'Потвърди и регистрирай', uk: 'Підтвердити та зареєструватися', ru: 'Подтвердить и зарегистрироваться', tr: 'Onayla ve Giriş Yap' },
-  safety: { de: 'Sicherheitsbelehrung', en: 'Safety Instructions', pl: 'Instrukcja bezpieczeństwa', ro: 'Instrucțiuni de siguranță', cs: 'Bezpečnostní pokyny', hu: 'Biztonsági utasítások', bg: 'Инструкции за безопасност', uk: 'Інструкції з безпеки', ru: 'Инструктаж по безопасности', tr: 'Güvenlik Talimatları' },
+  confirm:     { de: 'Bestätigen & Anmelden', en: 'Confirm & Check In', pl: 'Potwierdź i zamelduj', ro: 'Confirmați și înregistrați', cs: 'Potvrdit a přihlásit', hu: 'Megerősítés és bejelentkezés', bg: 'Потвърди и регистрирай', uk: 'Підтвердити та зареєструватися', ru: 'Подтвердить и зарегистрироваться', tr: 'Onayla ve Giriş Yap' },
+  safety:      { de: 'Sicherheitsbelehrung', en: 'Safety Instructions', pl: 'Instrukcja bezpieczeństwa', ro: 'Instrucțiuni de siguranță', cs: 'Bezpečnostní pokyny', hu: 'Biztonsági utasítások', bg: 'Инструкции за безопасност', uk: 'Інструкції з безпеки', ru: 'Инструктаж по безопасности', tr: 'Güvenlik Talimatları' },
+  refNum:      { de: 'Referenz-/Lade-Nr. (optional)', en: 'Reference / Load No. (optional)', pl: 'Nr ref./ładunku (opcjonalnie)', ro: 'Nr. referință/încărcare (opțional)', cs: 'Ref./nákladní č. (volitelné)', hu: 'Referencia-/rakszám (opcionális)', bg: 'Рef./товарен №. (незадължително)', uk: 'Реф./вантажний № (необов\'язково)', ru: 'Реф./номер груза (необязательно)', tr: 'Referans/Yük No. (isteğe bağlı)' },
 }
 
 function t(key: keyof typeof UI_TEXT, lang: string): string {
@@ -35,14 +45,17 @@ type Step = 'register' | 'briefing' | 'checkin' | 'done'
 
 export function CheckInClient({ site, briefing }: { site: SiteInfo; briefing: BriefingInfo | null }) {
   const [step, setStep] = useState<Step>('checkin')
-  const [driver, setDriver] = useState<{ id: string; name: string; license_plate: string; preferred_language: string } | null>(null)
+  const [driver, setDriver] = useState<DriverState | null>(null)
   const [lang, setLang] = useState('de')
   const [loading, setLoading] = useState(true)
-  const [checkInLoading, setCheckInLoading] = useState(false)
+  const [actionLoading, setActionLoading] = useState(false)
   const [briefingAccepted, setBriefingAccepted] = useState(false)
+  const [referenceNumber, setReferenceNumber] = useState('')
 
-  // Form state for registration
-  const [form, setForm] = useState({ name: '', company_name: '', phone: '', license_plate: '', preferred_language: 'de' })
+  const [form, setForm] = useState({
+    name: '', company_name: '', phone: '',
+    license_plate: '', trailer_plate: '', preferred_language: 'de',
+  })
   const [formLoading, setFormLoading] = useState(false)
 
   useEffect(() => {
@@ -50,12 +63,8 @@ export function CheckInClient({ site, briefing }: { site: SiteInfo; briefing: Br
       const token = localStorage.getItem(DRIVER_TOKEN_KEY)
       if (!token) { setStep('register'); setLoading(false); return }
 
-      const supabase = createClient()
-      const { data: existingDriver } = await supabase
-        .from('drivers')
-        .select('id, name, license_plate, preferred_language')
-        .eq('device_token', token)
-        .single()
+      const res = await fetch(`/api/check-in/driver?token=${encodeURIComponent(token)}`)
+      const existingDriver: DriverState | null = res.ok ? await res.json() : null
 
       if (!existingDriver) { setStep('register'); setLoading(false); return }
 
@@ -64,14 +73,10 @@ export function CheckInClient({ site, briefing }: { site: SiteInfo; briefing: Br
 
       if (!briefing) { setStep('checkin'); setLoading(false); return }
 
-      // Prüfen ob aktuelle Belehrungsversion schon bestätigt und nicht älter als 12 Monate
-      const { data: confirmation } = await supabase
-        .from('briefing_confirmations')
-        .select('confirmed_at')
-        .eq('driver_id', existingDriver.id)
-        .eq('site_id', site.id)
-        .eq('briefing_version', briefing.version)
-        .single()
+      const confRes = await fetch(
+        `/api/check-in/confirmation?driverId=${existingDriver.id}&siteId=${site.id}&briefingVersion=${briefing.version}`
+      )
+      const confirmation: { confirmed_at: string } | null = confRes.ok ? await confRes.json() : null
 
       if (!confirmation) {
         setStep('briefing')
@@ -79,11 +84,7 @@ export function CheckInClient({ site, briefing }: { site: SiteInfo; briefing: Br
         const confirmedAt = new Date(confirmation.confirmed_at)
         const twelveMonthsAgo = new Date()
         twelveMonthsAgo.setFullYear(twelveMonthsAgo.getFullYear() - 1)
-        if (confirmedAt < twelveMonthsAgo) {
-          setStep('briefing')
-        } else {
-          setStep('checkin')
-        }
+        setStep(confirmedAt < twelveMonthsAgo ? 'briefing' : 'checkin')
       }
 
       setLoading(false)
@@ -94,70 +95,79 @@ export function CheckInClient({ site, briefing }: { site: SiteInfo; briefing: Br
   async function handleRegister(e: React.FormEvent) {
     e.preventDefault()
     setFormLoading(true)
-    const supabase = createClient()
     const token = crypto.randomUUID()
 
-    const { data: newDriver, error } = await supabase
-      .from('drivers')
-      .insert({ ...form, device_token: token })
-      .select('id, name, license_plate, preferred_language')
-      .single()
+    const res = await fetch('/api/check-in/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...form, device_token: token }),
+    })
 
-    if (error || !newDriver) { setFormLoading(false); return }
+    if (!res.ok) { setFormLoading(false); return }
+    const newDriver: DriverState = await res.json()
 
     localStorage.setItem(DRIVER_TOKEN_KEY, token)
     setDriver(newDriver)
     setLang(form.preferred_language)
     setFormLoading(false)
-
-    if (!briefing) { setStep('checkin'); return }
-    setStep('briefing')
+    setStep(briefing ? 'briefing' : 'checkin')
   }
 
   async function handleBriefingConfirm() {
     if (!driver || !briefing || !briefingAccepted) return
-    setCheckInLoading(true)
-    const supabase = createClient()
+    setActionLoading(true)
 
-    await supabase.from('briefing_confirmations').upsert({
-      driver_id: driver.id,
-      site_id: site.id,
-      briefing_id: briefing.id,
-      briefing_version: briefing.version,
-      language: lang,
-    }, { onConflict: 'driver_id,site_id,briefing_version' })
-
-    await doCheckIn(true)
-  }
-
-  async function handleCheckIn() {
-    await doCheckIn(false)
-  }
-
-  async function doCheckIn(_justConfirmedBriefing: boolean) {
-    if (!driver || !briefing) return
-    setCheckInLoading(true)
-    const supabase = createClient()
-
-    await supabase.from('check_ins').insert({
-      driver_id: driver.id,
-      site_id: site.id,
-      briefing_id: briefing.id,
-      briefing_version: briefing.version,
-      driver_name: driver.name,
-      driver_company: '',
-      driver_phone: '',
-      license_plate: driver.license_plate,
-      language: lang,
-      briefing_confirmed: true,
-      briefing_confirmed_at: new Date().toISOString(),
+    await fetch('/api/check-in/confirm', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        driverId: driver.id,
+        siteId: site.id,
+        briefingId: briefing.id,
+        briefingVersion: briefing.version,
+        lang,
+        driverName: driver.name,
+        driverCompany: driver.company_name,
+        driverPhone: driver.phone,
+        licensePlate: driver.license_plate,
+        trailerPlate: driver.trailer_plate,
+        referenceNumber: referenceNumber.trim() || null,
+        confirmBriefing: true,
+      }),
     })
 
-    setCheckInLoading(false)
+    setActionLoading(false)
     setStep('done')
   }
 
-  const briefingText = briefing?.briefing_translations?.find(t => t.language === lang)?.content
+  async function handleCheckIn() {
+    if (!driver || !briefing) return
+    setActionLoading(true)
+
+    await fetch('/api/check-in/confirm', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        driverId: driver.id,
+        siteId: site.id,
+        briefingId: briefing.id,
+        briefingVersion: briefing.version,
+        lang,
+        driverName: driver.name,
+        driverCompany: driver.company_name,
+        driverPhone: driver.phone,
+        licensePlate: driver.license_plate,
+        trailerPlate: driver.trailer_plate,
+        referenceNumber: referenceNumber.trim() || null,
+        confirmBriefing: false,
+      }),
+    })
+
+    setActionLoading(false)
+    setStep('done')
+  }
+
+  const briefingText = briefing?.briefing_translations?.find(b => b.language === lang)?.content
     ?? briefing?.briefing_translations?.[0]?.content
     ?? ''
 
@@ -169,7 +179,6 @@ export function CheckInClient({ site, briefing }: { site: SiteInfo; briefing: Br
     )
   }
 
-  // DONE
   if (step === 'done') {
     return (
       <div className="min-h-screen bg-white flex flex-col items-center justify-center p-6 text-center">
@@ -184,13 +193,16 @@ export function CheckInClient({ site, briefing }: { site: SiteInfo; briefing: Br
         {driver && (
           <p className="text-slate-500 mt-4 text-sm">
             {driver.name} · {driver.license_plate}
+            {driver.trailer_plate && ` · Trailer: ${driver.trailer_plate}`}
           </p>
+        )}
+        {referenceNumber && (
+          <p className="text-slate-400 text-sm mt-1">Ref.: {referenceNumber}</p>
         )}
       </div>
     )
   }
 
-  // REGISTER
   if (step === 'register') {
     return (
       <div className="min-h-screen bg-white flex flex-col p-6">
@@ -204,7 +216,8 @@ export function CheckInClient({ site, briefing }: { site: SiteInfo; briefing: Br
             <Input label="Name" value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} placeholder="Vor- und Nachname" required />
             <Input label="Firma / Spedition" value={form.company_name} onChange={e => setForm(p => ({ ...p, company_name: e.target.value }))} placeholder="Müller Transport GmbH" required />
             <Input label="Telefon" type="tel" value={form.phone} onChange={e => setForm(p => ({ ...p, phone: e.target.value }))} placeholder="+49 171 ..." required />
-            <Input label="Kennzeichen" value={form.license_plate} onChange={e => setForm(p => ({ ...p, license_plate: e.target.value.toUpperCase() }))} placeholder="M-AB 1234" required />
+            <Input label="Kennzeichen Truck" value={form.license_plate} onChange={e => setForm(p => ({ ...p, license_plate: e.target.value.toUpperCase() }))} placeholder="M-AB 1234" required />
+            <Input label="Kennzeichen Trailer (optional)" value={form.trailer_plate} onChange={e => setForm(p => ({ ...p, trailer_plate: e.target.value.toUpperCase() }))} placeholder="M-TR 5678" />
 
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-slate-700">Sprache / Language</label>
@@ -228,7 +241,6 @@ export function CheckInClient({ site, briefing }: { site: SiteInfo; briefing: Br
     )
   }
 
-  // BRIEFING
   if (step === 'briefing') {
     return (
       <div className="min-h-screen bg-white flex flex-col p-6">
@@ -242,6 +254,13 @@ export function CheckInClient({ site, briefing }: { site: SiteInfo; briefing: Br
             {briefingText || 'Keine Belehrung verfügbar.'}
           </div>
 
+          <Input
+            label={t('refNum', lang)}
+            value={referenceNumber}
+            onChange={e => setReferenceNumber(e.target.value)}
+            placeholder="z. B. LN-20260422-001"
+          />
+
           <label className="flex items-start gap-3 cursor-pointer">
             <input
               type="checkbox"
@@ -252,12 +271,7 @@ export function CheckInClient({ site, briefing }: { site: SiteInfo; briefing: Br
             <span className="text-sm text-slate-700">{t('readConfirm', lang)}</span>
           </label>
 
-          <Button
-            onClick={handleBriefingConfirm}
-            loading={checkInLoading}
-            disabled={!briefingAccepted}
-            size="xl"
-          >
+          <Button onClick={handleBriefingConfirm} loading={actionLoading} disabled={!briefingAccepted} size="xl">
             {t('confirm', lang)}
           </Button>
         </div>
@@ -278,11 +292,20 @@ export function CheckInClient({ site, briefing }: { site: SiteInfo; briefing: Br
         {driver && (
           <div className="bg-slate-50 rounded-2xl px-6 py-4 w-full">
             <p className="font-semibold text-slate-900">{driver.name}</p>
-            <p className="text-sm text-slate-500">{driver.license_plate}</p>
+            <p className="text-sm text-slate-500">{driver.license_plate}{driver.trailer_plate ? ` · ${driver.trailer_plate}` : ''}</p>
           </div>
         )}
 
-        <Button onClick={handleCheckIn} loading={checkInLoading} size="xl">
+        <div className="w-full">
+          <Input
+            label={t('refNum', lang)}
+            value={referenceNumber}
+            onChange={e => setReferenceNumber(e.target.value)}
+            placeholder="z. B. LN-20260422-001"
+          />
+        </div>
+
+        <Button onClick={handleCheckIn} loading={actionLoading} size="xl">
           {t('arrive', lang)}
         </Button>
       </div>

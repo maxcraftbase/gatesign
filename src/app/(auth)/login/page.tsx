@@ -1,6 +1,5 @@
 'use client'
 import { useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/Button'
@@ -18,16 +17,22 @@ export default function LoginPage() {
     setLoading(true)
     setError('')
 
-    const supabase = createClient()
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    const res = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    })
 
-    if (error) {
-      setError('E-Mail oder Passwort falsch.')
+    const result = await res.json()
+
+    if (!res.ok) {
+      setError(result.error ?? 'E-Mail oder Passwort falsch.')
       setLoading(false)
       return
     }
 
     router.push('/dashboard')
+    router.refresh()
   }
 
   return (

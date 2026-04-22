@@ -25,32 +25,29 @@ export default function RegisterPage() {
       return
     }
 
-    const supabase = createClient()
-
-    const { data, error: signUpError } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { data: { company_name: companyName } },
+    // Registrierung über Server-Route (umgeht Client-seitige Key-Validierung)
+    const res = await fetch('/api/auth/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password, companyName }),
     })
 
-    if (signUpError) {
-      setError(`Fehler: ${signUpError.message} (Code: ${signUpError.status ?? 'n/a'})`)
+    const result = await res.json()
+
+    if (!res.ok) {
+      setError(result.error ?? 'Registrierung fehlgeschlagen.')
       setLoading(false)
       return
     }
 
-    if (data.user) {
-      const { error: companyError } = await supabase.from('companies').insert({
-        user_id: data.user.id,
-        name: companyName,
-        email,
-      })
+    // Nach erfolgreicher Registrierung einloggen
+    const supabase = createClient()
+    const { error: loginError } = await supabase.auth.signInWithPassword({ email, password })
 
-      if (companyError) {
-        setError('Konto erstellt, aber Firmenprofil konnte nicht angelegt werden.')
-        setLoading(false)
-        return
-      }
+    if (loginError) {
+      setError('Konto erstellt — bitte jetzt einloggen.')
+      router.push('/login')
+      return
     }
 
     router.push('/dashboard')

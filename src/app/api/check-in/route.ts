@@ -4,10 +4,13 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
     const {
+      visitor_type,
       driver_name,
       company_name,
       license_plate,
+      trailer_plate,
       phone,
+      contact_person,
       language,
       briefing_accepted,
       briefing_version,
@@ -24,6 +27,7 @@ export async function POST(req: NextRequest) {
     const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
     const payload: Record<string, unknown> = {
+      visitor_type: visitor_type ?? 'truck',
       driver_name,
       company_name,
       license_plate,
@@ -33,10 +37,10 @@ export async function POST(req: NextRequest) {
       has_signature: has_signature ?? false,
     }
 
-    if (briefing_accepted) {
-      payload.briefing_accepted_at = new Date().toISOString()
-    }
+    if (briefing_accepted) payload.briefing_accepted_at = new Date().toISOString()
     if (phone) payload.phone = phone
+    if (trailer_plate) payload.trailer_plate = trailer_plate
+    if (contact_person) payload.contact_person = contact_person
     if (signature_data) payload.signature_data = signature_data
     if (reference_number) payload.reference_number = reference_number
 

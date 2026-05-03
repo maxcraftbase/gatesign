@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { CheckCircle, Lock } from 'lucide-react'
-import { translations, LANGUAGES, type Language } from '@/lib/translations'
+import { translations, LANGUAGES, VISITOR_TYPES, type Language, type VisitorType } from '@/lib/translations'
 import { SignaturePad, type SignaturePadHandle } from '@/components/kiosk/SignaturePad'
 
 // ─── Simple markdown renderer (no external dependency) ───────────────────────
@@ -123,26 +123,48 @@ function AdminLoginModal({ onClose }: { onClose: () => void }) {
 // ─── Progress bar ─────────────────────────────────────────────────────────────
 function ProgressBar({ step, lang }: { step: number; lang: Language }) {
   const t = translations[lang]
-  const steps = [t.step_language, t.step_form, t.step_briefing, t.step_success]
+  const steps = [t.step_language, t.step_type, t.step_form, t.step_briefing, t.step_success]
   return (
-    <div className="flex items-center gap-2 px-6 py-4">
+    <div className="flex items-center gap-1 px-4 py-3">
       {steps.map((label, i) => (
-        <div key={i} className="flex items-center gap-2 flex-1">
-          <div className={`flex items-center gap-2 ${i + 1 <= step ? 'opacity-100' : 'opacity-40'}`}>
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0 transition-colors ${
+        <div key={i} className="flex items-center gap-1 flex-1">
+          <div className={`flex items-center gap-1.5 ${i + 1 <= step ? 'opacity-100' : 'opacity-40'}`}>
+            <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 transition-colors ${
               i + 1 < step ? 'bg-emerald-500 text-white' :
               i + 1 === step ? 'bg-blue-600 text-white' :
               'bg-slate-700 text-slate-400'
             }`}>
               {i + 1 < step ? '✓' : i + 1}
             </div>
-            <span className="text-sm font-medium text-slate-200 hidden sm:block">{label}</span>
+            <span className="text-xs font-medium text-slate-200 hidden md:block">{label}</span>
           </div>
           {i < steps.length - 1 && (
-            <div className={`h-0.5 flex-1 mx-2 rounded transition-colors ${i + 1 < step ? 'bg-emerald-500' : 'bg-slate-700'}`} />
+            <div className={`h-0.5 flex-1 mx-1 rounded transition-colors ${i + 1 < step ? 'bg-emerald-500' : 'bg-slate-700'}`} />
           )}
         </div>
       ))}
+    </div>
+  )
+}
+
+// ─── Step 2: Visitor type select ──────────────────────────────────────────────
+function VisitorTypeSelect({ lang, onSelect }: { lang: Language; onSelect: (t: VisitorType) => void }) {
+  const t = translations[lang]
+  return (
+    <div className="flex flex-col flex-1 px-6 py-4">
+      <h2 className="text-3xl font-bold text-white text-center mb-8">{t.choose_type}</h2>
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-3xl mx-auto w-full">
+        {VISITOR_TYPES.map(({ type, icon, labelKey }) => (
+          <button
+            key={type}
+            onClick={() => onSelect(type)}
+            className="flex flex-col items-center gap-4 bg-slate-800 hover:bg-slate-700 active:scale-95 active:bg-blue-600 transition-all rounded-2xl p-8 border border-slate-700 hover:border-blue-500"
+          >
+            <span className="text-6xl">{icon}</span>
+            <span className="text-white font-bold text-xl text-center">{t[labelKey]}</span>
+          </button>
+        ))}
+      </div>
     </div>
   )
 }
@@ -196,23 +218,27 @@ function LanguageSelect({ onSelect }: { onSelect: (lang: Language) => void }) {
   )
 }
 
-// ─── Step 2: Driver form ──────────────────────────────────────────────────────
+// ─── Step 3: Driver form ──────────────────────────────────────────────────────
 interface FormData {
   name: string
   company: string
   plate: string
+  trailerPlate: string
   phone: string
   reference: string
+  contactPerson: string
 }
 
 function DriverForm({
   lang,
+  visitorType,
   formData,
   onChange,
   onNext,
   onBack,
 }: {
   lang: Language
+  visitorType: VisitorType
   formData: FormData
   onChange: (f: FormData) => void
   onNext: () => void
@@ -240,72 +266,62 @@ function DriverForm({
         <div className="flex flex-col gap-5">
           <div>
             <label className={labelCls}>{t.field_name} <span className="text-red-500">*</span></label>
-            <input
-              className={inputCls}
-              placeholder={t.field_name_placeholder}
-              value={formData.name}
-              onChange={e => onChange({ ...formData, name: e.target.value })}
-              autoComplete="off"
-            />
+            <input className={inputCls} placeholder={t.field_name_placeholder}
+              value={formData.name} onChange={e => onChange({ ...formData, name: e.target.value })} autoComplete="off" />
           </div>
           <div>
             <label className={labelCls}>{t.field_company} <span className="text-red-500">*</span></label>
-            <input
-              className={inputCls}
-              placeholder={t.field_company_placeholder}
-              value={formData.company}
-              onChange={e => onChange({ ...formData, company: e.target.value })}
-              autoComplete="off"
-            />
+            <input className={inputCls} placeholder={t.field_company_placeholder}
+              value={formData.company} onChange={e => onChange({ ...formData, company: e.target.value })} autoComplete="off" />
           </div>
           <div>
             <label className={labelCls}>{t.field_plate} <span className="text-red-500">*</span></label>
-            <input
-              className={inputCls}
-              placeholder={t.field_plate_placeholder}
-              value={formData.plate}
-              onChange={e => onChange({ ...formData, plate: e.target.value.toUpperCase() })}
-              autoComplete="off"
-              autoCapitalize="characters"
-            />
+            <input className={inputCls} placeholder={t.field_plate_placeholder}
+              value={formData.plate} onChange={e => onChange({ ...formData, plate: e.target.value.toUpperCase() })}
+              autoComplete="off" autoCapitalize="characters" />
           </div>
+          {visitorType === 'truck' && (
+            <div>
+              <label className={labelCls}>{t.field_trailer_plate}</label>
+              <input className={inputCls} placeholder={t.field_trailer_placeholder}
+                value={formData.trailerPlate} onChange={e => onChange({ ...formData, trailerPlate: e.target.value.toUpperCase() })}
+                autoComplete="off" autoCapitalize="characters" />
+            </div>
+          )}
           <div>
             <label className={labelCls}>{t.field_phone}</label>
-            <input
-              className={inputCls}
-              placeholder={t.field_phone_placeholder}
-              value={formData.phone}
-              onChange={e => onChange({ ...formData, phone: e.target.value })}
-              type="tel"
-              autoComplete="off"
-            />
+            <input className={inputCls} placeholder={t.field_phone_placeholder}
+              value={formData.phone} onChange={e => onChange({ ...formData, phone: e.target.value })}
+              type="tel" autoComplete="off" />
           </div>
-          <div>
-            <label className={labelCls}>{t.field_reference}</label>
-            <input
-              className={inputCls}
-              placeholder={t.field_reference_placeholder}
-              value={formData.reference}
-              onChange={e => onChange({ ...formData, reference: e.target.value })}
-              autoComplete="off"
-            />
-          </div>
+          {visitorType === 'truck' && (
+            <div>
+              <label className={labelCls}>{t.field_reference}</label>
+              <input className={inputCls} placeholder={t.field_reference_placeholder}
+                value={formData.reference} onChange={e => onChange({ ...formData, reference: e.target.value })}
+                autoComplete="off" />
+            </div>
+          )}
+          {(visitorType === 'visitor' || visitorType === 'service') && (
+            <div>
+              <label className={labelCls}>{t.field_contact_person} <span className="text-red-500">*</span></label>
+              <input className={inputCls} placeholder={t.field_contact_placeholder}
+                value={formData.contactPerson} onChange={e => onChange({ ...formData, contactPerson: e.target.value })}
+                autoComplete="off" />
+            </div>
+          )}
           {error && (
             <p className="text-red-600 bg-red-50 rounded-xl px-4 py-3 text-lg font-medium">{error}</p>
           )}
         </div>
       </div>
       <div className="flex gap-4 mt-4 max-w-2xl mx-auto w-full pb-4">
-        <button
-          onClick={onBack}
-          className="flex-1 py-5 text-xl font-semibold rounded-2xl bg-slate-700 hover:bg-slate-600 active:scale-95 text-white transition-all"
-        >
+        <button onClick={onBack}
+          className="flex-1 py-5 text-xl font-semibold rounded-2xl bg-slate-700 hover:bg-slate-600 active:scale-95 text-white transition-all">
           {t.btn_back}
         </button>
-        <button
-          onClick={handleNext}
-          className="flex-2 flex-grow-[2] py-5 text-xl font-semibold rounded-2xl bg-blue-600 hover:bg-blue-500 active:scale-95 text-white transition-all"
-        >
+        <button onClick={handleNext}
+          className="flex-grow-[2] py-5 text-xl font-semibold rounded-2xl bg-blue-600 hover:bg-blue-500 active:scale-95 text-white transition-all">
           {t.btn_next}
         </button>
       </div>
@@ -471,10 +487,13 @@ function SuccessScreen({
 }
 
 // ─── Main kiosk component ─────────────────────────────────────────────────────
+const EMPTY_FORM: FormData = { name: '', company: '', plate: '', trailerPlate: '', phone: '', reference: '', contactPerson: '' }
+
 export function KioskClient() {
   const [step, setStep] = useState(0)
   const [lang, setLang] = useState<Language>('de')
-  const [formData, setFormData] = useState<FormData>({ name: '', company: '', plate: '', phone: '', reference: '' })
+  const [visitorType, setVisitorType] = useState<VisitorType>('truck')
+  const [formData, setFormData] = useState<FormData>(EMPTY_FORM)
   const [briefingContent, setBriefingContent] = useState('')
   const [briefingVersion, setBriefingVersion] = useState('1.0')
   const [signatureRequired, setSignatureRequired] = useState(false)
@@ -487,7 +506,6 @@ export function KioskClient() {
   const adminTapCount = useRef(0)
   const adminTapTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // Load settings on mount
   useEffect(() => {
     fetch('/api/settings')
       .then(r => r.json())
@@ -497,31 +515,25 @@ export function KioskClient() {
         if (data.briefing_version) setBriefingVersion(data.briefing_version)
         if (data.signature_required) setSignatureRequired(data.signature_required === 'true')
       })
-      .catch(() => {/* use defaults */})
+      .catch(() => {})
   }, [])
 
-  // Load briefing when language is selected
-  const loadBriefing = useCallback(async (language: Language, version: string) => {
+  const loadBriefing = useCallback(async (language: Language, vType: VisitorType, version: string) => {
     try {
-      const res = await fetch(`/api/briefing?language=${language}&version=${version}`)
+      const res = await fetch(`/api/briefing?language=${language}&visitor_type=${vType}&version=${version}`)
       const data = await res.json()
       if (data.content) setBriefingContent(data.content)
-    } catch {
-      // use fallback text
-    }
+    } catch {}
   }, [])
-
-  function handleStart() {
-    setStep(1)
-  }
 
   function handleLanguageSelect(selected: Language) {
     setLang(selected)
-    loadBriefing(selected, briefingVersion)
     setStep(2)
   }
 
-  function handleFormNext() {
+  function handleVisitorTypeSelect(type: VisitorType) {
+    setVisitorType(type)
+    loadBriefing(lang, type, briefingVersion)
     setStep(3)
   }
 
@@ -533,10 +545,13 @@ export function KioskClient() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          visitor_type: visitorType,
           driver_name: formData.name,
           company_name: formData.company,
           license_plate: formData.plate,
+          trailer_plate: formData.trailerPlate || null,
           phone: formData.phone || null,
+          contact_person: formData.contactPerson || null,
           language: lang,
           briefing_accepted: true,
           briefing_version: briefingVersion,
@@ -552,7 +567,7 @@ export function KioskClient() {
         return
       }
       setLoading(false)
-      setStep(4)
+      setStep(5)
     } catch {
       setError(translations[lang].error_generic)
       setLoading(false)
@@ -562,11 +577,11 @@ export function KioskClient() {
   function handleReset() {
     setStep(0)
     setLang('de')
-    setFormData({ name: '', company: '', plate: '', phone: '', reference: '' })
+    setVisitorType('truck')
+    setFormData(EMPTY_FORM)
     setError('')
   }
 
-  // Secret tap on lock icon to open admin
   function handleAdminTap() {
     adminTapCount.current += 1
     if (adminTapTimer.current) clearTimeout(adminTapTimer.current)
@@ -579,24 +594,19 @@ export function KioskClient() {
 
   return (
     <div className="min-h-screen bg-slate-900 flex flex-col overflow-hidden select-none">
-      {/* Header */}
-      <header className="flex items-center justify-between px-6 py-3 border-b border-slate-800">
-        <span className="text-white font-bold text-2xl tracking-tight">GateSign</span>
-        {step > 0 && step < 4 && (
-          <div className="flex-1 mx-4">
+      <header className="flex items-center justify-between px-4 py-2 border-b border-slate-800">
+        <span className="text-white font-bold text-xl tracking-tight shrink-0">GateSign</span>
+        {step > 0 && step < 5 && (
+          <div className="flex-1 mx-2">
             <ProgressBar step={step} lang={lang} />
           </div>
         )}
-        <button
-          onClick={handleAdminTap}
-          className="p-2 rounded-xl text-slate-600 hover:text-slate-400 transition-colors"
-          aria-label="Admin"
-        >
+        <button onClick={handleAdminTap}
+          className="p-2 rounded-xl text-slate-600 hover:text-slate-400 transition-colors shrink-0" aria-label="Admin">
           <Lock className="w-5 h-5" />
         </button>
       </header>
 
-      {/* Error banner */}
       {error && (
         <div className="mx-6 mt-4 bg-red-900/50 border border-red-700 text-red-200 rounded-xl px-5 py-3 text-lg">
           {error}
@@ -604,7 +614,6 @@ export function KioskClient() {
         </div>
       )}
 
-      {/* Loading overlay */}
       {loading && (
         <div className="fixed inset-0 z-40 bg-black/60 flex items-center justify-center">
           <div className="bg-white rounded-2xl p-8 flex flex-col items-center gap-4">
@@ -614,43 +623,20 @@ export function KioskClient() {
         </div>
       )}
 
-      {/* Steps */}
-      {step === 0 && (
-        <WelcomeScreen
-          title={welcomeTitle}
-          subtitle={welcomeSubtitle}
-          onStart={handleStart}
-        />
-      )}
-      {step === 1 && (
-        <LanguageSelect onSelect={handleLanguageSelect} />
-      )}
-      {step === 2 && (
-        <DriverForm
-          lang={lang}
-          formData={formData}
-          onChange={setFormData}
-          onNext={handleFormNext}
-          onBack={() => setStep(1)}
-        />
-      )}
+      {step === 0 && <WelcomeScreen title={welcomeTitle} subtitle={welcomeSubtitle} onStart={() => setStep(1)} />}
+      {step === 1 && <LanguageSelect onSelect={handleLanguageSelect} />}
+      {step === 2 && <VisitorTypeSelect lang={lang} onSelect={handleVisitorTypeSelect} />}
       {step === 3 && (
-        <SafetyBriefingStep
-          lang={lang}
-          briefingContent={briefingContent}
-          signatureRequired={signatureRequired}
-          onConfirm={handleBriefingConfirm}
-          onBack={() => setStep(2)}
-        />
+        <DriverForm lang={lang} visitorType={visitorType} formData={formData}
+          onChange={setFormData} onNext={() => setStep(4)} onBack={() => setStep(2)} />
       )}
       {step === 4 && (
-        <SuccessScreen lang={lang} onReset={handleReset} />
+        <SafetyBriefingStep lang={lang} briefingContent={briefingContent}
+          signatureRequired={signatureRequired} onConfirm={handleBriefingConfirm} onBack={() => setStep(3)} />
       )}
+      {step === 5 && <SuccessScreen lang={lang} onReset={handleReset} />}
 
-      {/* Admin modal */}
-      {adminModalOpen && (
-        <AdminLoginModal onClose={() => setAdminModalOpen(false)} />
-      )}
+      {adminModalOpen && <AdminLoginModal onClose={() => setAdminModalOpen(false)} />}
     </div>
   )
 }

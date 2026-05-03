@@ -40,23 +40,24 @@ export function AdminEntriesClient() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
-  const loadEntries = useCallback(async (p: number) => {
+  const loadEntries = useCallback((p: number) => {
     setLoading(true)
     setError('')
-    try {
-      const res = await fetch(`/api/admin/entries?page=${p}`)
-      if (!res.ok) throw new Error('Failed')
-      const data = await res.json()
-      setEntries(data.entries ?? [])
-      setTotal(data.total ?? 0)
-      setPage(p)
-    } catch {
-      setError('Fehler beim Laden der Einträge.')
-    } finally {
-      setLoading(false)
-    }
+    fetch(`/api/admin/entries?page=${p}`)
+      .then(res => {
+        if (!res.ok) throw new Error('Failed')
+        return res.json()
+      })
+      .then(data => {
+        setEntries(data.entries ?? [])
+        setTotal(data.total ?? 0)
+        setPage(p)
+      })
+      .catch(() => setError('Fehler beim Laden der Einträge.'))
+      .finally(() => setLoading(false))
   }, [])
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { loadEntries(1) }, [loadEntries])
 
   function handleExport() {

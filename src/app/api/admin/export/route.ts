@@ -31,7 +31,7 @@ function escapeCSV(val: unknown): string {
   return str
 }
 
-export async function GET(req: NextRequest) {
+export async function GET(_req: NextRequest) {
   try {
     const user = await getUser()
     if (!user) {

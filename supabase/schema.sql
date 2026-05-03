@@ -1,169 +1,83 @@
--- GateSign Database Schema
--- Run this in Supabase SQL Editor
+-- Drop old tables if they exist
+DROP TABLE IF EXISTS check_ins CASCADE;
+DROP TABLE IF EXISTS briefing_confirmations CASCADE;
+DROP TABLE IF EXISTS briefing_translations CASCADE;
+DROP TABLE IF EXISTS safety_briefings CASCADE;
+DROP TABLE IF EXISTS drivers CASCADE;
+DROP TABLE IF EXISTS sites CASCADE;
+DROP TABLE IF EXISTS companies CASCADE;
+DROP TABLE IF EXISTS app_settings CASCADE;
 
--- Companies (zahlende Kunden)
-create table public.companies (
-  id uuid primary key default gen_random_uuid(),
-  user_id uuid references auth.users(id) on delete cascade not null,
-  name text not null,
-  email text not null,
-  plan text not null default 'professional' check (plan in ('starter', 'professional', 'business')),
-  stripe_customer_id text,
-  stripe_subscription_id text,
-  subscription_active boolean not null default false,
-  created_at timestamptz not null default now()
+-- Check-in records
+CREATE TABLE IF NOT EXISTS check_ins (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  created_at TIMESTAMPTZ DEFAULT now(),
+  driver_name TEXT NOT NULL,
+  company_name TEXT NOT NULL,
+  license_plate TEXT NOT NULL,
+  phone TEXT,
+  language TEXT NOT NULL DEFAULT 'de',
+  briefing_accepted BOOLEAN NOT NULL DEFAULT false,
+  briefing_accepted_at TIMESTAMPTZ,
+  briefing_version TEXT,
+  has_signature BOOLEAN DEFAULT false,
+  signature_data TEXT,
+  reference_number TEXT
 );
 
--- Sites (Standorte)
-create table public.sites (
-  id uuid primary key default gen_random_uuid(),
-  company_id uuid references public.companies(id) on delete cascade not null,
-  name text not null,
-  address text,
-  qr_token text unique not null default replace(gen_random_uuid()::text, '-', ''),
-  created_at timestamptz not null default now()
+-- Safety briefing content per language
+CREATE TABLE IF NOT EXISTS safety_briefings (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  language TEXT NOT NULL,
+  content TEXT NOT NULL,
+  version TEXT NOT NULL DEFAULT '1.0',
+  updated_at TIMESTAMPTZ DEFAULT now(),
+  UNIQUE(language, version)
 );
 
--- Safety Briefings (Sicherheitsbelehrungen mit Versionierung)
-create table public.safety_briefings (
-  id uuid primary key default gen_random_uuid(),
-  site_id uuid references public.sites(id) on delete cascade not null,
-  version integer not null default 1,
-  is_active boolean not null default true,
-  created_at timestamptz not null default now()
+-- App configuration
+CREATE TABLE IF NOT EXISTS app_settings (
+  key TEXT PRIMARY KEY,
+  value TEXT NOT NULL,
+  updated_at TIMESTAMPTZ DEFAULT now()
 );
 
--- Briefing Translations (Übersetzungen pro Sprache)
-create table public.briefing_translations (
-  id uuid primary key default gen_random_uuid(),
-  briefing_id uuid references public.safety_briefings(id) on delete cascade not null,
-  language text not null,
-  content text not null,
-  unique(briefing_id, language)
-);
+-- Default safety briefing texts (insert for all 10 languages)
+INSERT INTO safety_briefings (language, content, version) VALUES
+('de', E'# Sicherheitsbelehrung\n\nBitte beachten Sie folgende Sicherheitsregeln auf unserem Betriebsgelände:\n\n1. **Schutzausrüstung:** Sicherheitsschuhe und Warnweste sind auf dem gesamten Gelände Pflicht.\n2. **Geschwindigkeit:** Maximal 10 km/h auf dem Betriebsgelände.\n3. **Rauchen:** Rauchen ist nur in den ausgewiesenen Bereichen erlaubt.\n4. **Sicherheitsbereiche:** Betreten Sie nur die für Sie freigegebenen Bereiche.\n5. **Notfall:** Im Notfall wählen Sie die 112. Sammelplatz ist am Haupteingang.\n6. **Anweisungen:** Folgen Sie den Anweisungen des Empfangspersonals.\n\nMit Ihrer Bestätigung erklären Sie, diese Regeln gelesen und verstanden zu haben.', '1.0'),
+('en', E'# Safety Briefing\n\nPlease observe the following safety rules on our premises:\n\n1. **Protective equipment:** Safety shoes and high-visibility vest are mandatory on all premises.\n2. **Speed:** Maximum 10 km/h on company grounds.\n3. **Smoking:** Smoking is only permitted in designated areas.\n4. **Safety zones:** Only enter areas authorized for you.\n5. **Emergency:** In case of emergency call 112. Assembly point is at the main entrance.\n6. **Instructions:** Follow the instructions of reception staff.\n\nBy confirming, you declare that you have read and understood these rules.', '1.0'),
+('pl', E'# Instrukcja bezpieczeństwa\n\nProsimy o przestrzeganie następujących zasad bezpieczeństwa na naszym terenie:\n\n1. **Wyposażenie ochronne:** Obuwie ochronne i kamizelka odblaskowa są obowiązkowe na terenie całego zakładu.\n2. **Prędkość:** Maksymalnie 10 km/h na terenie zakładu.\n3. **Palenie:** Palenie jest dozwolone tylko w wyznaczonych miejscach.\n4. **Strefy bezpieczeństwa:** Wchodź tylko do obszarów, do których masz dostęp.\n5. **Nagłe wypadki:** W nagłych wypadkach dzwoń 112. Punkt zbiórki przy wejściu głównym.\n6. **Instrukcje:** Postępuj zgodnie z instrukcjami personelu recepcji.\n\nPotwierdzając, oświadczasz, że przeczytałeś i zrozumiałeś te zasady.', '1.0'),
+('ro', E'# Instructaj de securitate\n\nVă rugăm să respectați următoarele reguli de securitate pe teritoriul nostru:\n\n1. **Echipament de protecție:** Încălțămintea de protecție și vesta reflectorizantă sunt obligatorii pe întregul teritoriu.\n2. **Viteză:** Maximum 10 km/h pe teritoriul companiei.\n3. **Fumat:** Fumatul este permis doar în zonele desemnate.\n4. **Zone de siguranță:** Intrați doar în zonele autorizate pentru dvs.\n5. **Urgențe:** În caz de urgență sunați 112. Punctul de adunare este la intrarea principală.\n6. **Instrucțiuni:** Urmați instrucțiunile personalului de recepție.\n\nPrin confirmare, declarați că ați citit și înțeles aceste reguli.', '1.0'),
+('cs', E'# Bezpečnostní školení\n\nDodržujte prosím následující bezpečnostní pravidla v našem areálu:\n\n1. **Ochranné vybavení:** Bezpečnostní obuv a reflexní vesta jsou povinné v celém areálu.\n2. **Rychlost:** Maximálně 10 km/h v areálu společnosti.\n3. **Kouření:** Kouření je povoleno pouze ve vyhrazených prostorách.\n4. **Bezpečnostní zóny:** Vstupujte pouze do oblastí, které jsou pro vás povoleny.\n5. **Nouzové situace:** V nouzové situaci volejte 112. Sraz je u hlavního vchodu.\n6. **Pokyny:** Dodržujte pokyny recepčního personálu.\n\nPotvrzením prohlašujete, že jste si tato pravidla přečetli a porozuměli jim.', '1.0'),
+('hu', E'# Biztonsági oktatás\n\nKérjük, tartsa be a következő biztonsági szabályokat telephelyünkön:\n\n1. **Védőfelszerelés:** Biztonsági cipő és láthatósági mellény kötelező az egész területen.\n2. **Sebesség:** Legfeljebb 10 km/h a vállalat területén.\n3. **Dohányzás:** Dohányozni csak a kijelölt területeken szabad.\n4. **Biztonsági zónák:** Csak az Ön számára engedélyezett területekre lépjen be.\n5. **Vészhelyzet:** Vészhelyzetben hívja a 112-t. A gyülekezési pont a főbejáratnál van.\n6. **Utasítások:** Kövesse a recepciós személyzet utasításait.\n\nMegerősítésével kijelenti, hogy elolvasta és megértette ezeket a szabályokat.', '1.0'),
+('bg', E'# Инструктаж по безопасност\n\nМоля, спазвайте следните правила за безопасност на нашата територия:\n\n1. **Предпазно оборудване:** Предпазни обувки и светлоотразителна жилетка са задължителни на цялата територия.\n2. **Скорост:** Максимум 10 км/ч на територията на компанията.\n3. **Тютюнопушене:** Пушенето е разрешено само в определените места.\n4. **Зони за безопасност:** Влизайте само в зоните, разрешени за вас.\n5. **Аварии:** При аварийна ситуация се обадете на 112. Сборният пункт е при главния вход.\n6. **Инструкции:** Следвайте инструкциите на персонала на рецепцията.\n\nС потвърждението си декларирате, че сте прочели и разбрали тези правила.', '1.0'),
+('uk', E'# Інструктаж з безпеки\n\nБудь ласка, дотримуйтесь наступних правил безпеки на нашій території:\n\n1. **Захисне спорядження:** Захисне взуття та світловідбивний жилет обов''язкові на всій території.\n2. **Швидкість:** Максимум 10 км/год на території компанії.\n3. **Куріння:** Куріння дозволено лише у відведених місцях.\n4. **Зони безпеки:** Входьте лише в зони, дозволені для вас.\n5. **Надзвичайні ситуації:** У надзвичайній ситуації телефонуйте 112. Місце збору біля головного входу.\n6. **Інструкції:** Дотримуйтесь вказівок персоналу рецепції.\n\nПідтверджуючи, ви заявляєте, що прочитали та зрозуміли ці правила.', '1.0'),
+('ru', E'# Инструктаж по безопасности\n\nПожалуйста, соблюдайте следующие правила безопасности на нашей территории:\n\n1. **Защитное снаряжение:** Защитная обувь и светоотражающий жилет обязательны на всей территории.\n2. **Скорость:** Максимум 10 км/ч на территории компании.\n3. **Курение:** Курение разрешено только в отведённых местах.\n4. **Зоны безопасности:** Заходите только в зоны, разрешённые для вас.\n5. **Чрезвычайные ситуации:** В чрезвычайной ситуации звоните 112. Место сбора у главного входа.\n6. **Инструкции:** Следуйте указаниям персонала ресепшн.\n\nПодтверждая, вы заявляете, что прочитали и поняли эти правила.', '1.0'),
+('tr', E'# Güvenlik Eğitimi\n\nLütfen tesisimizde aşağıdaki güvenlik kurallarına uyunuz:\n\n1. **Koruyucu ekipman:** Güvenlik ayakkabısı ve yansıtıcı yelek tüm tesis genelinde zorunludur.\n2. **Hız:** Şirket alanında maksimum 10 km/saat.\n3. **Sigara:** Sigara içmek yalnızca belirlenen alanlarda serbesttir.\n4. **Güvenlik bölgeleri:** Yalnızca size izin verilen alanlara giriniz.\n5. **Acil durumlar:** Acil durumda 112''yi arayın. Toplanma noktası ana girişte.\n6. **Talimatlar:** Resepsiyon personelinin talimatlarına uyunuz.\n\nOnaylayarak bu kuralları okuduğunuzu ve anladığınızı beyan edersiniz.', '1.0')
+ON CONFLICT (language, version) DO NOTHING;
 
--- Drivers (Fahrer — kein Login, nur Device-Token)
-create table public.drivers (
-  id uuid primary key default gen_random_uuid(),
-  name text not null,
-  company_name text not null,
-  phone text not null,
-  license_plate text not null,
-  trailer_plate text,
-  preferred_language text not null default 'de',
-  device_token text unique not null,
-  created_at timestamptz not null default now()
-);
+-- Default app settings
+INSERT INTO app_settings (key, value) VALUES
+('welcome_title', 'Willkommen / Welcome'),
+('welcome_subtitle', 'Bitte melden Sie sich hier an — Please register here'),
+('signature_required', 'false'),
+('site_info', ''),
+('briefing_version', '1.0')
+ON CONFLICT (key) DO NOTHING;
 
--- Briefing Confirmations (einmalig pro Fahrer + Standort + Version)
-create table public.briefing_confirmations (
-  id uuid primary key default gen_random_uuid(),
-  driver_id uuid references public.drivers(id) on delete cascade not null,
-  site_id uuid references public.sites(id) on delete cascade not null,
-  briefing_id uuid references public.safety_briefings(id) on delete cascade not null,
-  briefing_version integer not null,
-  language text not null,
-  confirmed_at timestamptz not null default now(),
-  unique(driver_id, site_id, briefing_version)
-);
+-- RLS
+ALTER TABLE check_ins ENABLE ROW LEVEL SECURITY;
+ALTER TABLE safety_briefings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE app_settings ENABLE ROW LEVEL SECURITY;
 
--- Check-ins (jeder Besuch)
-create table public.check_ins (
-  id uuid primary key default gen_random_uuid(),
-  driver_id uuid references public.drivers(id) on delete cascade not null,
-  site_id uuid references public.sites(id) on delete cascade not null,
-  briefing_id uuid references public.safety_briefings(id) not null,
-  briefing_version integer not null,
-  timestamp timestamptz not null default now(),
-  -- Snapshot der Fahrerdaten zum Zeitpunkt des Check-ins
-  driver_name text not null,
-  driver_company text not null,
-  driver_phone text not null,
-  license_plate text not null,
-  trailer_plate text,
-  reference_number text,
-  language text not null,
-  briefing_confirmed boolean not null default false,
-  briefing_confirmed_at timestamptz
-);
+-- check_ins: anyone can insert, only authenticated can read
+CREATE POLICY "public insert check_ins" ON check_ins FOR INSERT WITH CHECK (true);
+CREATE POLICY "authenticated read check_ins" ON check_ins FOR SELECT USING (auth.role() = 'authenticated');
 
--- RLS (Row Level Security) aktivieren
-alter table public.companies enable row level security;
-alter table public.sites enable row level security;
-alter table public.safety_briefings enable row level security;
-alter table public.briefing_translations enable row level security;
-alter table public.drivers enable row level security;
-alter table public.briefing_confirmations enable row level security;
-alter table public.check_ins enable row level security;
+-- safety_briefings: public read, authenticated write
+CREATE POLICY "public read briefings" ON safety_briefings FOR SELECT USING (true);
+CREATE POLICY "authenticated write briefings" ON safety_briefings FOR ALL USING (auth.role() = 'authenticated');
 
--- RLS Policies: Unternehmen sehen nur ihre eigenen Daten
-create policy "Companies: own data only"
-  on public.companies for all
-  using (user_id = auth.uid());
-
-create policy "Sites: own company only"
-  on public.sites for all
-  using (company_id in (select id from public.companies where user_id = auth.uid()));
-
-create policy "Briefings: own sites only"
-  on public.safety_briefings for all
-  using (site_id in (
-    select s.id from public.sites s
-    join public.companies c on c.id = s.company_id
-    where c.user_id = auth.uid()
-  ));
-
-create policy "Briefing translations: own sites only"
-  on public.briefing_translations for all
-  using (briefing_id in (
-    select sb.id from public.safety_briefings sb
-    join public.sites s on s.id = sb.site_id
-    join public.companies c on c.id = s.company_id
-    where c.user_id = auth.uid()
-  ));
-
-create policy "Check-ins: own sites only"
-  on public.check_ins for all
-  using (site_id in (
-    select s.id from public.sites s
-    join public.companies c on c.id = s.company_id
-    where c.user_id = auth.uid()
-  ));
-
--- Fahrer und Bestätigungen: öffentlich lesbar (für QR-Check-in ohne Login)
-create policy "Drivers: public insert"
-  on public.drivers for insert with check (true);
-
-create policy "Drivers: read by device token"
-  on public.drivers for select using (true);
-
-create policy "Drivers: update own"
-  on public.drivers for update using (true);
-
-create policy "Briefing confirmations: public insert"
-  on public.briefing_confirmations for insert with check (true);
-
-create policy "Briefing confirmations: public select"
-  on public.briefing_confirmations for select using (true);
-
--- Briefing translations: public read (für Fahrer-App)
-create policy "Briefing translations: public read"
-  on public.briefing_translations for select using (true);
-
--- Safety briefings: public read (für Fahrer-App)
-create policy "Safety briefings: public read"
-  on public.safety_briefings for select using (true);
-
--- Sites: public read by qr_token (für Fahrer-App)
-create policy "Sites: public read"
-  on public.sites for select using (true);
-
--- Check-ins: public insert (Fahrer können einchecken)
-create policy "Check-ins: public insert"
-  on public.check_ins for insert with check (true);
-
--- Index für Performance
-create index on public.check_ins(site_id, timestamp desc);
-create index on public.briefing_confirmations(driver_id, site_id);
-create index on public.sites(qr_token);
-create index on public.drivers(device_token);
+-- app_settings: public read, authenticated write
+CREATE POLICY "public read settings" ON app_settings FOR SELECT USING (true);
+CREATE POLICY "authenticated write settings" ON app_settings FOR ALL USING (auth.role() = 'authenticated');

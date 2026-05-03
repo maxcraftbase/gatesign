@@ -1,64 +1,56 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!
+export async function GET(req: NextRequest) {
+  try {
+    const { searchParams } = new URL(req.url)
+    const language = searchParams.get('language') ?? 'de'
+    const version = searchParams.get('version') ?? '1.0'
 
-async function dbFetch(path: string, options?: RequestInit) {
-  const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
-    ...options,
-    headers: {
-      apikey: SERVICE_KEY,
-      Authorization: `Bearer ${SERVICE_KEY}`,
-      'Content-Type': 'application/json',
-      Prefer: 'return=representation',
-      ...(options?.headers ?? {}),
-    },
-  })
-  if (!res.ok) throw new Error(await res.text())
-  return res.json()
-}
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
-export async function POST(req: NextRequest) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-  const { siteId, texts, existingBriefingId, existingVersion } = await req.json()
-  if (!siteId) return NextResponse.json({ error: 'Missing siteId' }, { status: 400 })
-
-  // Verify site belongs to user
-  const sites = await dbFetch(
-    `sites?id=eq.${siteId}&select=id,companies!inner(user_id)&companies.user_id=eq.${user.id}`
-  )
-  if (!sites?.length) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-
-  const filled = Object.entries(texts as Record<string, string>).filter(([, v]) => v.trim())
-  if (!filled.length) return NextResponse.json({ error: 'No content' }, { status: 400 })
-
-  // Deactivate existing briefing
-  if (existingBriefingId) {
-    await dbFetch(`safety_briefings?id=eq.${existingBriefingId}`, {
-      method: 'PATCH',
-      body: JSON.stringify({ is_active: false }),
+    const params = new URLSearchParams({
+      language: `eq.${language}`,
+      version: `eq.${version}`,
+      select: 'content,version,language',
+      limit: '1',
     })
+
+    const res = await fetch(`${supabaseUrl}/rest/v1/safety_briefings?${params}`, {
+      headers: {
+        apikey: anonKey,
+        Authorization: `Bearer ${anonKey}`,
+      },
+      cache: 'no-store',
+    })
+
+    if (!res.ok) {
+      return NextResponse.json({ error: 'Failed to fetch briefing' }, { status: 500 })
+    }
+
+    const data = await res.json()
+
+    if (!data || data.length === 0) {
+      // Fallback to German if language not found
+      const fallbackParams = new URLSearchParams({
+        language: 'eq.de',
+        version: `eq.${version}`,
+        select: 'content,version,language',
+        limit: '1',
+      })
+      const fallbackRes = await fetch(`${supabaseUrl}/rest/v1/safety_briefings?${fallbackParams}`, {
+        headers: {
+          apikey: anonKey,
+          Authorization: `Bearer ${anonKey}`,
+        },
+        cache: 'no-store',
+      })
+      const fallbackData = await fallbackRes.json()
+      return NextResponse.json(fallbackData[0] ?? { content: '', version: '1.0', language: 'de' })
+    }
+
+    return NextResponse.json(data[0])
+  } catch (err) {
+    return NextResponse.json({ error: String(err) }, { status: 500 })
   }
-
-  const newVersion = (existingVersion ?? 0) + 1
-
-  // Create new briefing
-  const [newBriefing] = await dbFetch('safety_briefings', {
-    method: 'POST',
-    body: JSON.stringify({ site_id: siteId, version: newVersion, is_active: true }),
-  })
-
-  // Insert translations
-  await dbFetch('briefing_translations', {
-    method: 'POST',
-    body: JSON.stringify(
-      filled.map(([language, content]) => ({ briefing_id: newBriefing.id, language, content }))
-    ),
-  })
-
-  return NextResponse.json({ id: newBriefing.id, version: newVersion })
 }

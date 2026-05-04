@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateSlug, createCompanyWithDefaults } from '@/lib/company'
 import { sendEmail } from '@/lib/brevo'
-import { generateSetupGuidePdf } from '@/lib/setup-guide-pdf'
 
 export async function POST(req: NextRequest) {
   try {
@@ -44,17 +43,15 @@ export async function POST(req: NextRequest) {
     const encoded = 'base64-' + Buffer.from(JSON.stringify(session)).toString('base64url')
     const cookieOpts = { httpOnly: true, sameSite: 'lax' as const, path: '/', maxAge: 400 * 24 * 60 * 60 }
 
-    // 4. Send welcome email with setup guide PDF (best-effort, don't fail registration)
+    // 4. Send welcome email (best-effort, don't fail registration)
     try {
       const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://gatesign-production.up.railway.app'
       const kioskUrl = `${appUrl}/${slug}`
       const adminUrl = `${appUrl}/${slug}/admin`
-      const pdfBuffer = await generateSetupGuidePdf({ companyName, kioskUrl, adminUrl })
       await sendEmail({
         to: email,
         subject: `Willkommen bei GateSign — ${companyName}`,
         html: welcomeHtml(companyName, kioskUrl, adminUrl),
-        attachments: [{ name: 'GateSign-Einrichtungsanleitung.pdf', content: pdfBuffer }],
       })
     } catch (emailErr) { console.error('[register] welcome email failed:', emailErr) }
 

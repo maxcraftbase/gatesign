@@ -150,12 +150,13 @@ export async function GET(req: NextRequest) {
     }
 
     try {
-      await resend.emails.send({
+      const { error: sendError } = await resend.emails.send({
         from: fromAddress,
         to: company.email,
         subject: `GateSign: ${entries.length} neue Einträge — ${new Date().toLocaleDateString('de-DE', { timeZone: 'Europe/Berlin' })}`,
         html: buildHtml(company.name, entries, since),
       })
+      if (sendError) throw new Error(sendError.message)
 
       await fetch(`${SUPABASE_URL}/rest/v1/companies?id=eq.${company.id}`, {
         method: 'PATCH',

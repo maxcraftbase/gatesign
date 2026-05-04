@@ -10,10 +10,21 @@ export default function RegisterPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
+  function validatePassword(pw: string): string | null {
+    if (pw.length < 8) return 'Mindestens 8 Zeichen erforderlich.'
+    if (!/[A-Z]/.test(pw)) return 'Mindestens ein Großbuchstabe erforderlich.'
+    if (!/[a-z]/.test(pw)) return 'Mindestens ein Kleinbuchstabe erforderlich.'
+    if (!/[0-9]/.test(pw)) return 'Mindestens eine Zahl erforderlich.'
+    return null
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
     setError('')
+
+    const pwError = validatePassword(password)
+    if (pwError) { setError(pwError); setLoading(false); return }
 
     const res = await fetch('/api/auth/register', {
       method: 'POST',
@@ -59,8 +70,9 @@ export default function RegisterPage() {
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1.5">Passwort</label>
               <input type="password" value={password} onChange={e => setPassword(e.target.value)}
-                placeholder="Mindestens 6 Zeichen" required minLength={6} autoComplete="new-password"
+                placeholder="Min. 8 Zeichen, Groß- & Kleinbuchstaben, Zahl" required autoComplete="new-password"
                 className={inputCls} />
+              <p className="text-xs text-slate-400 mt-1">Min. 8 Zeichen · Groß- & Kleinbuchstaben · Zahl</p>
             </div>
 
             {error && <p className="text-sm text-red-500 bg-red-50 rounded-lg px-3 py-2">{error}</p>}

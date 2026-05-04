@@ -167,7 +167,7 @@ function VisitorTypeSelect({ lang, onSelect, onBack }: { lang: Language; onSelec
           </button>
         ))}
       </div>
-      <div className="mt-6 max-w-3xl mx-auto w-full">
+      <div className="mt-6 max-w-3xl mx-auto w-full flex justify-center">
         <button onClick={onBack}
           className="w-full sm:w-auto px-8 py-4 text-xl font-semibold rounded-2xl bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-900 transition-all">
           {t.btn_back}
@@ -222,7 +222,7 @@ function LanguageSelect({ onSelect, onBack }: { onSelect: (lang: Language) => vo
           </button>
         ))}
       </div>
-      <div className="mt-6 max-w-4xl mx-auto w-full">
+      <div className="mt-6 max-w-4xl mx-auto w-full flex justify-center">
         <button onClick={onBack}
           className="px-8 py-4 text-xl font-semibold rounded-2xl bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-900 transition-all">
           Zurück / Back

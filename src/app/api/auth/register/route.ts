@@ -79,7 +79,7 @@ function welcomeHtml(companyName: string, kioskUrl: string, adminUrl: string) {
   <div style="max-width:600px;margin:32px auto;background:#fff;border-radius:12px;border:1px solid #e2e8f0;overflow:hidden">
     <div style="background:#0f172a;padding:28px 32px">
       <h1 style="margin:0;color:#fff;font-size:22px;font-weight:700">GateSign</h1>
-      <p style="margin:4px 0 0;color:#94a3b8;font-size:13px">Digitales Kiosk-Check-in</p>
+      <p style="margin:4px 0 0;color:#94a3b8;font-size:13px">Check-In Terminal</p>
     </div>
     <div style="padding:32px">
       <h2 style="margin:0 0 8px;font-size:18px">Willkommen, ${companyName}!</h2>
@@ -87,18 +87,18 @@ function welcomeHtml(companyName: string, kioskUrl: string, adminUrl: string) {
         Ihr GateSign-Konto ist eingerichtet. Hier sind Ihre Zugangsdaten:
       </p>
       <div style="background:#f8fafc;border-radius:8px;padding:16px 20px;margin-bottom:24px">
-        <p style="margin:0 0 8px;font-size:13px;color:#64748b"><strong style="color:#0f172a">Kiosk-Terminal</strong> (für Ihre Besucher)</p>
+        <p style="margin:0 0 8px;font-size:13px;color:#64748b"><strong style="color:#0f172a">Check-In Terminal</strong> (für Ihre Besucher)</p>
         <a href="${kioskUrl}" style="color:#2563eb;font-size:13px">${kioskUrl}</a>
         <p style="margin:16px 0 8px;font-size:13px;color:#64748b"><strong style="color:#0f172a">Admin-Dashboard</strong> (nur für Sie)</p>
         <a href="${adminUrl}" style="color:#2563eb;font-size:13px">${adminUrl}</a>
       </div>
-      <p style="color:#475569;font-size:13px;margin:0 0 8px">
-        Im Anhang finden Sie die <strong>Einrichtungsanleitung als PDF</strong> — mit Schritt-für-Schritt-Anleitung für:
+      <p style="color:#475569;font-size:13px;margin:0 0 12px">
+        Die vollständige <strong>Einrichtungsanleitung</strong> (iPad, Windows, Android) finden Sie hier:
       </p>
-      <ul style="color:#475569;font-size:13px;margin:0 0 24px;padding-left:20px">
-        <li style="margin-bottom:4px">iPad / Tablet (Geführter Zugriff)</li>
-        <li>Windows PC (Chrome Kiosk-Modus)</li>
-      </ul>
+      <a href="https://gatesign-production.up.railway.app/einrichtung" style="display:inline-block;background:#2563eb;color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-size:14px;font-weight:600;margin-bottom:24px">
+        Einrichtungsanleitung öffnen →
+      </a>
+      <br>
       <a href="${adminUrl}" style="display:inline-block;background:#0f172a;color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-size:14px;font-weight:600">
         Zum Admin-Dashboard →
       </a>

@@ -126,7 +126,7 @@ export async function GET(req: NextRequest) {
       : new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString()
 
     const entriesRes = await fetch(
-      `${SUPABASE_URL}/rest/v1/check_ins?company_id=eq.${company.id}&created_at=gt.${since}` +
+      `${SUPABASE_URL}/rest/v1/check_ins?company_id=eq.${company.id}&created_at=gt.${encodeURIComponent(since)}` +
         `&select=created_at,driver_name,company_name,license_plate,trailer_plate,visitor_type,contact_person,phone&order=created_at.asc`,
       { headers: serviceHeaders(), cache: 'no-store' }
     )

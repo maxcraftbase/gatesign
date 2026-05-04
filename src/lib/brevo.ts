@@ -11,7 +11,8 @@ export async function sendEmail(opts: SendEmailOpts): Promise<void> {
   const apiKey = process.env.BREVO_API_KEY
   if (!apiKey) throw new Error('BREVO_API_KEY not configured')
 
-  const senderEmail = process.env.DIGEST_FROM_EMAIL ?? 'gatesign@craft-base.de'
+  const senderEmail = process.env.DIGEST_FROM_EMAIL
+  if (!senderEmail) throw new Error('DIGEST_FROM_EMAIL not configured')
   const senderName = 'GateSign'
 
   const body: Record<string, unknown> = {

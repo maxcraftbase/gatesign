@@ -267,6 +267,7 @@ function CombinedFormStep({
   const [accepted, setAccepted] = useState(false)
   const [hasSigned, setHasSigned] = useState(false)
   const sigPadRef = useRef<SignaturePadHandle>(null)
+  const handleSign = useCallback(() => setHasSigned(true), [])
 
   function handleConfirm() {
     if (!formData.name.trim() || !formData.company.trim() || !formData.plate.trim()) {
@@ -353,8 +354,8 @@ function CombinedFormStep({
         <h2 className="text-3xl font-bold text-slate-900 mb-5">{t.briefing_title}</h2>
 
         {pdfUrl ? (
-          <div className="rounded-xl overflow-hidden border border-slate-200 mb-6" style={{ height: '50vh' }}>
-            <iframe src={pdfUrl} className="w-full h-full" title="Safety Briefing" />
+          <div className="rounded-xl overflow-hidden border border-slate-200 mb-6">
+            <iframe src={pdfUrl} className="w-full block" style={{ aspectRatio: '210/297' }} title="Safety Briefing" />
           </div>
         ) : (
           <div className="rounded-xl border border-slate-200 bg-slate-50 mb-6 flex items-center justify-center" style={{ height: '20vh' }}>
@@ -371,7 +372,7 @@ function CombinedFormStep({
             </button>
           </div>
           <div className="border-2 border-dashed border-slate-300 rounded-xl bg-slate-50 overflow-hidden relative">
-            <SignaturePad ref={sigPadRef} className="w-full h-36 block" onSign={() => setHasSigned(true)} />
+            <SignaturePad ref={sigPadRef} className="w-full h-36 block" onSign={handleSign} />
             {!hasSigned && (
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                 <span className="text-slate-400 text-base">

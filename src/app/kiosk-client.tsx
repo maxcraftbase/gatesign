@@ -46,7 +46,7 @@ function renderInline(text: string): React.ReactNode {
 }
 
 // ─── Admin login modal ───────────────────────────────────────────────────────
-function AdminLoginModal({ onClose }: { onClose: () => void }) {
+function AdminLoginModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: (slug: string) => void }) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -68,7 +68,7 @@ function AdminLoginModal({ onClose }: { onClose: () => void }) {
         setLoading(false)
         return
       }
-      window.location.href = data.slug ? `/${data.slug}/admin` : '/'
+      onSuccess(data.slug ?? '')
     } catch {
       setError('Network error')
       setLoading(false)
@@ -494,6 +494,28 @@ export function KioskClient({ slug }: { slug: string }) {
   const adminTapCount = useRef(0)
   const adminTapTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
+  // Fullscreen + kiosk lockdown
+  useEffect(() => {
+    document.documentElement.requestFullscreen?.().catch(() => {})
+    const noCtx = (e: MouseEvent) => e.preventDefault()
+    document.addEventListener('contextmenu', noCtx)
+    const noNav = (e: BeforeUnloadEvent) => { e.preventDefault() }
+    window.addEventListener('beforeunload', noNav)
+    return () => {
+      document.removeEventListener('contextmenu', noCtx)
+      window.removeEventListener('beforeunload', noNav)
+    }
+  }, [])
+
+  function handleAdminSuccess(targetSlug: string) {
+    const exit = document.fullscreenElement
+      ? document.exitFullscreen()
+      : Promise.resolve()
+    exit.catch(() => {}).finally(() => {
+      window.location.href = targetSlug ? `/${targetSlug}/admin` : '/'
+    })
+  }
+
   useEffect(() => {
     fetch(`/api/settings?slug=${slug}`)
       .then(r => r.json())
@@ -622,7 +644,7 @@ export function KioskClient({ slug }: { slug: string }) {
       )}
       {step === 5 && <SuccessScreen lang={lang} onReset={handleReset} />}
 
-      {adminModalOpen && <AdminLoginModal onClose={() => setAdminModalOpen(false)} />}
+      {adminModalOpen && <AdminLoginModal onClose={() => setAdminModalOpen(false)} onSuccess={handleAdminSuccess} />}
     </div>
   )
 }

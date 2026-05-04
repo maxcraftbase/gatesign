@@ -55,6 +55,11 @@ export default function LandingPage() {
               <input type="password" value={password} onChange={e => setPassword(e.target.value)}
                 placeholder="••••••••" required autoComplete="current-password" className={inputCls} />
             </div>
+            <div className="text-right -mt-1">
+              <Link href="/forgot-password" className="text-xs text-slate-400 hover:text-slate-700 transition-colors">
+                Passwort vergessen?
+              </Link>
+            </div>
             {error && <p className="text-sm text-red-500 bg-red-50 rounded-lg px-3 py-2">{error}</p>}
             <button type="submit" disabled={loading}
               className="w-full py-3 bg-slate-900 text-white font-semibold rounded-xl hover:bg-slate-700 transition-colors disabled:opacity-50 mt-1">

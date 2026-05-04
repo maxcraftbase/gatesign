@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateSlug, createCompanyWithDefaults } from '@/lib/company'
-import { Resend } from 'resend'
+import { sendEmail } from '@/lib/brevo'
 import { generateSetupGuidePdf } from '@/lib/setup-guide-pdf'
 
 export async function POST(req: NextRequest) {
@@ -46,22 +46,16 @@ export async function POST(req: NextRequest) {
 
     // 4. Send welcome email with setup guide PDF (best-effort, don't fail registration)
     try {
-      const resendKey = process.env.RESEND_API_KEY
-      const fromAddress = process.env.DIGEST_FROM_EMAIL ?? 'gatesign@craft-base.de'
       const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://gatesign-production.up.railway.app'
-      if (resendKey) {
-        const resend = new Resend(resendKey)
-        const kioskUrl = `${appUrl}/${slug}`
-        const adminUrl = `${appUrl}/${slug}/admin`
-        const pdfBuffer = await generateSetupGuidePdf({ companyName, kioskUrl, adminUrl })
-        await resend.emails.send({
-          from: fromAddress,
-          to: email,
-          subject: `Willkommen bei GateSign — ${companyName}`,
-          html: welcomeHtml(companyName, kioskUrl, adminUrl),
-          attachments: [{ filename: 'GateSign-Einrichtungsanleitung.pdf', content: pdfBuffer }],
-        })
-      }
+      const kioskUrl = `${appUrl}/${slug}`
+      const adminUrl = `${appUrl}/${slug}/admin`
+      const pdfBuffer = await generateSetupGuidePdf({ companyName, kioskUrl, adminUrl })
+      await sendEmail({
+        to: email,
+        subject: `Willkommen bei GateSign — ${companyName}`,
+        html: welcomeHtml(companyName, kioskUrl, adminUrl),
+        attachments: [{ name: 'GateSign-Einrichtungsanleitung.pdf', content: pdfBuffer }],
+      })
     } catch { /* ignore — registration already succeeded */ }
 
     const response = NextResponse.json({ success: true, slug })

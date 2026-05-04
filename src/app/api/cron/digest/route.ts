@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { Resend } from 'resend'
+import { sendEmail } from '@/lib/brevo'
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -96,13 +96,10 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'SUPABASE_SERVICE_ROLE_KEY not configured' }, { status: 500 })
   }
 
-  const resendKey = process.env.RESEND_API_KEY
-  if (!resendKey) {
-    return NextResponse.json({ error: 'RESEND_API_KEY not configured' }, { status: 500 })
+  if (!process.env.BREVO_API_KEY) {
+    return NextResponse.json({ error: 'BREVO_API_KEY not configured' }, { status: 500 })
   }
 
-  const resend = new Resend(resendKey)
-  const fromAddress = process.env.DIGEST_FROM_EMAIL ?? 'digest@gatesign.app'
   const results: { company: string; sent: boolean; count: number; error?: string }[] = []
 
   // Fetch all companies that have an email
@@ -150,13 +147,11 @@ export async function GET(req: NextRequest) {
     }
 
     try {
-      const { error: sendError } = await resend.emails.send({
-        from: fromAddress,
+      await sendEmail({
         to: company.email,
         subject: `GateSign: ${entries.length} neue Einträge — ${new Date().toLocaleDateString('de-DE', { timeZone: 'Europe/Berlin' })}`,
         html: buildHtml(company.name, entries, since),
       })
-      if (sendError) throw new Error(sendError.message)
 
       await fetch(`${SUPABASE_URL}/rest/v1/companies?id=eq.${company.id}`, {
         method: 'PATCH',

@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
         html: welcomeHtml(companyName, kioskUrl, adminUrl),
         attachments: [{ name: 'GateSign-Einrichtungsanleitung.pdf', content: pdfBuffer }],
       })
-    } catch { /* ignore — registration already succeeded */ }
+    } catch (emailErr) { console.error('[register] welcome email failed:', emailErr) }
 
     const response = NextResponse.json({ success: true, slug })
     const CHUNK_SIZE = 3180

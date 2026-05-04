@@ -4,27 +4,26 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { clsx } from 'clsx'
 
-const navItems = [
-  { href: '/admin', label: 'Einträge' },
-  { href: '/admin/settings', label: 'Einstellungen' },
-]
-
-export function AdminNav() {
+export function AdminNav({ slug }: { slug: string }) {
   const pathname = usePathname()
   const router = useRouter()
+  const base = `/${slug}/admin`
+
+  const navItems = [
+    { href: base, label: 'Einträge' },
+    { href: `${base}/settings`, label: 'Einstellungen' },
+  ]
 
   async function handleLogout() {
-    // Clear auth cookie by hitting the logout endpoint or just redirect
     await fetch('/api/auth/logout', { method: 'POST' }).catch(() => {})
-    router.push('/admin/login')
-    router.refresh()
+    window.location.href = '/'
   }
 
   return (
     <header className="bg-white border-b border-slate-100">
       <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
         <div className="flex items-center gap-6">
-          <Link href="/" className="font-bold text-slate-900">GateSign</Link>
+          <Link href={base} className="font-bold text-slate-900">GateSign</Link>
           <nav className="flex gap-1">
             {navItems.map(item => (
               <Link
@@ -32,9 +31,7 @@ export function AdminNav() {
                 href={item.href}
                 className={clsx(
                   'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
-                  (item.href === '/admin'
-                    ? pathname === '/admin'
-                    : pathname.startsWith(item.href))
+                  (item.href === base ? pathname === base : pathname.startsWith(item.href))
                     ? 'bg-slate-900 text-white'
                     : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                 )}
@@ -45,16 +42,10 @@ export function AdminNav() {
           </nav>
         </div>
         <div className="flex items-center gap-4">
-          <Link
-            href="/"
-            className="text-sm text-slate-500 hover:text-slate-900 transition-colors"
-          >
+          <Link href={`/${slug}`} className="text-sm text-slate-500 hover:text-slate-900 transition-colors">
             ← Kiosk
           </Link>
-          <button
-            onClick={handleLogout}
-            className="text-sm text-slate-500 hover:text-slate-900 transition-colors"
-          >
+          <button onClick={handleLogout} className="text-sm text-slate-500 hover:text-slate-900 transition-colors">
             Abmelden
           </button>
         </div>

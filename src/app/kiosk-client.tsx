@@ -68,7 +68,7 @@ function AdminLoginModal({ onClose }: { onClose: () => void }) {
         setLoading(false)
         return
       }
-      window.location.href = '/admin'
+      window.location.href = data.slug ? `/${data.slug}/admin` : '/'
     } catch {
       setError('Network error')
       setLoading(false)
@@ -132,14 +132,14 @@ function ProgressBar({ step, lang }: { step: number; lang: Language }) {
             <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 transition-colors ${
               i + 1 < step ? 'bg-emerald-500 text-white' :
               i + 1 === step ? 'bg-blue-600 text-white' :
-              'bg-slate-700 text-slate-400'
+              'bg-slate-200 text-slate-400'
             }`}>
               {i + 1 < step ? '✓' : i + 1}
             </div>
-            <span className="text-xs font-medium text-slate-200 hidden md:block">{label}</span>
+            <span className="text-xs font-medium text-slate-500 hidden md:block">{label}</span>
           </div>
           {i < steps.length - 1 && (
-            <div className={`h-0.5 flex-1 mx-1 rounded transition-colors ${i + 1 < step ? 'bg-emerald-500' : 'bg-slate-700'}`} />
+            <div className={`h-0.5 flex-1 mx-1 rounded transition-colors ${i + 1 < step ? 'bg-emerald-500' : 'bg-slate-200'}`} />
           )}
         </div>
       ))}
@@ -152,16 +152,16 @@ function VisitorTypeSelect({ lang, onSelect }: { lang: Language; onSelect: (t: V
   const t = translations[lang]
   return (
     <div className="flex flex-col flex-1 px-6 py-4">
-      <h2 className="text-3xl font-bold text-white text-center mb-8">{t.choose_type}</h2>
+      <h2 className="text-3xl font-bold text-slate-900 text-center mb-8">{t.choose_type}</h2>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-3xl mx-auto w-full">
         {VISITOR_TYPES.map(({ type, icon, labelKey }) => (
           <button
             key={type}
             onClick={() => onSelect(type)}
-            className="flex flex-col items-center gap-4 bg-slate-800 hover:bg-slate-700 active:scale-95 active:bg-blue-600 transition-all rounded-2xl p-8 border border-slate-700 hover:border-blue-500"
+            className="flex flex-col items-center gap-4 bg-white hover:bg-slate-50 active:scale-95 active:bg-blue-50 transition-all rounded-2xl p-8 border border-slate-200 hover:border-blue-500 shadow-sm"
           >
             <span className="text-6xl">{icon}</span>
-            <span className="text-white font-bold text-xl text-center">{t[labelKey]}</span>
+            <span className="text-slate-900 font-bold text-xl text-center">{t[labelKey]}</span>
           </button>
         ))}
       </div>
@@ -182,8 +182,8 @@ function WelcomeScreen({
   return (
     <div className="flex flex-col items-center justify-center flex-1 gap-10 px-8">
       <div className="text-center">
-        <h1 className="text-5xl font-bold text-white mb-4 leading-tight">{title}</h1>
-        <p className="text-2xl text-slate-300">{subtitle}</p>
+        <h1 className="text-5xl font-bold text-slate-900 mb-4 leading-tight">{title}</h1>
+        <p className="text-2xl text-slate-500">{subtitle}</p>
       </div>
       <button
         onClick={onStart}
@@ -199,7 +199,7 @@ function WelcomeScreen({
 function LanguageSelect({ onSelect }: { onSelect: (lang: Language) => void }) {
   return (
     <div className="flex flex-col flex-1 px-6 py-4">
-      <h2 className="text-3xl font-bold text-white text-center mb-8">
+      <h2 className="text-3xl font-bold text-slate-900 text-center mb-8">
         Sprache wählen / Choose language
       </h2>
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 max-w-4xl mx-auto w-full">
@@ -207,10 +207,10 @@ function LanguageSelect({ onSelect }: { onSelect: (lang: Language) => void }) {
           <button
             key={lang.code}
             onClick={() => onSelect(lang.code)}
-            className="flex flex-col items-center gap-3 bg-slate-800 hover:bg-slate-700 active:scale-95 active:bg-blue-600 transition-all rounded-2xl p-5 border border-slate-700 hover:border-blue-500"
+            className="flex flex-col items-center gap-3 bg-white hover:bg-slate-50 active:scale-95 active:bg-blue-50 transition-all rounded-2xl p-5 border border-slate-200 hover:border-blue-500 shadow-sm"
           >
             <span className="text-5xl">{lang.flag}</span>
-            <span className="text-white font-semibold text-lg">{lang.name}</span>
+            <span className="text-slate-900 font-semibold text-lg">{lang.name}</span>
           </button>
         ))}
       </div>
@@ -317,7 +317,7 @@ function DriverForm({
       </div>
       <div className="flex gap-4 mt-4 max-w-2xl mx-auto w-full pb-4">
         <button onClick={onBack}
-          className="flex-1 py-5 text-xl font-semibold rounded-2xl bg-slate-700 hover:bg-slate-600 active:scale-95 text-white transition-all">
+          className="flex-1 py-5 text-xl font-semibold rounded-2xl bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-900 transition-all">
           {t.btn_back}
         </button>
         <button onClick={handleNext}
@@ -332,13 +332,13 @@ function DriverForm({
 // ─── Step 3: Safety briefing ──────────────────────────────────────────────────
 function SafetyBriefingStep({
   lang,
-  briefingContent,
+  pdfUrl,
   signatureRequired,
   onConfirm,
   onBack,
 }: {
   lang: Language
-  briefingContent: string
+  pdfUrl: string
   signatureRequired: boolean
   onConfirm: (signatureData: string | null) => void
   onBack: () => void
@@ -364,32 +364,30 @@ function SafetyBriefingStep({
 
   return (
     <div className="flex flex-col flex-1 px-6 py-2 overflow-y-auto">
-      <div className="bg-white rounded-2xl shadow-sm p-6 max-w-2xl mx-auto w-full">
+      <div className="bg-white rounded-2xl shadow-sm p-6 max-w-3xl mx-auto w-full">
         <h2 className="text-3xl font-bold text-slate-900 mb-5">{t.briefing_title}</h2>
-        <div className="border border-slate-200 rounded-xl p-5 max-h-80 overflow-y-auto bg-slate-50 mb-6">
-          <div className="prose-custom">
-            {renderMarkdown(briefingContent)}
+
+        {pdfUrl ? (
+          <div className="rounded-xl overflow-hidden border border-slate-200 mb-6" style={{ height: '50vh' }}>
+            <iframe src={pdfUrl} className="w-full h-full" title="Safety Briefing" />
           </div>
-        </div>
+        ) : (
+          <div className="rounded-xl border border-slate-200 bg-slate-50 mb-6 flex items-center justify-center" style={{ height: '20vh' }}>
+            <p className="text-slate-400 text-lg">Keine Belehrung hinterlegt.</p>
+          </div>
+        )}
 
         {/* Signature pad */}
         <div className="mb-5">
           <div className="flex items-center justify-between mb-2">
             <label className="text-lg font-semibold text-slate-700">{t.signature_title}</label>
-            <button
-              type="button"
-              onClick={handleClear}
-              className="text-sm text-slate-500 hover:text-red-500 px-3 py-1 rounded-lg hover:bg-red-50 transition-colors"
-            >
+            <button type="button" onClick={handleClear}
+              className="text-sm text-slate-500 hover:text-red-500 px-3 py-1 rounded-lg hover:bg-red-50 transition-colors">
               {t.signature_clear}
             </button>
           </div>
           <div className="border-2 border-dashed border-slate-300 rounded-xl bg-slate-50 overflow-hidden relative">
-            <SignaturePad
-              ref={sigPadRef}
-              className="w-full h-36 block"
-              onSign={() => setHasSigned(true)}
-            />
+            <SignaturePad ref={sigPadRef} className="w-full h-36 block" onSign={() => setHasSigned(true)} />
             {!hasSigned && (
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                 <span className="text-slate-400 text-base">
@@ -400,37 +398,26 @@ function SafetyBriefingStep({
           </div>
         </div>
 
-        {/* Accept checkbox */}
         <label className="flex items-start gap-4 cursor-pointer select-none">
-          <div
-            onClick={() => setAccepted(!accepted)}
+          <div onClick={() => setAccepted(!accepted)}
             className={`w-8 h-8 rounded-lg border-2 flex items-center justify-center shrink-0 mt-0.5 transition-colors cursor-pointer ${
               accepted ? 'bg-blue-600 border-blue-600' : 'border-slate-300 hover:border-blue-400'
-            }`}
-          >
+            }`}>
             {accepted && <span className="text-white text-lg font-bold">✓</span>}
           </div>
-          <span
-            onClick={() => setAccepted(!accepted)}
-            className="text-lg text-slate-700 leading-relaxed"
-          >
+          <span onClick={() => setAccepted(!accepted)} className="text-lg text-slate-700 leading-relaxed">
             {t.briefing_accept_label}
           </span>
         </label>
       </div>
 
-      <div className="flex gap-4 mt-4 max-w-2xl mx-auto w-full pb-4">
-        <button
-          onClick={onBack}
-          className="flex-1 py-5 text-xl font-semibold rounded-2xl bg-slate-700 hover:bg-slate-600 active:scale-95 text-white transition-all"
-        >
+      <div className="flex gap-4 mt-4 max-w-3xl mx-auto w-full pb-4">
+        <button onClick={onBack}
+          className="flex-1 py-5 text-xl font-semibold rounded-2xl bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-900 transition-all">
           {t.btn_back}
         </button>
-        <button
-          onClick={handleConfirm}
-          disabled={!canConfirm}
-          className="flex-grow-[2] py-5 text-xl font-semibold rounded-2xl bg-blue-600 hover:bg-blue-500 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed text-white transition-all"
-        >
+        <button onClick={handleConfirm} disabled={!canConfirm}
+          className="flex-grow-[2] py-5 text-xl font-semibold rounded-2xl bg-blue-600 hover:bg-blue-500 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed text-white transition-all">
           {t.btn_confirm}
         </button>
       </div>
@@ -489,14 +476,15 @@ function SuccessScreen({
 // ─── Main kiosk component ─────────────────────────────────────────────────────
 const EMPTY_FORM: FormData = { name: '', company: '', plate: '', trailerPlate: '', phone: '', reference: '', contactPerson: '' }
 
-export function KioskClient() {
+export function KioskClient({ slug }: { slug: string }) {
   const [step, setStep] = useState(0)
   const [lang, setLang] = useState<Language>('de')
   const [visitorType, setVisitorType] = useState<VisitorType>('truck')
   const [formData, setFormData] = useState<FormData>(EMPTY_FORM)
-  const [briefingContent, setBriefingContent] = useState('')
+  const [briefingPdfUrl, setBriefingPdfUrl] = useState('')
   const [briefingVersion, setBriefingVersion] = useState('1.0')
   const [signatureRequired, setSignatureRequired] = useState(false)
+  const [pdfUrls, setPdfUrls] = useState<Record<string, string>>({})
   const [welcomeTitle, setWelcomeTitle] = useState('Willkommen / Welcome')
   const [welcomeSubtitle, setWelcomeSubtitle] = useState('Bitte melden Sie sich hier an — Please register here')
   const [loading, setLoading] = useState(false)
@@ -507,23 +495,20 @@ export function KioskClient() {
   const adminTapTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
-    fetch('/api/settings')
+    fetch(`/api/settings?slug=${slug}`)
       .then(r => r.json())
       .then((data: Record<string, string>) => {
         if (data.welcome_title) setWelcomeTitle(data.welcome_title)
         if (data.welcome_subtitle) setWelcomeSubtitle(data.welcome_subtitle)
         if (data.briefing_version) setBriefingVersion(data.briefing_version)
         if (data.signature_required) setSignatureRequired(data.signature_required === 'true')
+        const urls: Record<string, string> = {}
+        for (const key of ['truck', 'visitor', 'service']) {
+          if (data[`briefing_pdf_${key}`]) urls[key] = data[`briefing_pdf_${key}`]
+        }
+        setPdfUrls(urls)
       })
       .catch(() => {})
-  }, [])
-
-  const loadBriefing = useCallback(async (language: Language, vType: VisitorType, version: string) => {
-    try {
-      const res = await fetch(`/api/briefing?language=${language}&visitor_type=${vType}&version=${version}`)
-      const data = await res.json()
-      if (data.content) setBriefingContent(data.content)
-    } catch {}
   }, [])
 
   function handleLanguageSelect(selected: Language) {
@@ -533,7 +518,7 @@ export function KioskClient() {
 
   function handleVisitorTypeSelect(type: VisitorType) {
     setVisitorType(type)
-    loadBriefing(lang, type, briefingVersion)
+    setBriefingPdfUrl(pdfUrls[type] ?? '')
     setStep(3)
   }
 
@@ -545,6 +530,7 @@ export function KioskClient() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          slug,
           visitor_type: visitorType,
           driver_name: formData.name,
           company_name: formData.company,
@@ -593,24 +579,24 @@ export function KioskClient() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-900 flex flex-col overflow-hidden select-none">
-      <header className="flex items-center justify-between px-4 py-2 border-b border-slate-800">
-        <span className="text-white font-bold text-xl tracking-tight shrink-0">GateSign</span>
+    <div className="min-h-screen bg-white flex flex-col overflow-hidden select-none">
+      <header className="flex items-center justify-between px-4 py-2 border-b border-slate-200">
+        <button onClick={handleReset} className="text-slate-900 font-bold text-xl tracking-tight shrink-0 hover:text-slate-600 transition-colors">GateSign</button>
         {step > 0 && step < 5 && (
           <div className="flex-1 mx-2">
             <ProgressBar step={step} lang={lang} />
           </div>
         )}
         <button onClick={handleAdminTap}
-          className="p-2 rounded-xl text-slate-600 hover:text-slate-400 transition-colors shrink-0" aria-label="Admin">
+          className="p-2 rounded-xl text-slate-300 hover:text-slate-400 transition-colors shrink-0" aria-label="Admin">
           <Lock className="w-5 h-5" />
         </button>
       </header>
 
       {error && (
-        <div className="mx-6 mt-4 bg-red-900/50 border border-red-700 text-red-200 rounded-xl px-5 py-3 text-lg">
+        <div className="mx-6 mt-4 bg-red-50 border border-red-200 text-red-600 rounded-xl px-5 py-3 text-lg">
           {error}
-          <button onClick={() => setError('')} className="ml-4 text-red-400 hover:text-red-200">✕</button>
+          <button onClick={() => setError('')} className="ml-4 text-red-400 hover:text-red-600">✕</button>
         </div>
       )}
 
@@ -631,7 +617,7 @@ export function KioskClient() {
           onChange={setFormData} onNext={() => setStep(4)} onBack={() => setStep(2)} />
       )}
       {step === 4 && (
-        <SafetyBriefingStep lang={lang} briefingContent={briefingContent}
+        <SafetyBriefingStep lang={lang} pdfUrl={briefingPdfUrl}
           signatureRequired={signatureRequired} onConfirm={handleBriefingConfirm} onBack={() => setStep(3)} />
       )}
       {step === 5 && <SuccessScreen lang={lang} onReset={handleReset} />}

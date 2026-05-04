@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getCompanyBySlug } from '@/lib/company'
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
     const {
+      slug,
       visitor_type,
       driver_name,
       company_name,
@@ -23,6 +25,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
+    const company = slug ? await getCompanyBySlug(slug) : null
+
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
     const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
@@ -37,6 +41,7 @@ export async function POST(req: NextRequest) {
       has_signature: has_signature ?? false,
     }
 
+    if (company) payload.company_id = company.id
     if (briefing_accepted) payload.briefing_accepted_at = new Date().toISOString()
     if (phone) payload.phone = phone
     if (trailer_plate) payload.trailer_plate = trailer_plate

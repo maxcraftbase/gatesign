@@ -123,23 +123,25 @@ function AdminLoginModal({ onClose, onSuccess }: { onClose: () => void; onSucces
 // ─── Progress bar ─────────────────────────────────────────────────────────────
 function ProgressBar({ step, lang }: { step: number; lang: Language }) {
   const t = translations[lang]
-  const steps = [t.step_language, t.step_type, t.step_form, t.step_briefing, t.step_success]
+  // Map internal steps (1-5) to 4 visible progress steps
+  const progressStep = step <= 1 ? 1 : step === 2 ? 2 : step === 3 ? 3 : 4
+  const steps = [t.step_language, t.step_type, t.step_form, t.step_success]
   return (
     <div className="flex items-center gap-1 px-4 py-3">
       {steps.map((label, i) => (
         <div key={i} className="flex items-center gap-1 flex-1">
-          <div className={`flex items-center gap-1.5 ${i + 1 <= step ? 'opacity-100' : 'opacity-40'}`}>
+          <div className={`flex items-center gap-1.5 ${i + 1 <= progressStep ? 'opacity-100' : 'opacity-40'}`}>
             <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 transition-colors ${
-              i + 1 < step ? 'bg-emerald-500 text-white' :
-              i + 1 === step ? 'bg-blue-600 text-white' :
+              i + 1 < progressStep ? 'bg-emerald-500 text-white' :
+              i + 1 === progressStep ? 'bg-blue-600 text-white' :
               'bg-slate-200 text-slate-400'
             }`}>
-              {i + 1 < step ? '✓' : i + 1}
+              {i + 1 < progressStep ? '✓' : i + 1}
             </div>
             <span className="text-xs font-medium text-slate-500 hidden md:block">{label}</span>
           </div>
           {i < steps.length - 1 && (
-            <div className={`h-0.5 flex-1 mx-1 rounded transition-colors ${i + 1 < step ? 'bg-emerald-500' : 'bg-slate-200'}`} />
+            <div className={`h-0.5 flex-1 mx-1 rounded transition-colors ${i + 1 < progressStep ? 'bg-emerald-500' : 'bg-slate-200'}`} />
           )}
         </div>
       ))}
@@ -148,7 +150,7 @@ function ProgressBar({ step, lang }: { step: number; lang: Language }) {
 }
 
 // ─── Step 2: Visitor type select ──────────────────────────────────────────────
-function VisitorTypeSelect({ lang, onSelect }: { lang: Language; onSelect: (t: VisitorType) => void }) {
+function VisitorTypeSelect({ lang, onSelect, onBack }: { lang: Language; onSelect: (t: VisitorType) => void; onBack: () => void }) {
   const t = translations[lang]
   return (
     <div className="flex flex-col flex-1 px-6 py-4">
@@ -164,6 +166,12 @@ function VisitorTypeSelect({ lang, onSelect }: { lang: Language; onSelect: (t: V
             <span className="text-slate-900 font-bold text-xl text-center">{t[labelKey]}</span>
           </button>
         ))}
+      </div>
+      <div className="mt-6 max-w-3xl mx-auto w-full">
+        <button onClick={onBack}
+          className="w-full sm:w-auto px-8 py-4 text-xl font-semibold rounded-2xl bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-900 transition-all">
+          {t.btn_back}
+        </button>
       </div>
     </div>
   )
@@ -196,7 +204,7 @@ function WelcomeScreen({
 }
 
 // ─── Step 1: Language select ──────────────────────────────────────────────────
-function LanguageSelect({ onSelect }: { onSelect: (lang: Language) => void }) {
+function LanguageSelect({ onSelect, onBack }: { onSelect: (lang: Language) => void; onBack: () => void }) {
   return (
     <div className="flex flex-col flex-1 px-6 py-4">
       <h2 className="text-3xl font-bold text-slate-900 text-center mb-8">
@@ -214,11 +222,17 @@ function LanguageSelect({ onSelect }: { onSelect: (lang: Language) => void }) {
           </button>
         ))}
       </div>
+      <div className="mt-6 max-w-4xl mx-auto w-full">
+        <button onClick={onBack}
+          className="px-8 py-4 text-xl font-semibold rounded-2xl bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-900 transition-all">
+          Zurück / Back
+        </button>
+      </div>
     </div>
   )
 }
 
-// ─── Step 3: Driver form ──────────────────────────────────────────────────────
+// ─── Step 3: Combined form (Kontaktdaten + Sicherheitsbelehrung + Unterschrift) ─
 interface FormData {
   name: string
   company: string
@@ -229,39 +243,57 @@ interface FormData {
   contactPerson: string
 }
 
-function DriverForm({
+function CombinedFormStep({
   lang,
   visitorType,
   formData,
   onChange,
-  onNext,
+  pdfUrl,
+  signatureRequired,
+  onConfirm,
   onBack,
 }: {
   lang: Language
   visitorType: VisitorType
   formData: FormData
   onChange: (f: FormData) => void
-  onNext: () => void
+  pdfUrl: string
+  signatureRequired: boolean
+  onConfirm: (signatureData: string | null) => void
   onBack: () => void
 }) {
   const t = translations[lang]
   const [error, setError] = useState('')
+  const [accepted, setAccepted] = useState(false)
+  const [hasSigned, setHasSigned] = useState(false)
+  const sigPadRef = useRef<SignaturePadHandle>(null)
 
-  function handleNext() {
+  function handleConfirm() {
     if (!formData.name.trim() || !formData.company.trim() || !formData.plate.trim()) {
       setError(t.required_fields)
       return
     }
+    if (!accepted) return
+    if (signatureRequired && !hasSigned) return
     setError('')
-    onNext()
+    const sigData = hasSigned ? sigPadRef.current?.toDataURL() ?? null : null
+    onConfirm(sigData)
   }
+
+  function handleClearSig() {
+    sigPadRef.current?.clear()
+    setHasSigned(false)
+  }
+
+  const canConfirm = accepted && (!signatureRequired || hasSigned)
 
   const inputCls = 'w-full px-5 py-4 rounded-xl border border-slate-200 text-xl outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-colors placeholder:text-slate-400'
   const labelCls = 'text-lg font-semibold text-slate-700 mb-1 block'
 
   return (
     <div className="flex flex-col flex-1 px-6 py-2 overflow-y-auto">
-      <div className="bg-white rounded-2xl shadow-sm p-6 max-w-2xl mx-auto w-full">
+      {/* Kontaktdaten */}
+      <div className="bg-white rounded-2xl shadow-sm p-6 max-w-2xl mx-auto w-full mb-4">
         <h2 className="text-3xl font-bold text-slate-900 mb-6">{t.form_title}</h2>
         <div className="flex flex-col gap-5">
           <div>
@@ -315,56 +347,9 @@ function DriverForm({
           )}
         </div>
       </div>
-      <div className="flex gap-4 mt-4 max-w-2xl mx-auto w-full pb-4">
-        <button onClick={onBack}
-          className="flex-1 py-5 text-xl font-semibold rounded-2xl bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-900 transition-all">
-          {t.btn_back}
-        </button>
-        <button onClick={handleNext}
-          className="flex-grow-[2] py-5 text-xl font-semibold rounded-2xl bg-blue-600 hover:bg-blue-500 active:scale-95 text-white transition-all">
-          {t.btn_next}
-        </button>
-      </div>
-    </div>
-  )
-}
 
-// ─── Step 3: Safety briefing ──────────────────────────────────────────────────
-function SafetyBriefingStep({
-  lang,
-  pdfUrl,
-  signatureRequired,
-  onConfirm,
-  onBack,
-}: {
-  lang: Language
-  pdfUrl: string
-  signatureRequired: boolean
-  onConfirm: (signatureData: string | null) => void
-  onBack: () => void
-}) {
-  const t = translations[lang]
-  const [accepted, setAccepted] = useState(false)
-  const [hasSigned, setHasSigned] = useState(false)
-  const sigPadRef = useRef<SignaturePadHandle>(null)
-
-  function handleConfirm() {
-    if (!accepted) return
-    if (signatureRequired && !hasSigned) return
-    const sigData = hasSigned ? sigPadRef.current?.toDataURL() ?? null : null
-    onConfirm(sigData)
-  }
-
-  function handleClear() {
-    sigPadRef.current?.clear()
-    setHasSigned(false)
-  }
-
-  const canConfirm = accepted && (!signatureRequired || hasSigned)
-
-  return (
-    <div className="flex flex-col flex-1 px-6 py-2 overflow-y-auto">
-      <div className="bg-white rounded-2xl shadow-sm p-6 max-w-3xl mx-auto w-full">
+      {/* Sicherheitsbelehrung + Unterschrift */}
+      <div className="bg-white rounded-2xl shadow-sm p-6 max-w-2xl mx-auto w-full mb-4">
         <h2 className="text-3xl font-bold text-slate-900 mb-5">{t.briefing_title}</h2>
 
         {pdfUrl ? (
@@ -377,11 +362,10 @@ function SafetyBriefingStep({
           </div>
         )}
 
-        {/* Signature pad */}
         <div className="mb-5">
           <div className="flex items-center justify-between mb-2">
             <label className="text-lg font-semibold text-slate-700">{t.signature_title}</label>
-            <button type="button" onClick={handleClear}
+            <button type="button" onClick={handleClearSig}
               className="text-sm text-slate-500 hover:text-red-500 px-3 py-1 rounded-lg hover:bg-red-50 transition-colors">
               {t.signature_clear}
             </button>
@@ -411,7 +395,7 @@ function SafetyBriefingStep({
         </label>
       </div>
 
-      <div className="flex gap-4 mt-4 max-w-3xl mx-auto w-full pb-4">
+      <div className="flex gap-4 mt-2 max-w-2xl mx-auto w-full pb-4">
         <button onClick={onBack}
           className="flex-1 py-5 text-xl font-semibold rounded-2xl bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-900 transition-all">
           {t.btn_back}
@@ -632,15 +616,12 @@ export function KioskClient({ slug }: { slug: string }) {
       )}
 
       {step === 0 && <WelcomeScreen title={welcomeTitle} subtitle={welcomeSubtitle} onStart={() => setStep(1)} />}
-      {step === 1 && <LanguageSelect onSelect={handleLanguageSelect} />}
-      {step === 2 && <VisitorTypeSelect lang={lang} onSelect={handleVisitorTypeSelect} />}
+      {step === 1 && <LanguageSelect onSelect={handleLanguageSelect} onBack={() => setStep(0)} />}
+      {step === 2 && <VisitorTypeSelect lang={lang} onSelect={handleVisitorTypeSelect} onBack={() => setStep(1)} />}
       {step === 3 && (
-        <DriverForm lang={lang} visitorType={visitorType} formData={formData}
-          onChange={setFormData} onNext={() => setStep(4)} onBack={() => setStep(2)} />
-      )}
-      {step === 4 && (
-        <SafetyBriefingStep lang={lang} pdfUrl={briefingPdfUrl}
-          signatureRequired={signatureRequired} onConfirm={handleBriefingConfirm} onBack={() => setStep(3)} />
+        <CombinedFormStep lang={lang} visitorType={visitorType} formData={formData}
+          onChange={setFormData} pdfUrl={briefingPdfUrl} signatureRequired={signatureRequired}
+          onConfirm={handleBriefingConfirm} onBack={() => setStep(2)} />
       )}
       {step === 5 && <SuccessScreen lang={lang} onReset={handleReset} />}
 

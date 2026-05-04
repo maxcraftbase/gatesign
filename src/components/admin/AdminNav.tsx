@@ -43,7 +43,7 @@ export function AdminNav({ slug }: { slug: string }) {
         </div>
         <div className="flex items-center gap-4">
           <Link href={`/${slug}`} className="text-sm text-slate-500 hover:text-slate-900 transition-colors">
-            ← Kiosk
+            ← Check-In Terminal
           </Link>
           <button onClick={handleLogout} className="text-sm text-slate-500 hover:text-slate-900 transition-colors">
             Abmelden

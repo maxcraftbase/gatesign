@@ -60,3 +60,34 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: String(err) }, { status: 500 })
   }
 }
+
+export async function DELETE(req: NextRequest) {
+  try {
+    const ctx = await getAdminContext()
+    if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+    const { visitorType } = await req.json()
+    if (!visitorType) return NextResponse.json({ error: 'Fehlende Parameter' }, { status: 400 })
+
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    const fileName = `${ctx.company.slug}/briefing_${visitorType}.pdf`
+
+    // Delete from storage
+    await fetch(`${supabaseUrl}/storage/v1/object/briefings/${fileName}`, {
+      method: 'DELETE',
+      headers: { apikey: anonKey, Authorization: `Bearer ${ctx.accessToken}` },
+    })
+
+    // Clear setting value
+    const settingKey = `briefing_pdf_${visitorType}`
+    await fetch(`${supabaseUrl}/rest/v1/app_settings?company_id=eq.${ctx.company.id}&key=eq.${settingKey}`, {
+      method: 'DELETE',
+      headers: { apikey: anonKey, Authorization: `Bearer ${ctx.accessToken}` },
+    })
+
+    return NextResponse.json({ success: true })
+  } catch (err) {
+    return NextResponse.json({ error: String(err) }, { status: 500 })
+  }
+}

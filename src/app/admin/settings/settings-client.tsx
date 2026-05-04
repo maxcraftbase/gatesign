@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { Save, ChevronDown, ChevronUp, Upload, FileText, Loader2, CheckCircle2, ExternalLink } from 'lucide-react'
+import { Save, ChevronDown, ChevronUp, Upload, FileText, Loader2, CheckCircle2, ExternalLink, Trash2 } from 'lucide-react'
 import { LANGUAGES, VISITOR_TYPES } from '@/lib/translations'
 
 interface Settings {
@@ -48,6 +48,7 @@ export function AdminSettingsClient() {
   const [uploadSuccess, setUploadSuccess] = useState<string | null>(null)
   const [uploadError, setUploadError] = useState('')
   const [pdfUrls, setPdfUrls] = useState<Record<string, string>>({})
+  const [removing, setRemoving] = useState<string | null>(null)
 
   useEffect(() => {
     fetch('/api/admin/settings')
@@ -90,6 +91,28 @@ export function AdminSettingsClient() {
   function triggerPdfUpload(visitor_type: string) {
     setPdfUploadType(visitor_type)
     pdfInputRef.current?.click()
+  }
+
+  async function handlePdfRemove(visitorType: string) {
+    setRemoving(visitorType)
+    setUploadError('')
+    try {
+      const res = await fetch('/api/admin/upload-briefing', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ visitorType }),
+      })
+      if (!res.ok) {
+        const data = await res.json()
+        setUploadError(data.error ?? 'Fehler beim Entfernen.')
+      } else {
+        setPdfUrls(prev => { const next = { ...prev }; delete next[visitorType]; return next })
+      }
+    } catch {
+      setUploadError('Netzwerkfehler beim Entfernen.')
+    } finally {
+      setRemoving(null)
+    }
   }
 
   async function handlePdfUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -251,48 +274,47 @@ export function AdminSettingsClient() {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {VISITOR_TYPES.map(vt => {
             const isUploading = uploading === vt.type
+            const isRemoving = removing === vt.type
             const isSuccess = uploadSuccess === vt.type
-            const hasBriefings = hasBriefingsForType(vt.type)
+            const hasPdf = !!pdfUrls[vt.type]
 
             return (
               <div key={vt.type} className="border border-slate-200 rounded-2xl p-5 flex flex-col items-center gap-3">
                 <span className="text-4xl">{vt.icon}</span>
                 <span className="font-semibold text-slate-900">{VISITOR_TYPE_LABELS[vt.type]}</span>
 
-                {pdfUrls[vt.type] && !isSuccess && (
-                  <a
-                    href={pdfUrls[vt.type]}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-xs bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full flex items-center gap-1 hover:bg-emerald-100 transition-colors"
-                  >
-                    <FileText className="w-3 h-3" /> PDF anzeigen <ExternalLink className="w-2.5 h-2.5" />
-                  </a>
-                )}
-                {isSuccess && (
+                {isSuccess ? (
                   <span className="text-xs bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full flex items-center gap-1">
                     <CheckCircle2 className="w-3 h-3" /> Gespeichert
                   </span>
+                ) : hasPdf ? (
+                  <a href={pdfUrls[vt.type]} target="_blank" rel="noreferrer"
+                    className="text-xs bg-emerald-50 text-emerald-600 px-2 py-0.5 rounded-full flex items-center gap-1 hover:bg-emerald-100 transition-colors">
+                    <FileText className="w-3 h-3" /> PDF anzeigen <ExternalLink className="w-2.5 h-2.5" />
+                  </a>
+                ) : (
+                  <span className="text-xs text-slate-400">Kein PDF hinterlegt</span>
                 )}
 
                 <button
                   type="button"
                   onClick={() => triggerPdfUpload(vt.type)}
-                  disabled={isUploading}
+                  disabled={isUploading || isRemoving}
                   className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-medium text-slate-700 hover:bg-slate-50 hover:border-slate-900 transition-colors disabled:opacity-50"
                 >
-                  {isUploading ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      Übersetze…
-                    </>
-                  ) : (
-                    <>
-                      <Upload className="w-4 h-4" />
-                      PDF hochladen
-                    </>
-                  )}
+                  {isUploading ? <><Loader2 className="w-4 h-4 animate-spin" /> Hochladen…</> : <><Upload className="w-4 h-4" />{hasPdf ? 'PDF ersetzen' : 'PDF hochladen'}</>}
                 </button>
+
+                {hasPdf && (
+                  <button
+                    type="button"
+                    onClick={() => handlePdfRemove(vt.type)}
+                    disabled={isRemoving || isUploading}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-red-100 text-sm font-medium text-red-500 hover:bg-red-50 hover:border-red-300 transition-colors disabled:opacity-50"
+                  >
+                    {isRemoving ? <><Loader2 className="w-4 h-4 animate-spin" /> Entfernen…</> : <><Trash2 className="w-4 h-4" /> PDF entfernen</>}
+                  </button>
+                )}
               </div>
             )
           })}

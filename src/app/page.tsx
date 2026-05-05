@@ -314,7 +314,7 @@ export default function LandingPage() {
 
           {/* Right: visual */}
           <div className="flex-1 w-full max-w-sm mx-auto lg:max-w-none">
-            <div className="bg-slate-900 rounded-2xl p-6 shadow-xl">
+            <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-lg">
               <p className="text-xs text-slate-400 font-semibold uppercase tracking-wide mb-4">
                 {lang === 'de' ? 'Sicherheitsregeln — Aktiv' : 'Safety Rules — Active'}
               </p>
@@ -327,15 +327,15 @@ export default function LandingPage() {
                   { icon: '🐢', de: 'Schrittgeschwindigkeit', en: 'Walking pace only' },
                   { icon: '🎧', de: 'Kopfhörer verboten', en: 'No headphones' },
                 ].map((rule, i) => (
-                  <div key={i} className="bg-amber-500/10 border border-amber-500/20 rounded-xl px-3 py-3 flex items-center gap-2">
+                  <div key={i} className="bg-amber-50 border border-amber-200 rounded-xl px-3 py-3 flex items-center gap-2">
                     <span className="text-xl">{rule.icon}</span>
-                    <span className="text-xs text-amber-200 font-medium leading-tight">
+                    <span className="text-xs text-amber-900 font-medium leading-tight">
                       {lang === 'de' ? rule.de : rule.en}
                     </span>
                   </div>
                 ))}
               </div>
-              <div className="mt-4 pt-4 border-t border-slate-700 flex items-center gap-2">
+              <div className="mt-4 pt-4 border-t border-slate-100 flex items-center gap-2">
                 <div className="w-2 h-2 rounded-full bg-emerald-400" />
                 <span className="text-xs text-slate-400">
                   {lang === 'de' ? '6 Regeln aktiv · automatisch übersetzt' : '6 rules active · automatically translated'}

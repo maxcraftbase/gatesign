@@ -349,14 +349,35 @@ export function AdminSettingsClient() {
 
       {/* Safety rules library */}
       <div className="bg-white rounded-2xl border border-slate-100 p-6 mb-6">
-        <h2 className="text-lg font-bold text-slate-900 mb-1">Sicherheitsregeln</h2>
-        <p className="text-sm text-slate-500 mb-5">
+        <div className="flex items-center justify-between mb-1">
+          <h2 className="text-lg font-bold text-slate-900">Sicherheitsregeln</h2>
+          <span className="text-xs text-slate-400">
+            {(() => { try { return (JSON.parse(settings.active_safety_rules) as string[]).length } catch { return 0 } })()} aktiv
+          </span>
+        </div>
+        <p className="text-sm text-slate-500 mb-4">
           Auswählen was gilt — wird automatisch in alle Sprachen übersetzt und im Kiosk angezeigt.
         </p>
-        {(['ppe', 'prohibition', 'behavior', 'vehicle', 'emergency'] as const).map(cat => {
+        <input
+          type="text"
+          placeholder="Regeln suchen…"
+          className="w-full px-4 py-2.5 rounded-xl border border-slate-200 text-sm outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-100 mb-5"
+          id="safety-rule-search"
+          onChange={e => {
+            const q = e.target.value.toLowerCase()
+            document.querySelectorAll<HTMLElement>('[data-rule-label]').forEach(el => {
+              el.style.display = el.dataset.ruleLabel?.toLowerCase().includes(q) ? '' : 'none'
+            })
+            document.querySelectorAll<HTMLElement>('[data-rule-category]').forEach(el => {
+              const visible = [...el.querySelectorAll<HTMLElement>('[data-rule-label]')].some(r => r.style.display !== 'none')
+              el.style.display = visible ? '' : 'none'
+            })
+          }}
+        />
+        {(['ppe', 'prohibition', 'behavior', 'vehicle', 'emergency', 'legal'] as const).map(cat => {
           const rulesInCat = SAFETY_RULES.filter(r => r.category === cat)
           return (
-            <div key={cat} className="mb-5">
+            <div key={cat} className="mb-5" data-rule-category={cat}>
               <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">{SAFETY_RULE_CATEGORIES[cat].de}</p>
               <div className="flex flex-col gap-2">
                 {rulesInCat.map(rule => {
@@ -373,7 +394,7 @@ export function AdminSettingsClient() {
                     setSettings(s => ({ ...s, active_safety_rules: JSON.stringify(next) }))
                   }
                   return (
-                    <label key={rule.id} onClick={toggle}
+                    <label key={rule.id} onClick={toggle} data-rule-label={rule.label.de}
                       className={`flex items-center gap-4 px-4 py-3 rounded-xl border cursor-pointer transition-colors select-none ${
                         active ? 'bg-blue-50 border-blue-200' : 'border-slate-200 hover:bg-slate-50'
                       }`}>

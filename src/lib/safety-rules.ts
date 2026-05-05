@@ -3,7 +3,7 @@ import type { Language } from './translations'
 export interface SafetyRule {
   id: string
   icon: string
-  category: 'ppe' | 'prohibition' | 'behavior' | 'emergency' | 'vehicle'
+  category: 'ppe' | 'prohibition' | 'behavior' | 'emergency' | 'vehicle' | 'legal'
   label: Record<Language, string>
 }
 
@@ -13,6 +13,7 @@ export const SAFETY_RULE_CATEGORIES: Record<SafetyRule['category'], Record<Langu
   behavior:   { de: 'Verhaltensregeln', en: 'Conduct Rules', pl: 'Zasady zachowania', ro: 'Reguli de conduită', cs: 'Pravidla chování', hu: 'Magatartási szabályok', bg: 'Правила за поведение', uk: 'Правила поведінки', ru: 'Правила поведения', tr: 'Davranış kuralları' },
   emergency:  { de: 'Notfall & Sicherheit', en: 'Emergency & Safety', pl: 'Nagłe wypadki i bezpieczeństwo', ro: 'Urgențe și siguranță', cs: 'Nouzové situace a bezpečnost', hu: 'Vészhelyzet és biztonság', bg: 'Аварийни ситуации и безопасност', uk: 'Надзвичайні ситуації та безпека', ru: 'Аварийные ситуации и безопасность', tr: 'Acil durum ve güvenlik' },
   vehicle:    { de: 'Fahrzeug', en: 'Vehicle', pl: 'Pojazd', ro: 'Vehicul', cs: 'Vozidlo', hu: 'Jármű', bg: 'Превозно средство', uk: 'Транспортний засіб', ru: 'Транспортное средство', tr: 'Araç' },
+  legal:      { de: 'Rechtliche Hinweise (DE)', en: 'Legal Notes (DE)', pl: 'Uwagi prawne (DE)', ro: 'Note juridice (DE)', cs: 'Právní poznámky (DE)', hu: 'Jogi megjegyzések (DE)', bg: 'Правни бележки (DE)', uk: 'Правові примітки (DE)', ru: 'Правовые примечания (DE)', tr: 'Hukuki notlar (DE)' },
 }
 
 export const SAFETY_RULES: SafetyRule[] = [
@@ -533,6 +534,76 @@ export const SAFETY_RULES: SafetyRule[] = [
       uk: 'Негайно повідомляйте про небезпеки та нещасні випадки',
       ru: 'Немедленно сообщайте об опасностях и несчастных случаях',
       tr: 'Tehlikeleri ve kazaları derhal bildirin',
+    },
+  },
+
+  // ── Rechtliche Hinweise (DE) ─────────────────────────────────────────────────
+  {
+    id: 'loading_dock',
+    icon: '🏗️',
+    category: 'legal',
+    label: {
+      de: 'Laderampe nur mit Einweisung durch Personal benutzen (DGUV Vorschrift 70)',
+      en: 'Use loading dock only with staff instruction (DGUV Regulation 70)',
+      pl: 'Rampa załadowcza tylko z instruktażem personelu (DGUV Przepis 70)',
+      ro: 'Utilizați rampa de încărcare numai cu instrucțiunile personalului (DGUV Reg. 70)',
+      cs: 'Nakládací rampu používejte pouze s instrukcí personálu (DGUV Předpis 70)',
+      hu: 'A rakodórámpát csak a személyzet útmutatásával használja (DGUV 70. előírás)',
+      bg: 'Товарна рампа само с инструктаж на персонала (DGUV Наредба 70)',
+      uk: 'Вантажна рампа лише з інструктажем персоналу (DGUV Приписи 70)',
+      ru: 'Погрузочная рампа только с инструктажем персонала (DGUV Предписание 70)',
+      tr: 'Yükleme rampasını yalnızca personel talimatıyla kullanın (DGUV Yönetmelik 70)',
+    },
+  },
+  {
+    id: 'adr_hazmat',
+    icon: '☢️',
+    category: 'legal',
+    label: {
+      de: 'Gefahrgut-Kennzeichnung (ADR) beachten und Begleitpapiere bereithalten',
+      en: 'Observe hazardous goods markings (ADR) and keep documents ready',
+      pl: 'Przestrzegać oznakowania towarów niebezpiecznych (ADR) i trzymać dokumenty',
+      ro: 'Respectați marcajele mărfurilor periculoase (ADR) și păstrați documentele',
+      cs: 'Dodržujte označení nebezpečného zboží (ADR) a mějte doklady připravené',
+      hu: 'Tartsa be a veszélyes áruk jelöléseit (ADR) és tartsa kéznél a dokumentumokat',
+      bg: 'Спазвайте маркировката на опасните стоки (ADR) и дръжте документите готови',
+      uk: 'Дотримуйтеся маркування небезпечних вантажів (ADR) та тримайте документи',
+      ru: 'Соблюдайте маркировку опасных грузов (ADR) и держите документы наготове',
+      tr: 'Tehlikeli mal işaretlerine (ADR) uyun ve belgeleri hazır bulundurun',
+    },
+  },
+  {
+    id: 'no_pressure_vessels',
+    icon: '⚗️',
+    category: 'legal',
+    label: {
+      de: 'Druckbehälter und Gasflaschen nur mit Genehmigung auf das Gelände (BetrSichV)',
+      en: 'Pressure vessels and gas cylinders on premises only with authorization (BetrSichV)',
+      pl: 'Zbiorniki ciśnieniowe i butle gazowe tylko za zezwoleniem (BetrSichV)',
+      ro: 'Recipiente sub presiune și butelii de gaz pe teritoriu numai cu autorizație (BetrSichV)',
+      cs: 'Tlakové nádoby a plynové láhve v areálu pouze s povolením (BetrSichV)',
+      hu: 'Nyomástartó edények és gázpalackok csak engedéllyel a területen (BetrSichV)',
+      bg: 'Съдове под налягане и газови бутилки само с разрешение (BetrSichV)',
+      uk: 'Посудини під тиском та газові балони лише з дозволом (BetrSichV)',
+      ru: 'Сосуды под давлением и газовые баллоны только с разрешением (BetrSichV)',
+      tr: 'Basınçlı kaplar ve gaz tüpleri tesise yalnızca izinle (BetrSichV)',
+    },
+  },
+  {
+    id: 'legal_instruction',
+    icon: '⚖️',
+    category: 'legal',
+    label: {
+      de: 'Diese Unterweisung gilt als Sicherheitsunterweisung gemäß §12 ArbSchG',
+      en: 'This briefing constitutes a safety instruction pursuant to §12 ArbSchG',
+      pl: 'Ten instruktaż jest instruktażem bezpieczeństwa zgodnie z §12 ArbSchG',
+      ro: 'Acest instructaj constituie instructaj de securitate conform §12 ArbSchG',
+      cs: 'Toto školení platí jako bezpečnostní školení dle §12 ArbSchG',
+      hu: 'Ez az oktatás biztonsági oktatásnak minősül a §12 ArbSchG szerint',
+      bg: 'Този инструктаж е инструктаж по безопасност съгласно §12 ArbSchG',
+      uk: 'Цей інструктаж є інструктажем з безпеки відповідно до §12 ArbSchG',
+      ru: 'Данный инструктаж является инструктажем по безопасности согласно §12 ArbSchG',
+      tr: 'Bu brifing, §12 ArbSchG uyarınca güvenlik eğitimi olarak geçerlidir',
     },
   },
 ]

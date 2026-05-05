@@ -94,7 +94,7 @@ export default function SuperadminPage() {
       })
       if (res.ok) {
         const data = await res.json() as { adminUrl: string }
-        if (newTab) newTab.location.href = data.adminUrl
+        if (newTab) newTab.location.href = window.location.origin + data.adminUrl
       } else {
         newTab?.close()
       }

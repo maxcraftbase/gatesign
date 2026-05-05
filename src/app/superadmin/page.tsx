@@ -181,37 +181,44 @@ export default function SuperadminPage() {
           </div>
 
           {dataLoading ? (
-            <div className="py-16 text-center text-slate-400 text-sm">Daten werden geladen…</div>
+            <div className="py-16 text-center">
+              <div className="w-6 h-6 border-2 border-slate-900 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+              <p className="text-slate-400 text-sm">Daten werden geladen…</p>
+            </div>
           ) : companies.length === 0 ? (
-            <div className="py-16 text-center text-slate-400 text-sm">Noch keine Unternehmen registriert.</div>
+            <div className="py-16 text-center">
+              <p className="text-2xl mb-2">🏢</p>
+              <p className="text-slate-700 font-medium mb-1">Noch keine Unternehmen registriert</p>
+              <p className="text-slate-400 text-sm">Neue Firmen erscheinen hier nach der Registrierung.</p>
+            </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-slate-100">
+                  <tr className="border-b border-slate-100 bg-slate-50/50">
                     <th className="text-left px-6 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wide">Unternehmen</th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wide">Slug</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wide">Registriert</th>
                     <th className="text-right px-4 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wide">Check-ins</th>
                     <th className="text-left px-4 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wide">Letzter</th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wide">Abo</th>
-                    <th className="px-4 py-3" />
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wide">Abo / Testende</th>
+                    <th className="text-right px-4 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wide">Aktionen</th>
                   </tr>
                 </thead>
                 <tbody>
                   {companies.map((c, i) => (
-                    <tr key={c.id} className={`border-b border-slate-50 hover:bg-slate-50 transition-colors ${i === companies.length - 1 ? 'border-b-0' : ''}`}>
+                    <tr key={c.id} className={`border-b border-slate-50 hover:bg-slate-50/60 transition-colors ${i === companies.length - 1 ? 'border-b-0' : ''}`}>
                       <td className="px-6 py-4">
-                        <p className="font-medium text-slate-900">{c.name}</p>
+                        <p className="font-semibold text-slate-900">{c.name}</p>
                         <p className="text-xs text-slate-400 mt-0.5">{c.email}</p>
                       </td>
-                      <td className="px-4 py-4">
-                        <a href={`/${c.slug}/admin`} target="_blank" rel="noopener noreferrer"
-                          className="text-slate-500 hover:text-slate-900 font-mono text-xs hover:underline">
-                          /{c.slug}
-                        </a>
+                      <td className="px-4 py-4 text-xs text-slate-400">
+                        {formatDate(c.created_at)}
                       </td>
                       <td className="px-4 py-4 text-right">
                         <span className="font-semibold text-slate-900">{c.total_check_ins}</span>
+                        {c.total_check_ins === 0 && (
+                          <span className="block text-xs text-slate-300 mt-0.5">noch keiner</span>
+                        )}
                       </td>
                       <td className="px-4 py-4 text-slate-500 text-xs">
                         {formatDate(c.last_check_in)}
@@ -222,9 +229,9 @@ export default function SuperadminPage() {
                             ? 'bg-emerald-50 text-emerald-700'
                             : c.subscription_status === 'trial'
                             ? 'bg-amber-50 text-amber-700'
-                            : 'bg-slate-100 text-slate-400'
+                            : 'bg-slate-100 text-slate-500'
                         }`}>
-                          <span className={`w-1.5 h-1.5 rounded-full ${
+                          <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
                             c.subscription_status === 'active' ? 'bg-emerald-500'
                             : c.subscription_status === 'trial' ? 'bg-amber-400'
                             : 'bg-slate-300'
@@ -233,15 +240,34 @@ export default function SuperadminPage() {
                             : c.subscription_status === 'trial' ? 'Testphase'
                             : 'Inaktiv'}
                         </span>
+                        {c.subscription_status === 'trial' && c.trial_ends_at && (
+                          <p className="text-xs text-slate-400 mt-1">
+                            bis {new Date(c.trial_ends_at).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' })}
+                          </p>
+                        )}
                       </td>
                       <td className="px-4 py-4 text-right">
-                        <button
-                          onClick={() => toggleStatus(c)}
-                          disabled={toggling === c.id}
-                          className="text-xs text-slate-400 hover:text-slate-700 border border-slate-200 hover:border-slate-400 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-40"
-                        >
-                          {toggling === c.id ? '…' : c.subscription_status === 'active' ? 'Deaktivieren' : 'Aktivieren'}
-                        </button>
+                        <div className="flex items-center justify-end gap-2">
+                          <a
+                            href={`/${c.slug}/admin`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs text-slate-400 hover:text-slate-700 border border-slate-200 hover:border-slate-300 px-3 py-1.5 rounded-lg transition-colors"
+                          >
+                            Admin ↗
+                          </a>
+                          <button
+                            onClick={() => toggleStatus(c)}
+                            disabled={toggling === c.id}
+                            className={`text-xs px-3 py-1.5 rounded-lg transition-colors disabled:opacity-40 font-medium ${
+                              c.subscription_status === 'active'
+                                ? 'bg-red-50 text-red-600 hover:bg-red-100'
+                                : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                            }`}
+                          >
+                            {toggling === c.id ? '…' : c.subscription_status === 'active' ? 'Deaktivieren' : 'Aktivieren'}
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}

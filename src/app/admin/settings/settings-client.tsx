@@ -192,7 +192,7 @@ export function AdminSettingsClient() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+        <div className="w-8 h-8 border-4 border-slate-900 border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }
@@ -201,7 +201,7 @@ export function AdminSettingsClient() {
   const labelCls = 'block text-sm font-semibold text-slate-700 mb-1.5'
 
   return (
-    <div className="max-w-3xl">
+    <div className="max-w-3xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Einstellungen</h1>

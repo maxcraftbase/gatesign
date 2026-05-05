@@ -8,12 +8,12 @@ function hashPassword(pw: string) {
 export async function POST(req: NextRequest) {
   try {
     const { password } = await req.json()
-    const expected = process.env.SUPERADMIN_PASSWORD
+    const expected = process.env.SUPERADMIN_PASSWORD?.trim()
     if (!expected) return NextResponse.json({ error: 'SUPERADMIN_PASSWORD nicht gesetzt in Railway.' }, { status: 500 })
-    if (password !== expected) {
+    if (password.trim() !== expected) {
       return NextResponse.json({
         error: 'Falsches Passwort.',
-        debug: `Erwartet: ${expected.length} Zeichen, Eingabe: ${password.length} Zeichen`,
+        debug: `Erwartet: ${expected.length} Zeichen, Eingabe: ${password.trim().length} Zeichen`,
       }, { status: 401 })
     }
     const token = hashPassword(expected)

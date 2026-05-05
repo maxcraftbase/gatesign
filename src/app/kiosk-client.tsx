@@ -526,6 +526,7 @@ export function KioskClient({ slug }: { slug: string }) {
   const [hoursSun, setHoursSun] = useState('')
   const [sunClosed, setSunClosed] = useState(true)
   const [customHints, setCustomHints] = useState<string[]>([])
+  const [customHintsTranslations, setCustomHintsTranslations] = useState<Record<string, string[]>>({})
   const [activeSafetyRules, setActiveSafetyRules] = useState<string[]>([])
   const [ruleVisitorTypes, setRuleVisitorTypes] = useState<Record<string, string[]>>({})
   const [hintsPdfUrl, setHintsPdfUrl] = useState('')
@@ -576,6 +577,9 @@ export function KioskClient({ slug }: { slug: string }) {
         if (data.sun_closed !== undefined) setSunClosed(data.sun_closed !== 'false')
         if (data.custom_hints) {
           try { setCustomHints(JSON.parse(data.custom_hints)) } catch { /* ignore */ }
+        }
+        if (data.custom_hints_translations) {
+          try { setCustomHintsTranslations(JSON.parse(data.custom_hints_translations)) } catch { /* ignore */ }
         }
         if (data.active_safety_rules) {
           try { setActiveSafetyRules(JSON.parse(data.active_safety_rules)) } catch { /* ignore */ }
@@ -705,7 +709,7 @@ export function KioskClient({ slug }: { slug: string }) {
         <CombinedFormStep lang={lang} visitorType={visitorType} formData={formData}
           onChange={setFormData} pdfUrl={briefingPdfUrl} signatureRequired={signatureRequired}
           activeRules={activeSafetyRules} ruleVisitorTypes={ruleVisitorTypes}
-          customHints={customHints} hintsPdfUrl={hintsPdfUrl}
+          customHints={customHintsTranslations[lang] ?? customHints} hintsPdfUrl={hintsPdfUrl}
           onConfirm={handleBriefingConfirm} onBack={() => setStep(2)} />
       )}
       {step === 5 && <SuccessScreen lang={lang} onReset={handleReset} />}

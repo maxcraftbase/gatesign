@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { Save, BookOpen, Plus, X, FileText, Trash2 } from 'lucide-react'
+import { Save, BookOpen, Plus, X, FileText, Trash2, Languages } from 'lucide-react'
 import { SAFETY_RULES, SAFETY_RULE_CATEGORIES } from '@/lib/safety-rules'
 import { IsoSign } from '@/components/IsoSign'
 
@@ -84,6 +84,9 @@ export function AdminSettingsClient() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [uploadingPdf, setUploadingPdf] = useState(false)
+  const [translating, setTranslating] = useState(false)
+  const [translateSuccess, setTranslateSuccess] = useState(false)
+  const [translateError, setTranslateError] = useState('')
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -155,6 +158,21 @@ export function AdminSettingsClient() {
   async function handlePdfDelete() {
     await fetch('/api/admin/upload-hints-pdf', { method: 'DELETE' })
     setSettings(s => ({ ...s, hints_pdf_url: '' }))
+  }
+
+  async function handleTranslate() {
+    setTranslating(true)
+    setTranslateError('')
+    setTranslateSuccess(false)
+    const res = await fetch('/api/admin/translate-hints', { method: 'POST' })
+    if (res.ok) {
+      setTranslateSuccess(true)
+      setTimeout(() => setTranslateSuccess(false), 4000)
+    } else {
+      const data = await res.json() as { error?: string }
+      setTranslateError(data.error ?? 'Fehler beim Übersetzen.')
+    }
+    setTranslating(false)
   }
 
   async function handleSave() {
@@ -421,6 +439,19 @@ export function AdminSettingsClient() {
             <p className="text-sm text-slate-400 italic">Noch keine Texthinweise hinzugefügt.</p>
           )}
         </div>
+
+        {getCustomHints().length > 0 && (
+          <div className="flex items-center gap-3 mb-4">
+            <button type="button" onClick={handleTranslate} disabled={translating}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50 transition-colors">
+              <Languages className="w-4 h-4" />
+              {translating ? 'Wird übersetzt…' : 'In alle Sprachen übersetzen'}
+            </button>
+            {translateSuccess && <span className="text-sm text-emerald-600 font-medium">✓ Übersetzt</span>}
+            {translateError && <span className="text-sm text-red-600">{translateError}</span>}
+          </div>
+        )}
+
         <div className="flex gap-2">
           <input
             type="text"

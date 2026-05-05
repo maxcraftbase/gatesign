@@ -416,9 +416,8 @@ export function AdminSettingsClient() {
                         {active && <span className="text-white text-xs font-bold">✓</span>}
                       </div>
                       <IsoSign
-                        code={rule.isoCode ?? ''}
-                        fallback={rule.icon}
-                        fallbackClass={`${SIGN_STYLES[rule.signType].bg} ${SIGN_STYLES[rule.signType].shape}`}
+                        code={rule.isoCode}
+                        signType={rule.signType}
                         size={36}
                       />
                       <span className="text-sm font-medium text-slate-800">{rule.label.de}</span>

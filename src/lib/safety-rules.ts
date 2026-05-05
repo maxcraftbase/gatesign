@@ -173,6 +173,7 @@ export const SAFETY_RULES: SafetyRule[] = [
   {
     id: 'no_alcohol',
     icon: '🍺',
+    isoCode: 'P005',
     signType: 'prohibition',
     category: 'prohibition',
     label: {
@@ -210,6 +211,7 @@ export const SAFETY_RULES: SafetyRule[] = [
   {
     id: 'no_entry',
     icon: '🔒',
+    isoCode: 'P004',
     signType: 'prohibition',
     category: 'prohibition',
     label: {
@@ -285,6 +287,7 @@ export const SAFETY_RULES: SafetyRule[] = [
   {
     id: 'stay_vehicle',
     icon: '🚛',
+    isoCode: 'M001',
     signType: 'mandatory',
     category: 'behavior',
     label: {
@@ -321,7 +324,7 @@ export const SAFETY_RULES: SafetyRule[] = [
   {
     id: 'designated_paths',
     icon: '🛤️',
-    isoCode: 'M024',
+    isoCode: 'M001',
     signType: 'mandatory',
     category: 'behavior',
     label: {
@@ -340,6 +343,7 @@ export const SAFETY_RULES: SafetyRule[] = [
   {
     id: 'keep_clear',
     icon: '↔️',
+    isoCode: 'M001',
     signType: 'mandatory',
     category: 'behavior',
     label: {
@@ -358,7 +362,7 @@ export const SAFETY_RULES: SafetyRule[] = [
   {
     id: 'doors_closed',
     icon: '🚪',
-    isoCode: 'M029',
+    isoCode: 'M001',
     signType: 'mandatory',
     category: 'behavior',
     label: {
@@ -414,7 +418,7 @@ export const SAFETY_RULES: SafetyRule[] = [
   {
     id: 'waste',
     icon: '🗑️',
-    isoCode: 'M002',
+    isoCode: 'M001',
     signType: 'mandatory',
     category: 'behavior',
     label: {
@@ -435,7 +439,7 @@ export const SAFETY_RULES: SafetyRule[] = [
   {
     id: 'engine_off',
     icon: '🔑',
-    isoCode: 'M076',
+    isoCode: 'M021',
     signType: 'mandatory',
     category: 'vehicle',
     label: {
@@ -454,6 +458,7 @@ export const SAFETY_RULES: SafetyRule[] = [
   {
     id: 'handbrake',
     icon: '✋',
+    isoCode: 'M001',
     signType: 'mandatory',
     category: 'vehicle',
     label: {
@@ -472,6 +477,7 @@ export const SAFETY_RULES: SafetyRule[] = [
   {
     id: 'chocks',
     icon: '⬛',
+    isoCode: 'M001',
     signType: 'mandatory',
     category: 'vehicle',
     label: {
@@ -509,7 +515,7 @@ export const SAFETY_RULES: SafetyRule[] = [
   {
     id: 'load_securing',
     icon: '📦',
-    isoCode: 'M049',
+    isoCode: 'M001',
     signType: 'mandatory',
     category: 'vehicle',
     label: {
@@ -587,7 +593,7 @@ export const SAFETY_RULES: SafetyRule[] = [
   {
     id: 'report_hazards',
     icon: '📋',
-    isoCode: 'M040',
+    isoCode: 'E004',
     signType: 'emergency',
     category: 'emergency',
     label: {
@@ -608,8 +614,8 @@ export const SAFETY_RULES: SafetyRule[] = [
   {
     id: 'loading_dock',
     icon: '🏗️',
-    isoCode: 'M028',
-    signType: 'mandatory',
+    isoCode: 'W015',
+    signType: 'warning',
     category: 'legal',
     label: {
       de: 'Laderampe nur mit Einweisung durch Personal benutzen (DGUV Vorschrift 70)',
@@ -627,7 +633,7 @@ export const SAFETY_RULES: SafetyRule[] = [
   {
     id: 'adr_hazmat',
     icon: '☢️',
-    isoCode: 'W023',
+    isoCode: 'W016',
     signType: 'warning',
     category: 'legal',
     label: {
@@ -646,7 +652,7 @@ export const SAFETY_RULES: SafetyRule[] = [
   {
     id: 'no_pressure_vessels',
     icon: '⚗️',
-    isoCode: 'P020',
+    isoCode: 'P012',
     signType: 'prohibition',
     category: 'legal',
     label: {
@@ -665,7 +671,6 @@ export const SAFETY_RULES: SafetyRule[] = [
   {
     id: 'legal_instruction',
     icon: '⚖️',
-    isoCode: 'E011',
     signType: 'info',
     category: 'legal',
     label: {

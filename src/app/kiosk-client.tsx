@@ -403,9 +403,8 @@ function CombinedFormStep({
               return (
                 <div key={rule.id} className="flex items-center gap-4 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3">
                   <IsoSign
-                    code={rule.isoCode ?? ''}
-                    fallback={rule.icon}
-                    fallbackClass={`${s.bg} ${s.shape}`}
+                    code={rule.isoCode}
+                    signType={rule.signType}
                     size={44}
                   />
                   <span className="text-base font-medium text-slate-800">{rule.label[lang]}</span>

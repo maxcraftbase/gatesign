@@ -11,6 +11,7 @@ export function AdminNav({ slug }: { slug: string }) {
   const navItems = [
     { href: base, label: 'Einträge' },
     { href: `${base}/settings`, label: 'Einstellungen' },
+    { href: `${base}/agents`, label: 'Agenten' },
   ]
 
   async function handleLogout() {

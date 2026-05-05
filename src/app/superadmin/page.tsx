@@ -161,27 +161,27 @@ export default function SuperadminPage() {
 
   if (!authed) {
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
+      <div className="min-h-screen bg-zinc-950 flex items-center justify-center p-6">
         <div className="w-full max-w-xs">
           <div className="text-center mb-8">
-            <h1 className="text-2xl font-bold text-slate-900">GateSign</h1>
-            <p className="text-slate-400 text-sm mt-1">Superadmin</p>
+            <h1 className="text-2xl font-bold text-white">GateSign</h1>
+            <p className="text-zinc-500 text-sm mt-1">Superadmin</p>
           </div>
-          <form onSubmit={handleLogin} className="bg-white rounded-2xl border border-slate-100 shadow-sm p-8 flex flex-col gap-4">
+          <form onSubmit={handleLogin} className="bg-zinc-900 rounded-2xl border border-zinc-800 p-8 flex flex-col gap-4">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">Passwort</label>
+              <label className="block text-sm font-medium text-zinc-300 mb-1.5">Passwort</label>
               <input
                 type="password"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 required
                 autoFocus
-                className="w-full px-4 py-3 rounded-xl border border-slate-200 text-base outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-100"
+                className="w-full px-4 py-3 rounded-xl border border-zinc-700 bg-zinc-800 text-white text-base outline-none focus:border-zinc-400 focus:ring-2 focus:ring-zinc-700 placeholder:text-zinc-600"
               />
             </div>
-            {loginError && <p className="text-sm text-red-500 bg-red-50 rounded-lg px-3 py-2">{loginError}</p>}
+            {loginError && <p className="text-sm text-red-400 bg-red-950 border border-red-900 rounded-lg px-3 py-2">{loginError}</p>}
             <button type="submit" disabled={loginLoading}
-              className="w-full py-3 bg-slate-900 text-white font-semibold rounded-xl hover:bg-slate-700 transition-colors disabled:opacity-50">
+              className="w-full py-3 bg-white text-zinc-900 font-semibold rounded-xl hover:bg-zinc-100 transition-colors disabled:opacity-50">
               {loginLoading ? 'Prüfen…' : 'Anmelden'}
             </button>
           </form>
@@ -191,16 +191,16 @@ export default function SuperadminPage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-zinc-950">
       {/* Header */}
-      <header className="bg-white border-b border-slate-100 sticky top-0 z-10">
+      <header className="bg-zinc-900 border-b border-zinc-800 sticky top-0 z-10">
         <div className="max-w-6xl mx-auto px-6 h-14 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <span className="font-bold text-slate-900">GateSign</span>
-            <span className="text-xs bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full font-medium">Superadmin</span>
+            <span className="font-bold text-white">GateSign</span>
+            <span className="text-xs bg-zinc-800 text-zinc-400 px-2 py-0.5 rounded-full font-medium">Superadmin</span>
           </div>
           <button onClick={handleLogout}
-            className="text-sm text-slate-400 hover:text-slate-700 transition-colors">
+            className="text-sm text-zinc-500 hover:text-zinc-200 transition-colors">
             Abmelden
           </button>
         </div>
@@ -209,14 +209,14 @@ export default function SuperadminPage() {
       <main className="max-w-6xl mx-auto px-6 py-8">
 
         {/* Tab bar */}
-        <div className="flex gap-1 mb-6 bg-slate-100 p-1 rounded-xl w-fit">
+        <div className="flex gap-1 mb-6 bg-zinc-900 p-1 rounded-xl w-fit border border-zinc-800">
           <button onClick={() => setActiveTab('companies')}
-            className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${activeTab === 'companies' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
+            className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${activeTab === 'companies' ? 'bg-zinc-700 text-white shadow-sm' : 'text-zinc-500 hover:text-zinc-300'}`}>
             Unternehmen
           </button>
           <button onClick={() => setActiveTab('agents')}
-            className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${activeTab === 'agents' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}>
-            Agenten {selectedCompany && <span className="ml-1 text-violet-600">· {selectedCompany.name}</span>}
+            className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${activeTab === 'agents' ? 'bg-zinc-700 text-white shadow-sm' : 'text-zinc-500 hover:text-zinc-300'}`}>
+            Agenten {selectedCompany && <span className="ml-1 text-violet-400">· {selectedCompany.name}</span>}
           </button>
         </div>
 
@@ -237,100 +237,100 @@ export default function SuperadminPage() {
         {activeTab === 'companies' && (
         <>{/* Stats */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
-          <div className="bg-white rounded-2xl border border-slate-100 p-5">
-            <p className="text-xs text-slate-400 font-medium uppercase tracking-wide mb-1">Unternehmen</p>
-            <p className="text-3xl font-bold text-slate-900">{companies.length}</p>
+          <div className="bg-zinc-900 rounded-2xl border border-zinc-800 p-5">
+            <p className="text-xs text-zinc-500 font-medium uppercase tracking-wide mb-1">Unternehmen</p>
+            <p className="text-3xl font-bold text-white">{companies.length}</p>
           </div>
-          <div className="bg-white rounded-2xl border border-slate-100 p-5">
-            <p className="text-xs text-slate-400 font-medium uppercase tracking-wide mb-1">Check-ins gesamt</p>
-            <p className="text-3xl font-bold text-slate-900">{totalCheckIns}</p>
+          <div className="bg-zinc-900 rounded-2xl border border-zinc-800 p-5">
+            <p className="text-xs text-zinc-500 font-medium uppercase tracking-wide mb-1">Check-ins gesamt</p>
+            <p className="text-3xl font-bold text-white">{totalCheckIns}</p>
           </div>
-          <div className="bg-white rounded-2xl border border-slate-100 p-5">
-            <p className="text-xs text-slate-400 font-medium uppercase tracking-wide mb-1">Aktive Abos</p>
-            <p className="text-3xl font-bold text-slate-900">
+          <div className="bg-zinc-900 rounded-2xl border border-zinc-800 p-5">
+            <p className="text-xs text-zinc-500 font-medium uppercase tracking-wide mb-1">Aktive Abos</p>
+            <p className="text-3xl font-bold text-white">
               {companies.filter(c => c.subscription_status === 'active').length}
             </p>
           </div>
-          <div className="bg-white rounded-2xl border border-slate-100 p-5">
-            <p className="text-xs text-slate-400 font-medium uppercase tracking-wide mb-1">In Testphase</p>
-            <p className="text-3xl font-bold text-amber-500">
+          <div className="bg-zinc-900 rounded-2xl border border-zinc-800 p-5">
+            <p className="text-xs text-zinc-500 font-medium uppercase tracking-wide mb-1">In Testphase</p>
+            <p className="text-3xl font-bold text-amber-400">
               {companies.filter(c => c.subscription_status === 'trial').length}
             </p>
           </div>
         </div>
 
         {/* Table */}
-        <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
-          <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-            <h2 className="font-semibold text-slate-900">Alle Unternehmen</h2>
+        <div className="bg-zinc-900 rounded-2xl border border-zinc-800 overflow-hidden">
+          <div className="px-6 py-4 border-b border-zinc-800 flex items-center justify-between">
+            <h2 className="font-semibold text-white">Alle Unternehmen</h2>
             <button onClick={loadData} disabled={dataLoading}
-              className="text-xs text-slate-400 hover:text-slate-700 transition-colors disabled:opacity-50">
+              className="text-xs text-zinc-500 hover:text-zinc-200 transition-colors disabled:opacity-50">
               {dataLoading ? 'Lädt…' : '↻ Aktualisieren'}
             </button>
           </div>
 
           {dataLoading ? (
             <div className="py-16 text-center">
-              <div className="w-6 h-6 border-2 border-slate-900 border-t-transparent rounded-full animate-spin mx-auto mb-3" />
-              <p className="text-slate-400 text-sm">Daten werden geladen…</p>
+              <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+              <p className="text-zinc-500 text-sm">Daten werden geladen…</p>
             </div>
           ) : companies.length === 0 ? (
             <div className="py-16 text-center">
               <p className="text-2xl mb-2">🏢</p>
-              <p className="text-slate-700 font-medium mb-1">Noch keine Unternehmen registriert</p>
-              <p className="text-slate-400 text-sm">Neue Firmen erscheinen hier nach der Registrierung.</p>
+              <p className="text-zinc-300 font-medium mb-1">Noch keine Unternehmen registriert</p>
+              <p className="text-zinc-500 text-sm">Neue Firmen erscheinen hier nach der Registrierung.</p>
             </div>
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-slate-100 bg-slate-50/50">
-                    <th className="text-left px-6 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wide">Unternehmen</th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wide">Registriert</th>
-                    <th className="text-right px-4 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wide">Check-ins</th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wide">Letzter</th>
-                    <th className="text-left px-4 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wide">Abo / Testende</th>
-                    <th className="text-right px-4 py-3 text-xs font-semibold text-slate-400 uppercase tracking-wide">Aktionen</th>
+                  <tr className="border-b border-zinc-800 bg-zinc-800/50">
+                    <th className="text-left px-6 py-3 text-xs font-semibold text-zinc-500 uppercase tracking-wide">Unternehmen</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-zinc-500 uppercase tracking-wide">Registriert</th>
+                    <th className="text-right px-4 py-3 text-xs font-semibold text-zinc-500 uppercase tracking-wide">Check-ins</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-zinc-500 uppercase tracking-wide">Letzter</th>
+                    <th className="text-left px-4 py-3 text-xs font-semibold text-zinc-500 uppercase tracking-wide">Abo / Testende</th>
+                    <th className="text-right px-4 py-3 text-xs font-semibold text-zinc-500 uppercase tracking-wide">Aktionen</th>
                   </tr>
                 </thead>
                 <tbody>
                   {companies.map((c, i) => (
-                    <tr key={c.id} className={`border-b border-slate-50 hover:bg-slate-50/60 transition-colors ${i === companies.length - 1 ? 'border-b-0' : ''}`}>
+                    <tr key={c.id} className={`border-b border-zinc-800/60 hover:bg-zinc-800/40 transition-colors ${i === companies.length - 1 ? 'border-b-0' : ''}`}>
                       <td className="px-6 py-4">
-                        <p className="font-semibold text-slate-900">{c.name}</p>
-                        <p className="text-xs text-slate-400 mt-0.5">{c.email}</p>
+                        <p className="font-semibold text-white">{c.name}</p>
+                        <p className="text-xs text-zinc-500 mt-0.5">{c.email}</p>
                       </td>
-                      <td className="px-4 py-4 text-xs text-slate-400">
+                      <td className="px-4 py-4 text-xs text-zinc-500">
                         {formatDate(c.created_at)}
                       </td>
                       <td className="px-4 py-4 text-right">
-                        <span className="font-semibold text-slate-900">{c.total_check_ins}</span>
+                        <span className="font-semibold text-white">{c.total_check_ins}</span>
                         {c.total_check_ins === 0 && (
-                          <span className="block text-xs text-slate-300 mt-0.5">noch keiner</span>
+                          <span className="block text-xs text-zinc-600 mt-0.5">noch keiner</span>
                         )}
                       </td>
-                      <td className="px-4 py-4 text-slate-500 text-xs">
+                      <td className="px-4 py-4 text-zinc-500 text-xs">
                         {formatDate(c.last_check_in)}
                       </td>
                       <td className="px-4 py-4">
                         <span className={`inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full ${
                           c.subscription_status === 'active'
-                            ? 'bg-emerald-50 text-emerald-700'
+                            ? 'bg-emerald-950 text-emerald-400'
                             : c.subscription_status === 'trial'
-                            ? 'bg-amber-50 text-amber-700'
-                            : 'bg-slate-100 text-slate-500'
+                            ? 'bg-amber-950 text-amber-400'
+                            : 'bg-zinc-800 text-zinc-500'
                         }`}>
                           <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
                             c.subscription_status === 'active' ? 'bg-emerald-500'
                             : c.subscription_status === 'trial' ? 'bg-amber-400'
-                            : 'bg-slate-300'
+                            : 'bg-zinc-600'
                           }`} />
                           {c.subscription_status === 'active' ? 'Aktiv'
                             : c.subscription_status === 'trial' ? 'Testphase'
                             : 'Inaktiv'}
                         </span>
                         {c.subscription_status === 'trial' && c.trial_ends_at && (
-                          <p className="text-xs text-slate-400 mt-1">
+                          <p className="text-xs text-zinc-500 mt-1">
                             bis {new Date(c.trial_ends_at).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' })}
                           </p>
                         )}
@@ -339,14 +339,14 @@ export default function SuperadminPage() {
                         <div className="flex items-center justify-end gap-2">
                           <button
                             onClick={() => void openAgents(c)}
-                            className="text-xs text-violet-600 hover:text-violet-700 border border-violet-200 hover:border-violet-300 hover:bg-violet-50 px-3 py-1.5 rounded-lg transition-colors font-medium"
+                            className="text-xs text-violet-400 hover:text-violet-300 border border-violet-800 hover:border-violet-600 hover:bg-violet-950 px-3 py-1.5 rounded-lg transition-colors font-medium"
                           >
                             Agenten
                           </button>
                           <button
                             onClick={() => handleImpersonate(c)}
                             disabled={impersonating === c.id}
-                            className="text-xs text-blue-600 hover:text-blue-700 border border-blue-200 hover:border-blue-300 hover:bg-blue-50 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-40 font-medium"
+                            className="text-xs text-blue-400 hover:text-blue-300 border border-blue-800 hover:border-blue-600 hover:bg-blue-950 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-40 font-medium"
                           >
                             {impersonating === c.id ? '…' : 'Einloggen ↗'}
                           </button>
@@ -355,8 +355,8 @@ export default function SuperadminPage() {
                             disabled={toggling === c.id}
                             className={`text-xs px-3 py-1.5 rounded-lg transition-colors disabled:opacity-40 font-medium ${
                               c.subscription_status === 'active'
-                                ? 'bg-red-50 text-red-600 hover:bg-red-100'
-                                : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100'
+                                ? 'bg-red-950 text-red-400 hover:bg-red-900'
+                                : 'bg-emerald-950 text-emerald-400 hover:bg-emerald-900'
                             }`}
                           >
                             {toggling === c.id ? '…' : c.subscription_status === 'active' ? 'Deaktivieren' : 'Aktivieren'}
@@ -460,9 +460,9 @@ function AgentsPanel({
   onBack: () => void
 }) {
   if (!company) return (
-    <div className="bg-white rounded-2xl border border-slate-100 p-12 text-center">
-      <p className="text-slate-400">Wähle ein Unternehmen über den &quot;Agenten&quot;-Button in der Tabelle.</p>
-      <button onClick={onBack} className="mt-4 text-sm text-slate-500 hover:text-slate-900 transition-colors">← Zurück zur Übersicht</button>
+    <div className="bg-zinc-900 rounded-2xl border border-zinc-800 p-12 text-center">
+      <p className="text-zinc-500">Wähle ein Unternehmen über den &quot;Agenten&quot;-Button in der Tabelle.</p>
+      <button onClick={onBack} className="mt-4 text-sm text-zinc-500 hover:text-zinc-200 transition-colors">← Zurück zur Übersicht</button>
     </div>
   )
 
@@ -472,10 +472,10 @@ function AgentsPanel({
     <div>
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-lg font-bold text-slate-900">{company.name}</h2>
-          <p className="text-sm text-slate-400">{company.email}</p>
+          <h2 className="text-lg font-bold text-white">{company.name}</h2>
+          <p className="text-sm text-zinc-500">{company.email}</p>
         </div>
-        <button onClick={onRefresh} className="text-xs text-slate-400 hover:text-slate-700 transition-colors">↻ Aktualisieren</button>
+        <button onClick={onRefresh} className="text-xs text-zinc-500 hover:text-zinc-200 transition-colors">↻ Aktualisieren</button>
       </div>
 
       {/* Agent cards */}
@@ -484,30 +484,30 @@ function AgentsPanel({
           const last = lastByType(agent.type)
           const isRunning = runningAgent === agent.type
           return (
-            <div key={agent.type} className="bg-white border border-slate-100 rounded-2xl p-5">
+            <div key={agent.type} className="bg-zinc-900 border border-zinc-800 rounded-2xl p-5">
               <div className="flex items-start justify-between gap-3 mb-3">
                 <div>
                   <div className="flex items-center gap-2 mb-1">
-                    <h3 className="font-bold text-slate-900 text-sm">{agent.name}</h3>
+                    <h3 className="font-bold text-white text-sm">{agent.name}</h3>
                     {last && <StatusBadge status={last.status} />}
                   </div>
-                  <p className="text-xs text-slate-500">{agent.description}</p>
+                  <p className="text-xs text-zinc-500">{agent.description}</p>
                 </div>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-xs text-slate-400">🕐 {agent.schedule}</span>
+                <span className="text-xs text-zinc-600">🕐 {agent.schedule}</span>
                 <button
                   onClick={() => onTrigger(agent.type)}
                   disabled={isRunning || runningAgent !== null}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-900 text-white text-xs font-semibold hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white text-zinc-900 text-xs font-semibold hover:bg-zinc-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   {isRunning
-                    ? <><div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" /> Läuft…</>
+                    ? <><div className="w-3 h-3 border-2 border-zinc-900 border-t-transparent rounded-full animate-spin" /> Läuft…</>
                     : <><Play className="w-3 h-3" /> Ausführen</>}
                 </button>
               </div>
               {last?.summary && (
-                <div className={`mt-3 px-3 py-2 rounded-lg text-xs ${last.status === 'failed' ? 'bg-red-50 text-red-700' : last.issues_count > 0 ? 'bg-amber-50 text-amber-800' : 'bg-emerald-50 text-emerald-700'}`}>
+                <div className={`mt-3 px-3 py-2 rounded-lg text-xs ${last.status === 'failed' ? 'bg-red-950 text-red-400' : last.issues_count > 0 ? 'bg-amber-950 text-amber-400' : 'bg-emerald-950 text-emerald-400'}`}>
                   {last.summary}
                 </div>
               )}
@@ -517,10 +517,10 @@ function AgentsPanel({
       </div>
 
       {/* Run history */}
-      <h3 className="text-sm font-bold text-slate-900 mb-3">Verlauf</h3>
+      <h3 className="text-sm font-bold text-white mb-3">Verlauf</h3>
       {runs.length === 0 ? (
-        <div className="bg-white border border-slate-100 rounded-2xl p-8 text-center">
-          <p className="text-slate-400 text-sm">Noch keine Ausführungen — oben starten.</p>
+        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-8 text-center">
+          <p className="text-zinc-500 text-sm">Noch keine Ausführungen — oben starten.</p>
         </div>
       ) : (
         <div className="flex flex-col gap-1.5">
@@ -528,19 +528,19 @@ function AgentsPanel({
             const def = AGENT_DEFS.find(a => a.type === run.agent_type)
             const isExpanded = expandedRun === run.id
             return (
-              <div key={run.id} className={`bg-white border rounded-xl overflow-hidden transition-all ${agentFlash === run.id ? 'border-blue-400 ring-2 ring-blue-100' : 'border-slate-100'}`}>
+              <div key={run.id} className={`bg-zinc-900 border rounded-xl overflow-hidden transition-all ${agentFlash === run.id ? 'border-blue-500 ring-2 ring-blue-900' : 'border-zinc-800'}`}>
                 <button onClick={() => onToggleExpand(run.id)}
-                  className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-slate-50 transition-colors">
+                  className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-zinc-800/50 transition-colors">
                   <StatusBadge status={run.status} />
-                  <span className="text-sm font-medium text-slate-700 flex-1 truncate">{def?.name ?? run.agent_type}</span>
-                  <span className="text-xs text-slate-400 shrink-0">
+                  <span className="text-sm font-medium text-zinc-300 flex-1 truncate">{def?.name ?? run.agent_type}</span>
+                  <span className="text-xs text-zinc-600 shrink-0">
                     {new Intl.DateTimeFormat('de-DE', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(run.run_at))}
                   </span>
-                  {isExpanded ? <ChevronUp className="w-4 h-4 text-slate-400 shrink-0" /> : <ChevronDown className="w-4 h-4 text-slate-400 shrink-0" />}
+                  {isExpanded ? <ChevronUp className="w-4 h-4 text-zinc-600 shrink-0" /> : <ChevronDown className="w-4 h-4 text-zinc-600 shrink-0" />}
                 </button>
                 {isExpanded && (
-                  <div className="border-t border-slate-100 px-4 py-4">
-                    {run.summary && <p className="text-sm text-slate-600 mb-3">{run.summary}</p>}
+                  <div className="border-t border-zinc-800 px-4 py-4">
+                    {run.summary && <p className="text-sm text-zinc-400 mb-3">{run.summary}</p>}
                     <RunDetail run={run} />
                   </div>
                 )}

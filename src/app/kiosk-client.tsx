@@ -156,8 +156,11 @@ interface InfoPanelProps {
   hoursWeekday: string
   hoursFri: string
   friClosed: boolean
-  showHintRefnr: boolean
-  showHintDocs: boolean
+  hoursSat: string
+  satClosed: boolean
+  hoursSun: string
+  sunClosed: boolean
+  customHints: string[]
 }
 
 function VisitorTypeSelect({ lang, onSelect, onBack, info }: {
@@ -167,7 +170,8 @@ function VisitorTypeSelect({ lang, onSelect, onBack, info }: {
   info: InfoPanelProps
 }) {
   const t = translations[lang]
-  const hasInfo = info.hoursWeekday || info.showHintRefnr || info.showHintDocs
+  const hasHours = !!info.hoursWeekday
+  const hasInfo = hasHours || info.customHints.length > 0
 
   return (
     <div className="flex flex-col flex-1 px-6 py-4">
@@ -187,24 +191,17 @@ function VisitorTypeSelect({ lang, onSelect, onBack, info }: {
 
       {hasInfo && (
         <div className="mt-6 max-w-3xl mx-auto w-full bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 flex flex-col gap-2">
-          {info.hoursWeekday && (
+          {hasHours && (
             <div className="flex flex-wrap gap-x-6 gap-y-1 text-base text-slate-700">
-              <span>
-                <span className="font-semibold">📅 {t.info_weekdays}:</span>{' '}
-                {info.hoursWeekday}
-              </span>
-              <span>
-                <span className="font-semibold">{t.info_friday}:</span>{' '}
-                {info.friClosed ? t.info_closed : info.hoursFri}
-              </span>
+              <span><span className="font-semibold">📅 {t.info_weekdays}:</span> {info.hoursWeekday}</span>
+              <span><span className="font-semibold">{t.info_friday}:</span> {info.friClosed ? t.info_closed : info.hoursFri}</span>
+              <span><span className="font-semibold">Sa:</span> {info.satClosed ? t.info_closed : info.hoursSat}</span>
+              <span><span className="font-semibold">So:</span> {info.sunClosed ? t.info_closed : info.hoursSun}</span>
             </div>
           )}
-          {info.showHintRefnr && (
-            <p className="text-base text-slate-700">⚠️ {t.info_hint_refnr}</p>
-          )}
-          {info.showHintDocs && (
-            <p className="text-base text-slate-700">📄 {t.info_hint_docs}</p>
-          )}
+          {info.customHints.map((hint, i) => (
+            <p key={i} className="text-base text-slate-700">ℹ️ {hint}</p>
+          ))}
         </div>
       )}
 
@@ -537,8 +534,11 @@ export function KioskClient({ slug }: { slug: string }) {
   const [hoursWeekday, setHoursWeekday] = useState('')
   const [hoursFri, setHoursFri] = useState('')
   const [friClosed, setFriClosed] = useState(true)
-  const [showHintRefnr, setShowHintRefnr] = useState(false)
-  const [showHintDocs, setShowHintDocs] = useState(false)
+  const [hoursSat, setHoursSat] = useState('')
+  const [satClosed, setSatClosed] = useState(true)
+  const [hoursSun, setHoursSun] = useState('')
+  const [sunClosed, setSunClosed] = useState(true)
+  const [customHints, setCustomHints] = useState<string[]>([])
   const [activeSafetyRules, setActiveSafetyRules] = useState<string[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -580,8 +580,13 @@ export function KioskClient({ slug }: { slug: string }) {
         if (data.hours_weekday) setHoursWeekday(data.hours_weekday)
         if (data.hours_fri) setHoursFri(data.hours_fri)
         if (data.fri_closed !== undefined) setFriClosed(data.fri_closed !== 'false')
-        if (data.show_hint_refnr) setShowHintRefnr(data.show_hint_refnr === 'true')
-        if (data.show_hint_docs) setShowHintDocs(data.show_hint_docs === 'true')
+        if (data.hours_sat) setHoursSat(data.hours_sat)
+        if (data.sat_closed !== undefined) setSatClosed(data.sat_closed !== 'false')
+        if (data.hours_sun) setHoursSun(data.hours_sun)
+        if (data.sun_closed !== undefined) setSunClosed(data.sun_closed !== 'false')
+        if (data.custom_hints) {
+          try { setCustomHints(JSON.parse(data.custom_hints)) } catch { /* ignore */ }
+        }
         if (data.active_safety_rules) {
           try { setActiveSafetyRules(JSON.parse(data.active_safety_rules)) } catch { /* ignore */ }
         }
@@ -699,7 +704,7 @@ export function KioskClient({ slug }: { slug: string }) {
           lang={lang}
           onSelect={handleVisitorTypeSelect}
           onBack={() => setStep(1)}
-          info={{ hoursWeekday, hoursFri, friClosed, showHintRefnr, showHintDocs }}
+          info={{ hoursWeekday, hoursFri, friClosed, hoursSat, satClosed, hoursSun, sunClosed, customHints }}
         />
       )}
       {step === 3 && (

@@ -49,7 +49,7 @@ export default function RegisterPage() {
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           <Link href="/" className="text-2xl font-bold text-slate-900">GateSign</Link>
-          <p className="text-slate-500 mt-1 text-sm">Digitales Kiosk-Check-in für Ihr Unternehmen</p>
+          <p className="text-slate-500 mt-1 text-sm">Digitales Check-in Terminal für Ihr Unternehmen</p>
         </div>
 
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-8">

@@ -46,12 +46,12 @@ export async function POST(req: NextRequest) {
     // 4. Send welcome email (best-effort, don't fail registration)
     try {
       const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://gatesign-production.up.railway.app'
-      const kioskUrl = `${appUrl}/${slug}`
+      const terminalUrl = `${appUrl}/${slug}`
       const adminUrl = `${appUrl}/${slug}/admin`
       await sendEmail({
         to: email,
         subject: `Willkommen bei GateSign — ${companyName}`,
-        html: welcomeHtml(companyName, kioskUrl, adminUrl),
+        html: welcomeHtml(companyName, terminalUrl, adminUrl),
       })
     } catch (emailErr) { console.error('[register] welcome email failed:', emailErr) }
 
@@ -71,7 +71,7 @@ export async function POST(req: NextRequest) {
   }
 }
 
-function welcomeHtml(companyName: string, kioskUrl: string, adminUrl: string) {
+function welcomeHtml(companyName: string, terminalUrl: string, adminUrl: string) {
   return `<!DOCTYPE html>
 <html lang="de">
 <head><meta charset="UTF-8"></head>
@@ -88,7 +88,7 @@ function welcomeHtml(companyName: string, kioskUrl: string, adminUrl: string) {
       </p>
       <div style="background:#f8fafc;border-radius:8px;padding:16px 20px;margin-bottom:24px">
         <p style="margin:0 0 8px;font-size:13px;color:#64748b"><strong style="color:#0f172a">Check-In Terminal</strong> (für Ihre Besucher)</p>
-        <a href="${kioskUrl}" style="color:#2563eb;font-size:13px">${kioskUrl}</a>
+        <a href="${terminalUrl}" style="color:#2563eb;font-size:13px">${terminalUrl}</a>
         <p style="margin:16px 0 8px;font-size:13px;color:#64748b"><strong style="color:#0f172a">Admin-Dashboard</strong> (nur für Sie)</p>
         <a href="${adminUrl}" style="color:#2563eb;font-size:13px">${adminUrl}</a>
       </div>

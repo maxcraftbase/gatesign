@@ -1,4 +1,4 @@
-// GateSign kiosk types
+// GateSign Check-in Terminal types
 
 export interface CheckIn {
   id: string

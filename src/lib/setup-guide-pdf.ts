@@ -2,7 +2,7 @@ import PDFDocument from 'pdfkit'
 
 export async function generateSetupGuidePdf(opts: {
   companyName: string
-  kioskUrl: string
+  terminalUrl: string
   adminUrl: string
 }): Promise<Buffer> {
   return new Promise((resolve, reject) => {
@@ -26,7 +26,7 @@ export async function generateSetupGuidePdf(opts: {
     doc.text(opts.companyName, 50, 100)
     doc.fillColor(GRAY).fontSize(10).font('Helvetica')
     doc.text('Vielen Dank für Ihre Registrierung bei GateSign.', 50, 118)
-    doc.text('Diese Anleitung hilft Ihnen beim Einrichten des Kiosk-Terminals.', 50, 132)
+    doc.text('Diese Anleitung hilft Ihnen beim Einrichten des Check-in Terminals.', 50, 132)
 
     // ── Zugangsdaten ─────────────────────────────────────────────────────────
     doc.moveDown(1.5)
@@ -34,7 +34,7 @@ export async function generateSetupGuidePdf(opts: {
     const boxY = doc.y + 12
     doc.fillColor(DARK).fontSize(11).font('Helvetica-Bold').text('Ihre Zugangsdaten', 65, boxY)
     doc.fillColor(GRAY).fontSize(10).font('Helvetica')
-    doc.text(`Kiosk-Terminal:  ${opts.kioskUrl}`, 65, boxY + 18)
+    doc.text(`Check-in Terminal:  ${opts.terminalUrl}`, 65, boxY + 18)
     doc.text(`Admin-Dashboard: ${opts.adminUrl}`, 65, boxY + 33)
     doc.moveDown(4.5)
 
@@ -51,7 +51,7 @@ export async function generateSetupGuidePdf(opts: {
     steps(doc, GRAY, [
       'Einstellungen öffnen → Bedienungshilfen → Geführter Zugriff',
       'Geführten Zugriff aktivieren → Passcode-Einstellungen → Passcode festlegen',
-      'Safari öffnen und zum Kiosk-Link navigieren: ' + opts.kioskUrl,
+      'Safari öffnen und zum Terminal-Link navigieren: ' + opts.terminalUrl,
       'Dreimal schnell den Home-Button (oder Seitentaste) drücken',
       '„Geführten Zugriff starten" antippen → fertig!',
       'Zum Beenden: erneut dreimal Home-Button → Passcode eingeben → „Beenden"',
@@ -75,9 +75,9 @@ export async function generateSetupGuidePdf(opts: {
     steps(doc, GRAY, [
       'Rechtsklick auf den Desktop → Neu → Verknüpfung',
       'Ziel eintragen:',
-      '"C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe" --kiosk ' + opts.kioskUrl,
-      'Verknüpfung benennen: z.B. „GateSign Kiosk"',
-      'Verknüpfung starten — Chrome öffnet sich im Vollbild-Kiosk-Modus',
+      '"C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe" --kiosk ' + opts.terminalUrl,
+      'Verknüpfung benennen: z.B. „GateSign Check-in Terminal"',
+      'Verknüpfung starten — Chrome öffnet sich im Vollbild-Modus',
       'Zum Beenden: Strg + Alt + Entf → Task-Manager → Chrome beenden',
     ])
 
@@ -102,7 +102,7 @@ export async function generateSetupGuidePdf(opts: {
     doc.moveDown(0.4)
     doc.fillColor(DARK).font('Helvetica').fontSize(10)
     doc.text(
-      'Aus dem Kiosk-Terminal: GateSign-Logo 3× schnell antippen → Admin-Login eingeben → Vollbild wird beendet.',
+      'Aus dem Check-in Terminal: GateSign-Logo 3× schnell antippen → Admin-Login eingeben → Vollbild wird beendet.',
       50, doc.y, { width: doc.page.width - 100 }
     )
 

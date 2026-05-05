@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { Save, ChevronDown, ChevronUp, Upload, FileText, Loader2, CheckCircle2, ExternalLink, Trash2 } from 'lucide-react'
+import { Save, ChevronDown, ChevronUp, Upload, FileText, Loader2, CheckCircle2, ExternalLink, Trash2, BookOpen } from 'lucide-react'
 import { LANGUAGES, VISITOR_TYPES } from '@/lib/translations'
 import { SAFETY_RULES, SAFETY_RULE_CATEGORIES, SIGN_STYLES } from '@/lib/safety-rules'
 
@@ -205,16 +205,27 @@ export function AdminSettingsClient() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Einstellungen</h1>
-          <p className="text-slate-500 text-sm mt-1">Kiosk-Konfiguration und Sicherheitsbelehrungen</p>
+          <p className="text-slate-500 text-sm mt-1">Check-in Terminal Konfiguration und Sicherheitsbelehrungen</p>
         </div>
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-900 text-white font-semibold hover:bg-slate-700 disabled:opacity-50 transition-colors"
-        >
-          <Save className="w-4 h-4" />
-          {saving ? 'Speichern…' : 'Speichern'}
-        </button>
+        <div className="flex items-center gap-3">
+          <a
+            href="/einrichtung"
+            target="_blank"
+            rel="noreferrer"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-semibold hover:bg-slate-50 transition-colors text-sm"
+          >
+            <BookOpen className="w-4 h-4" />
+            Einrichtungsanleitung
+          </a>
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-900 text-white font-semibold hover:bg-slate-700 disabled:opacity-50 transition-colors"
+          >
+            <Save className="w-4 h-4" />
+            {saving ? 'Speichern…' : 'Speichern'}
+          </button>
+        </div>
       </div>
 
       {error && (
@@ -277,7 +288,7 @@ export function AdminSettingsClient() {
       <div className="bg-white rounded-2xl border border-slate-100 p-6 mb-6">
         <h2 className="text-lg font-bold text-slate-900 mb-1">Betriebszeiten & Hinweise</h2>
         <p className="text-sm text-slate-500 mb-5">
-          Wird im Kiosk unter der Besuchertypauswahl angezeigt — automatisch in alle Sprachen übersetzt.
+          Wird im Check-in Terminal unter der Besuchertypauswahl angezeigt — automatisch in alle Sprachen übersetzt.
         </p>
         <div className="flex flex-col gap-5">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -356,7 +367,7 @@ export function AdminSettingsClient() {
           </span>
         </div>
         <p className="text-sm text-slate-500 mb-4">
-          Auswählen was gilt — wird automatisch in alle Sprachen übersetzt und im Kiosk angezeigt.
+          Auswählen was gilt — wird automatisch in alle Sprachen übersetzt und im Check-in Terminal angezeigt.
         </p>
         <input
           type="text"
@@ -420,7 +431,7 @@ export function AdminSettingsClient() {
       <div className="bg-white rounded-2xl border border-slate-100 p-6 mb-6">
         <h2 className="text-lg font-bold text-slate-900 mb-1">Sicherheitsbelehrung hochladen</h2>
         <p className="text-sm text-slate-500 mb-5">
-          PDF hochladen — wird direkt im Kiosk angezeigt.
+          PDF hochladen — wird direkt im Check-in Terminal angezeigt.
         </p>
 
         {uploadError && (

@@ -20,7 +20,7 @@ const steps = {
         ],
       },
       {
-        title: 'Schritt 2 — Geführten Zugriff aktivieren (Kiosk-Absicherung)',
+        title: 'Schritt 2 — Geführten Zugriff aktivieren (Terminal-Absicherung)',
         items: [
           <>Öffnen Sie die <strong>Einstellungen</strong> → <strong>Bedienungshilfen</strong> → <strong>Geführter Zugriff</strong></>,
           <>Aktivieren Sie <strong>Geführter Zugriff</strong> und setzen Sie einen PIN-Code unter <strong>Code-Einstellungen</strong></>,
@@ -41,7 +41,7 @@ const steps = {
         items: [
           <>Klicken Sie mit der rechten Maustaste auf den Desktop → <strong>Neu</strong> → <strong>Verknüpfung</strong></>,
           <>Geben Sie folgenden Pfad ein (Ihre GateSign-Adresse anpassen):<br /><code className="block bg-slate-100 px-3 py-2 rounded text-xs font-mono mt-2 break-all">{'"C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe" --kiosk https://gatesign-production.up.railway.app/ihr-slug'}</code></>,
-          <>Benennen Sie die Verknüpfung z.B. {'\u201eGateSign Kiosk\u201c'}</>,
+          <>Benennen Sie die Verknüpfung z.B. {'\u201eGateSign Check-in Terminal\u201c'}</>,
           <>Doppelklicken Sie auf die Verknüpfung — Chrome öffnet sich im Vollbild-Kiosk-Modus ohne Adressleiste</>,
           <>Zum Beenden: <strong>Alt + F4</strong> drücken</>,
         ],
@@ -62,7 +62,7 @@ const steps = {
         ],
       },
       {
-        title: 'Schritt 2 — Bildschirmfixierung aktivieren (Kiosk-Absicherung)',
+        title: 'Schritt 2 — Bildschirmfixierung aktivieren (Terminal-Absicherung)',
         items: [
           <>Öffnen Sie die <strong>Einstellungen</strong> → <strong>Sicherheit</strong> (je nach Hersteller auch <strong>Biometrie und Sicherheit</strong>)</>,
           <>Tippen Sie auf <strong>Bildschirmfixierung</strong> (oder {'\u201eApp-Fixierung\u201c'}) und aktivieren Sie diese</>,

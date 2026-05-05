@@ -39,7 +39,7 @@ export default function LandingPage() {
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-slate-900 mb-2">GateSign</h1>
-          <p className="text-slate-500">Digitales Kiosk-Check-in für Ihr Unternehmen</p>
+          <p className="text-slate-500">Digitales Check-in Terminal für Ihr Unternehmen</p>
         </div>
 
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-8 mb-4">

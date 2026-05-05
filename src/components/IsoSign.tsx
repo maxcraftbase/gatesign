@@ -3,46 +3,78 @@
 import { useState } from 'react'
 import { isoSignUrl, type SignType } from '@/lib/safety-rules'
 
-function CameraSign({ size }: { size: number }) {
-  const cx = size / 2
-  const cy = size / 2
-  const r = size / 2 - 1
-  const sw = Math.max(1.5, size * 0.05)
-  const topX = cx, topY = cy - r
-  const blX = cx - r * 0.866, blY = cy + r * 0.5
-  const brX = cx + r * 0.866, brY = cy + r * 0.5
+function CctvSign({ size }: { size: number }) {
+  const s = size
+  const rx = s * 0.1
+  // Layout: blue square, camera fills upper 68%, text row at bottom 22%
+  const textH = s * 0.26
+  const camArea = s - textH
 
-  // Camera positioned in lower portion of triangle interior
-  const camCy = cy + r * 0.12
-  const camW = r * 0.88
-  const camH = r * 0.44
-  const camX = cx - camW / 2
-  const camY = camCy - camH / 2
-  const lensR = camH * 0.32
-  const bumpW = camW * 0.28
-  const bumpH = camH * 0.28
+  // Ceiling mount arm: thin vertical bar from top center
+  const armW = s * 0.06
+  const armH = camArea * 0.28
+  const armX = s * 0.5 - armW / 2
+  const armY = camArea * 0.04
+
+  // Camera body: trapezoid-ish — use a polygon
+  // Body sits below the arm, tilted slightly (front lower than back)
+  const bY = armY + armH           // top of camera back
+  const bodyH = camArea * 0.32
+  const backW = s * 0.22
+  const frontW = s * 0.32
+  const backX = s * 0.5 - backW / 2
+  const frontX = s * 0.5 - frontW / 2 + s * 0.08 // shifted right (pointing left-down)
+
+  // Lens: circle at the front-left of body
+  const lensX = frontX + frontW * 0.18
+  const lensY = bY + bodyH * 0.6
+  const lensR = s * 0.075
 
   return (
-    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="shrink-0">
-      <polygon
-        points={`${topX},${topY} ${blX},${blY} ${brX},${brY}`}
-        fill="#facc15" stroke="#1e293b" strokeWidth={sw}
-        strokeLinejoin="round"
-      />
-      {/* Viewfinder bump */}
+    <svg width={s} height={s} viewBox={`0 0 ${s} ${s}`} className="shrink-0">
+      {/* Blue background */}
+      <rect x={0} y={0} width={s} height={s} rx={rx} fill="#1a5fa8" />
+
+      {/* Ceiling mount arm */}
+      <rect x={armX} y={armY} width={armW} height={armH} rx={armW * 0.3} fill="white" />
+
+      {/* Horizontal bracket at bottom of arm */}
       <rect
-        x={cx - bumpW / 2} y={camY - bumpH * 0.6}
-        width={bumpW} height={bumpH + 2}
-        rx={bumpH * 0.3} fill="#1e293b"
+        x={s * 0.32} y={armY + armH - armW * 0.5}
+        width={s * 0.36} height={armW * 0.9}
+        rx={armW * 0.3} fill="white"
       />
-      {/* Camera body */}
-      <rect x={camX} y={camY} width={camW} height={camH} rx={camH * 0.18} fill="#1e293b" />
-      {/* Lens ring */}
-      <circle cx={cx} cy={camCy} r={lensR} fill="#facc15" />
-      {/* Lens */}
-      <circle cx={cx} cy={camCy} r={lensR * 0.58} fill="#1e293b" />
-      {/* Lens shine */}
-      <circle cx={cx - lensR * 0.28} cy={camCy - lensR * 0.28} r={lensR * 0.18} fill="#ffffff88" />
+
+      {/* Camera body (trapezoid pointing left) */}
+      <polygon
+        points={`
+          ${backX},${bY}
+          ${backX + backW},${bY}
+          ${frontX + frontW},${bY + bodyH}
+          ${frontX},${bY + bodyH}
+        `}
+        fill="white"
+      />
+
+      {/* Lens housing (dark circle) */}
+      <circle cx={lensX} cy={lensY} r={lensR} fill="#1a5fa8" />
+      {/* Lens glass */}
+      <circle cx={lensX} cy={lensY} r={lensR * 0.58} fill="white" opacity={0.6} />
+
+      {/* "Videoüberwacht" text */}
+      <rect x={0} y={s - textH} width={s} height={textH} rx={0} fill="#1a5fa8" />
+      <rect x={0} y={s - textH} width={s} height={1.5} fill="white" opacity={0.4} />
+      <text
+        x={s * 0.5}
+        y={s - textH * 0.38}
+        textAnchor="middle"
+        dominantBaseline="central"
+        fontSize={s * 0.115}
+        fontWeight="bold"
+        fontFamily="Arial,sans-serif"
+        fill="white"
+        letterSpacing={s * -0.003}
+      >Videoüberwacht</text>
     </svg>
   )
 }
@@ -151,8 +183,8 @@ export function IsoSign({
     return <SignShell signType="limit" size={size} />
   }
 
-  if (code === 'CAMERA') {
-    return <CameraSign size={size} />
+  if (code === 'CCTV') {
+    return <CctvSign size={size} />
   }
 
   if (!code || failed) {

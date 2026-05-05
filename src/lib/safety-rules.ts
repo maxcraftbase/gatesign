@@ -287,6 +287,7 @@ export const SAFETY_RULES: SafetyRule[] = [
   },
   {
     id: 'stay_vehicle',
+    isoCode: 'W001',
     signType: 'warning',
     category: 'behavior',
     label: {
@@ -321,6 +322,7 @@ export const SAFETY_RULES: SafetyRule[] = [
   },
   {
     id: 'designated_paths',
+    isoCode: 'W001',
     signType: 'warning',
     category: 'behavior',
     label: {
@@ -338,6 +340,7 @@ export const SAFETY_RULES: SafetyRule[] = [
   },
   {
     id: 'keep_clear',
+    isoCode: 'W001',
     signType: 'warning',
     category: 'behavior',
     label: {
@@ -355,6 +358,7 @@ export const SAFETY_RULES: SafetyRule[] = [
   },
   {
     id: 'doors_closed',
+    isoCode: 'W001',
     signType: 'warning',
     category: 'behavior',
     label: {
@@ -372,8 +376,8 @@ export const SAFETY_RULES: SafetyRule[] = [
   },
   {
     id: 'cctv',
-    isoCode: 'CAMERA',
-    signType: 'warning',
+    isoCode: 'CCTV',
+    signType: 'info',
     category: 'behavior',
     label: {
       de: 'Videoüberwachung auf dem Betriebsgelände',
@@ -409,6 +413,7 @@ export const SAFETY_RULES: SafetyRule[] = [
   },
   {
     id: 'waste',
+    isoCode: 'W001',
     signType: 'warning',
     category: 'behavior',
     label: {
@@ -447,6 +452,7 @@ export const SAFETY_RULES: SafetyRule[] = [
   },
   {
     id: 'handbrake',
+    isoCode: 'W001',
     signType: 'warning',
     category: 'vehicle',
     label: {
@@ -464,6 +470,7 @@ export const SAFETY_RULES: SafetyRule[] = [
   },
   {
     id: 'chocks',
+    isoCode: 'W001',
     signType: 'warning',
     category: 'vehicle',
     label: {
@@ -500,6 +507,7 @@ export const SAFETY_RULES: SafetyRule[] = [
   },
   {
     id: 'load_securing',
+    isoCode: 'W001',
     signType: 'warning',
     category: 'vehicle',
     label: {

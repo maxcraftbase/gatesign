@@ -35,6 +35,7 @@ export default function SuperadminPage() {
   const [totalCheckIns, setTotalCheckIns] = useState(0)
   const [dataLoading, setDataLoading] = useState(false)
   const [toggling, setToggling] = useState<string | null>(null)
+  const [impersonating, setImpersonating] = useState<string | null>(null)
 
   async function loadData() {
     setDataLoading(true)
@@ -70,6 +71,20 @@ export default function SuperadminPage() {
     await fetch('/api/superadmin/logout', { method: 'POST' })
     setAuthed(false)
     setCompanies([])
+  }
+
+  async function handleImpersonate(company: Company) {
+    setImpersonating(company.id)
+    const res = await fetch('/api/superadmin/impersonate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ companySlug: company.slug }),
+    })
+    if (res.ok) {
+      const data = await res.json() as { adminUrl: string }
+      window.open(data.adminUrl, '_blank')
+    }
+    setImpersonating(null)
   }
 
   async function toggleStatus(company: Company) {
@@ -248,14 +263,13 @@ export default function SuperadminPage() {
                       </td>
                       <td className="px-4 py-4 text-right">
                         <div className="flex items-center justify-end gap-2">
-                          <a
-                            href={`/${c.slug}/admin`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-xs text-slate-400 hover:text-slate-700 border border-slate-200 hover:border-slate-300 px-3 py-1.5 rounded-lg transition-colors"
+                          <button
+                            onClick={() => handleImpersonate(c)}
+                            disabled={impersonating === c.id}
+                            className="text-xs text-blue-600 hover:text-blue-700 border border-blue-200 hover:border-blue-300 hover:bg-blue-50 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-40 font-medium"
                           >
-                            Admin ↗
-                          </a>
+                            {impersonating === c.id ? '…' : 'Einloggen ↗'}
+                          </button>
                           <button
                             onClick={() => toggleStatus(c)}
                             disabled={toggling === c.id}

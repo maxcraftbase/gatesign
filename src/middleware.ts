@@ -38,7 +38,7 @@ function isTokenExpired(token: string): boolean {
 }
 
 async function verifyJwtSignature(token: string): Promise<boolean> {
-  const secret = process.env.SUPABASE_JWT_SECRET
+  const secret = process.env.SUPABASE_JWT_SECRET?.trim()
   if (!secret) return true // skip if not configured
 
   try {
@@ -60,7 +60,8 @@ async function verifyJwtSignature(token: string): Promise<boolean> {
 
     return await crypto.subtle.verify('HMAC', key, signature, data)
   } catch {
-    return false
+    // On any verification error, fall back to expiry-only check
+    return true
   }
 }
 

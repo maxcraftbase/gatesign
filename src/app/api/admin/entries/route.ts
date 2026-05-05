@@ -33,6 +33,6 @@ export async function GET(req: NextRequest) {
     const total = parseInt(res.headers.get('content-range')?.split('/')[1] ?? '0')
     return NextResponse.json({ entries: data, total, page, limit })
   } catch (err) {
-    return NextResponse.json({ error: String(err) }, { status: 500 })
+    return NextResponse.json({ error: 'Interner Fehler.' }, { status: 500 })
   }
 }

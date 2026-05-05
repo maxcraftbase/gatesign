@@ -21,6 +21,6 @@ export async function GET(req: NextRequest) {
     for (const row of rows) settings[row.key] = row.value
     return NextResponse.json(settings)
   } catch (err) {
-    return NextResponse.json({ error: String(err) }, { status: 500 })
+    return NextResponse.json({ error: 'Interner Fehler.' }, { status: 500 })
   }
 }

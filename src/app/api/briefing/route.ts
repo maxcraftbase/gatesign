@@ -40,6 +40,6 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json(briefing ?? { content: '', version: '1.0', language: 'de', visitor_type: 'truck' })
   } catch (err) {
-    return NextResponse.json({ error: String(err) }, { status: 500 })
+    return NextResponse.json({ error: 'Interner Fehler.' }, { status: 500 })
   }
 }

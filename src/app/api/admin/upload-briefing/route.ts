@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAdminContext } from '@/lib/admin-auth'
 
+const ALLOWED_VISITOR_TYPES = new Set(['truck', 'visitor', 'service'])
+const MAX_SIZE_BYTES = 20 * 1024 * 1024 // 20 MB
+
 export async function POST(req: NextRequest) {
   try {
     const ctx = await getAdminContext()
@@ -11,6 +14,9 @@ export async function POST(req: NextRequest) {
     const visitorType = formData.get('visitor_type') as string | null
 
     if (!file || !visitorType) return NextResponse.json({ error: 'Fehlende Parameter' }, { status: 400 })
+    if (!ALLOWED_VISITOR_TYPES.has(visitorType)) return NextResponse.json({ error: 'Ungültiger Besuchertyp.' }, { status: 400 })
+    if (file.type !== 'application/pdf') return NextResponse.json({ error: 'Nur PDF-Dateien erlaubt.' }, { status: 400 })
+    if (file.size > MAX_SIZE_BYTES) return NextResponse.json({ error: 'Datei zu groß (max. 20 MB).' }, { status: 400 })
 
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
     const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -30,8 +36,7 @@ export async function POST(req: NextRequest) {
     })
 
     if (!uploadRes.ok) {
-      const err = await uploadRes.text()
-      console.error('Storage upload error:', err)
+      console.error('Storage upload error:', await uploadRes.text())
       return NextResponse.json({ error: 'Fehler beim Speichern der PDF.' }, { status: 500 })
     }
 
@@ -55,9 +60,8 @@ export async function POST(req: NextRequest) {
     })
 
     return NextResponse.json({ success: true, url: publicUrl })
-  } catch (err) {
-    console.error('Upload briefing error:', err)
-    return NextResponse.json({ error: String(err) }, { status: 500 })
+  } catch {
+    return NextResponse.json({ error: 'Interner Fehler.' }, { status: 500 })
   }
 }
 
@@ -67,19 +71,19 @@ export async function DELETE(req: NextRequest) {
     if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const { visitorType } = await req.json()
-    if (!visitorType) return NextResponse.json({ error: 'Fehlende Parameter' }, { status: 400 })
+    if (!visitorType || !ALLOWED_VISITOR_TYPES.has(visitorType)) {
+      return NextResponse.json({ error: 'Ungültiger Besuchertyp.' }, { status: 400 })
+    }
 
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
     const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     const fileName = `${ctx.company.slug}/briefing_${visitorType}.pdf`
 
-    // Delete from storage
     await fetch(`${supabaseUrl}/storage/v1/object/briefings/${fileName}`, {
       method: 'DELETE',
       headers: { apikey: anonKey, Authorization: `Bearer ${ctx.accessToken}` },
     })
 
-    // Clear setting value
     const settingKey = `briefing_pdf_${visitorType}`
     await fetch(`${supabaseUrl}/rest/v1/app_settings?company_id=eq.${ctx.company.id}&key=eq.${settingKey}`, {
       method: 'DELETE',
@@ -87,7 +91,7 @@ export async function DELETE(req: NextRequest) {
     })
 
     return NextResponse.json({ success: true })
-  } catch (err) {
-    return NextResponse.json({ error: String(err) }, { status: 500 })
+  } catch {
+    return NextResponse.json({ error: 'Interner Fehler.' }, { status: 500 })
   }
 }

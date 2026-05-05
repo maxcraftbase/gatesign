@@ -66,6 +66,7 @@ export async function POST() {
 
     return NextResponse.json({ success: true, translations })
   } catch (err) {
-    return NextResponse.json({ error: String(err) }, { status: 500 })
+    console.error('Translate hints error:', err)
+    return NextResponse.json({ error: 'Interner Fehler.' }, { status: 500 })
   }
 }

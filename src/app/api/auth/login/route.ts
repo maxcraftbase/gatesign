@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { checkRateLimit } from '@/lib/rate-limit'
 
 export async function POST(req: NextRequest) {
   try {
+    const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() ?? 'unknown'
+    if (!checkRateLimit(`login:${ip}`, 10, 15 * 60 * 1000)) {
+      return NextResponse.json({ error: 'Zu viele Versuche. Bitte 15 Minuten warten.' }, { status: 429 })
+    }
+
     const { email, password } = await req.json()
 
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
@@ -27,17 +33,15 @@ export async function POST(req: NextRequest) {
     const encoded = 'base64-' + Buffer.from(JSON.stringify(session)).toString('base64url')
     const cookieOpts = {
       httpOnly: true,
+      secure: true,
       sameSite: 'lax' as const,
       path: '/',
       maxAge: 400 * 24 * 60 * 60,
     }
 
-    // Set cookies directly on the response object
-    // Look up company slug for redirect
-    const supabaseUrl2 = process.env.NEXT_PUBLIC_SUPABASE_URL!
     let slug = ''
     try {
-      const compRes = await fetch(`${supabaseUrl2}/rest/v1/companies?select=slug&limit=1`, {
+      const compRes = await fetch(`${supabaseUrl}/rest/v1/companies?select=slug&limit=1`, {
         headers: { apikey: anonKey, Authorization: `Bearer ${session.access_token}` },
         cache: 'no-store',
       })
@@ -57,7 +61,7 @@ export async function POST(req: NextRequest) {
     }
 
     return response
-  } catch (err) {
-    return NextResponse.json({ error: String(err) }, { status: 500 })
+  } catch {
+    return NextResponse.json({ error: 'Interner Fehler.' }, { status: 500 })
   }
 }

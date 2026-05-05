@@ -70,6 +70,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true, id: data[0]?.id })
   } catch (err) {
     console.error('Check-in route error:', err)
-    return NextResponse.json({ error: String(err) }, { status: 500 })
+    return NextResponse.json({ error: 'Interner Fehler.' }, { status: 500 })
   }
 }

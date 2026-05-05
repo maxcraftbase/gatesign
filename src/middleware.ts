@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from 'next/server'
 
-function getAccessToken(request: NextRequest): string | null {
+function getTokenAndCookieName(request: NextRequest): { token: string | null; cookieName: string } {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''
   const projectRef = new URL(supabaseUrl).hostname.split('.')[0]
   const cookieName = `sb-${projectRef}-auth-token`
@@ -16,15 +16,15 @@ function getAccessToken(request: NextRequest): string | null {
     }
     if (chunks) raw = chunks
   }
-  if (!raw) return null
+  if (!raw) return { token: null, cookieName }
 
   try {
     const json = raw.startsWith('base64-')
       ? Buffer.from(raw.slice(7), 'base64url').toString('utf-8')
       : raw
-    return JSON.parse(json).access_token ?? null
+    return { token: JSON.parse(json).access_token ?? null, cookieName }
   } catch {
-    return null
+    return { token: null, cookieName }
   }
 }
 
@@ -37,7 +37,34 @@ function isTokenExpired(token: string): boolean {
   }
 }
 
-export function middleware(request: NextRequest) {
+async function verifyJwtSignature(token: string): Promise<boolean> {
+  const secret = process.env.SUPABASE_JWT_SECRET
+  if (!secret) return true // skip if not configured
+
+  try {
+    const parts = token.split('.')
+    if (parts.length !== 3) return false
+
+    const key = await crypto.subtle.importKey(
+      'raw',
+      new TextEncoder().encode(secret),
+      { name: 'HMAC', hash: 'SHA-256' },
+      false,
+      ['verify'],
+    )
+
+    const data = new TextEncoder().encode(`${parts[0]}.${parts[1]}`)
+    const sig = parts[2].replace(/-/g, '+').replace(/_/g, '/')
+    const padded = sig + '='.repeat((4 - sig.length % 4) % 4)
+    const signature = Uint8Array.from(atob(padded), c => c.charCodeAt(0))
+
+    return await crypto.subtle.verify('HMAC', key, signature, data)
+  } catch {
+    return false
+  }
+}
+
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // Skip non-admin API routes entirely
@@ -57,10 +84,13 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  // Guard all /api/admin/* routes — return 401 JSON if not authenticated
+  // Guard all /api/admin/* routes
   if (pathname.startsWith('/api/admin/')) {
-    const token = getAccessToken(request)
+    const { token } = getTokenAndCookieName(request)
     if (!token || isTokenExpired(token)) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+    if (!await verifyJwtSignature(token)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
     return NextResponse.next()
@@ -72,8 +102,8 @@ export function middleware(request: NextRequest) {
     const rest = adminMatch[2] ?? ''
     if (rest === '/login' || rest.startsWith('/login/')) return NextResponse.next()
 
-    const token = getAccessToken(request)
-    if (!token || isTokenExpired(token)) {
+    const { token } = getTokenAndCookieName(request)
+    if (!token || isTokenExpired(token) || !await verifyJwtSignature(token)) {
       const slug = adminMatch[1]
       return NextResponse.redirect(new URL(`/${slug}/admin/login`, request.url))
     }

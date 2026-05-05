@@ -254,6 +254,9 @@ function CombinedFormStep({
   pdfUrl,
   signatureRequired,
   activeRules,
+  ruleVisitorTypes,
+  customHints,
+  hintsPdfUrl,
   onConfirm,
   onBack,
 }: {
@@ -264,6 +267,9 @@ function CombinedFormStep({
   pdfUrl: string
   signatureRequired: boolean
   activeRules: string[]
+  ruleVisitorTypes: Record<string, string[]>
+  customHints: string[]
+  hintsPdfUrl: string
   onConfirm: (signatureData: string | null) => void
   onBack: () => void
 }) {
@@ -358,33 +364,53 @@ function CombinedFormStep({
       <div className="bg-white rounded-2xl shadow-sm p-6 max-w-2xl mx-auto w-full mb-4">
         <h2 className="text-3xl font-bold text-slate-900 mb-5">{t.briefing_title}</h2>
 
-        {activeRules.length > 0 && (
-          <div className="flex flex-col gap-2 mb-6">
-            {SAFETY_RULES.filter(r => activeRules.includes(r.id)).map(rule => {
-              return (
+        {(() => {
+          const visibleRules = SAFETY_RULES.filter(r => {
+            if (!activeRules.includes(r.id)) return false
+            const types = ruleVisitorTypes[r.id] ?? ['all']
+            return types.includes('all') || types.includes(visitorType)
+          })
+          return visibleRules.length > 0 ? (
+            <div className="flex flex-col gap-2 mb-6">
+              {visibleRules.map(rule => (
                 <div key={rule.id} className="flex items-center gap-4 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3">
-                  <IsoSign
-                    code={rule.isoCode}
-                    icon={rule.icon}
-                    signType={rule.signType}
-                    size={44}
-                  />
+                  <IsoSign code={rule.isoCode} icon={rule.icon} signType={rule.signType} size={44} />
                   <span className="text-base font-medium text-slate-800">{rule.label[lang]}</span>
                 </div>
-              )
-            })}
-          </div>
-        )}
+              ))}
+            </div>
+          ) : null
+        })()}
 
         {pdfUrl ? (
           <div className="rounded-xl overflow-hidden border border-slate-200 mb-6">
             <iframe src={pdfUrl} className="w-full block" style={{ aspectRatio: '210/297' }} title="Safety Briefing" />
           </div>
-        ) : activeRules.length === 0 ? (
+        ) : activeRules.length === 0 && !hintsPdfUrl && customHints.length === 0 ? (
           <div className="rounded-xl border border-slate-200 bg-slate-50 mb-6 flex items-center justify-center" style={{ height: '20vh' }}>
             <p className="text-slate-400 text-lg">Keine Belehrung hinterlegt.</p>
           </div>
         ) : null}
+
+        {(customHints.length > 0 || hintsPdfUrl) && (
+          <div className="flex flex-col gap-2 mb-6">
+            {customHints.map((hint, i) => (
+              <div key={i} className="flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
+                <IsoSign code="W001" icon="⚠️" signType="warning" size={36} />
+                <span className="text-base text-slate-800">{hint}</span>
+              </div>
+            ))}
+            {hintsPdfUrl && (
+              <a href={hintsPdfUrl} target="_blank" rel="noreferrer"
+                className="flex items-center gap-3 bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 hover:bg-blue-100 transition-colors">
+                <span className="text-blue-600 text-xl shrink-0">📄</span>
+                <span className="text-base font-medium text-blue-700">
+                  {lang === 'de' ? 'Weitere Hinweise öffnen' : 'Open additional notes'}
+                </span>
+              </a>
+            )}
+          </div>
+        )}
 
         <div className="mb-5">
           <div className="flex items-center justify-between mb-2">
@@ -505,6 +531,8 @@ export function KioskClient({ slug }: { slug: string }) {
   const [sunClosed, setSunClosed] = useState(true)
   const [customHints, setCustomHints] = useState<string[]>([])
   const [activeSafetyRules, setActiveSafetyRules] = useState<string[]>([])
+  const [ruleVisitorTypes, setRuleVisitorTypes] = useState<Record<string, string[]>>({})
+  const [hintsPdfUrl, setHintsPdfUrl] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [adminModalOpen, setAdminModalOpen] = useState(false)
@@ -556,6 +584,10 @@ export function KioskClient({ slug }: { slug: string }) {
         if (data.active_safety_rules) {
           try { setActiveSafetyRules(JSON.parse(data.active_safety_rules)) } catch { /* ignore */ }
         }
+        if (data.rule_visitor_types) {
+          try { setRuleVisitorTypes(JSON.parse(data.rule_visitor_types)) } catch { /* ignore */ }
+        }
+        if (data.hints_pdf_url) setHintsPdfUrl(data.hints_pdf_url)
         const urls: Record<string, string> = {}
         for (const key of ['truck', 'visitor', 'service']) {
           if (data[`briefing_pdf_${key}`]) urls[key] = data[`briefing_pdf_${key}`]
@@ -676,7 +708,8 @@ export function KioskClient({ slug }: { slug: string }) {
       {step === 3 && (
         <CombinedFormStep lang={lang} visitorType={visitorType} formData={formData}
           onChange={setFormData} pdfUrl={briefingPdfUrl} signatureRequired={signatureRequired}
-          activeRules={activeSafetyRules}
+          activeRules={activeSafetyRules} ruleVisitorTypes={ruleVisitorTypes}
+          customHints={customHints} hintsPdfUrl={hintsPdfUrl}
           onConfirm={handleBriefingConfirm} onBack={() => setStep(2)} />
       )}
       {step === 5 && <SuccessScreen lang={lang} onReset={handleReset} />}

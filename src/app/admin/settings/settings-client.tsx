@@ -1,12 +1,19 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { Save, BookOpen, Plus, X } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { Save, BookOpen, Plus, X, FileText, Trash2 } from 'lucide-react'
 import { SAFETY_RULES, SAFETY_RULE_CATEGORIES } from '@/lib/safety-rules'
 import { IsoSign } from '@/components/IsoSign'
 
 const inputCls = 'w-full px-4 py-3 rounded-xl border border-slate-200 text-base outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-100'
 const labelCls = 'block text-sm font-semibold text-slate-700 mb-1.5'
+
+const RULE_TYPES = [
+  { key: 'all', label: 'Alle' },
+  { key: 'truck', label: 'LKW' },
+  { key: 'visitor', label: 'Besucher' },
+  { key: 'service', label: 'Service' },
+] as const
 
 interface Settings {
   welcome_title: string
@@ -21,7 +28,9 @@ interface Settings {
   hours_sun: string
   sun_closed: string
   active_safety_rules: string
+  rule_visitor_types: string
   custom_hints: string
+  hints_pdf_url: string
 }
 
 function DayRow({ label, closedKey, hoursKey, settings, setSettings }: {
@@ -67,13 +76,17 @@ export function AdminSettingsClient() {
     hours_sun: '',
     sun_closed: 'true',
     active_safety_rules: '[]',
+    rule_visitor_types: '{}',
     custom_hints: '[]',
+    hints_pdf_url: '',
   })
   const [newHint, setNewHint] = useState('')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [uploadingPdf, setUploadingPdf] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     fetch('/api/admin/settings')
@@ -98,6 +111,50 @@ export function AdminSettingsClient() {
 
   function removeHint(index: number) {
     setSettings(s => ({ ...s, custom_hints: JSON.stringify(getCustomHints().filter((_, i) => i !== index)) }))
+  }
+
+  function getRuleVisitorTypes(): Record<string, string[]> {
+    try { return JSON.parse(settings.rule_visitor_types) as Record<string, string[]> } catch { return {} }
+  }
+
+  function getRuleTypes(ruleId: string): string[] {
+    const map = getRuleVisitorTypes()
+    return map[ruleId] ?? ['all']
+  }
+
+  function toggleRuleType(ruleId: string, type: string) {
+    const map = getRuleVisitorTypes()
+    const current = map[ruleId] ?? ['all']
+    let next: string[]
+    if (type === 'all') {
+      next = ['all']
+    } else {
+      const withoutAll = current.filter(t => t !== 'all')
+      if (withoutAll.includes(type)) {
+        next = withoutAll.filter(t => t !== type)
+        if (next.length === 0) next = ['all']
+      } else {
+        next = [...withoutAll, type]
+      }
+    }
+    setSettings(s => ({ ...s, rule_visitor_types: JSON.stringify({ ...map, [ruleId]: next }) }))
+  }
+
+  async function handlePdfUpload(file: File) {
+    setUploadingPdf(true)
+    const fd = new FormData()
+    fd.append('file', file)
+    const res = await fetch('/api/admin/upload-hints-pdf', { method: 'POST', body: fd })
+    if (res.ok) {
+      const data = await res.json() as { url: string }
+      setSettings(s => ({ ...s, hints_pdf_url: data.url }))
+    }
+    setUploadingPdf(false)
+  }
+
+  async function handlePdfDelete() {
+    await fetch('/api/admin/upload-hints-pdf', { method: 'DELETE' })
+    setSettings(s => ({ ...s, hints_pdf_url: '' }))
   }
 
   async function handleSave() {
@@ -141,6 +198,8 @@ export function AdminSettingsClient() {
   function toggleAllRules() {
     setSettings(s => ({ ...s, active_safety_rules: allSelected ? '[]' : JSON.stringify(allRuleIds) }))
   }
+
+  const hintsPdfUrl = settings.hints_pdf_url
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -230,7 +289,8 @@ export function AdminSettingsClient() {
             </button>
           </div>
         </div>
-        <p className="text-sm text-slate-500 mb-4">Auswählen was gilt — wird automatisch in alle Sprachen übersetzt.</p>
+        <p className="text-sm text-slate-500 mb-1">Auswählen was gilt — wird automatisch in alle Sprachen übersetzt.</p>
+        <p className="text-xs text-slate-400 mb-4">Für aktive Regeln: Typ-Chips auswählen, für welche Besucher die Regel gilt.</p>
         <input
           type="text"
           placeholder="Regeln suchen…"
@@ -254,23 +314,44 @@ export function AdminSettingsClient() {
               <div className="flex flex-col gap-2">
                 {rulesInCat.map(rule => {
                   const isActive = activeRules.includes(rule.id)
+                  const ruleTypes = getRuleTypes(rule.id)
                   function toggle() {
                     const next = isActive ? activeRules.filter(id => id !== rule.id) : [...activeRules, rule.id]
                     setSettings(s => ({ ...s, active_safety_rules: JSON.stringify(next) }))
                   }
                   return (
-                    <label key={rule.id} onClick={toggle} data-rule-label={rule.label.de}
-                      className={`flex items-center gap-4 px-4 py-3 rounded-xl border cursor-pointer transition-colors select-none ${
-                        isActive ? 'bg-blue-50 border-blue-200' : 'border-slate-200 hover:bg-slate-50'
-                      }`}>
-                      <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-colors ${
-                        isActive ? 'bg-blue-600 border-blue-600' : 'border-slate-300'
-                      }`}>
-                        {isActive && <span className="text-white text-xs font-bold">✓</span>}
-                      </div>
-                      <IsoSign code={rule.isoCode} icon={rule.icon} signType={rule.signType} size={36} />
-                      <span className="text-sm font-medium text-slate-800">{rule.label.de}</span>
-                    </label>
+                    <div key={rule.id} data-rule-label={rule.label.de}
+                      className={`rounded-xl border transition-colors ${isActive ? 'bg-blue-50 border-blue-200' : 'border-slate-200 hover:bg-slate-50'}`}>
+                      <label onClick={toggle}
+                        className="flex items-center gap-4 px-4 py-3 cursor-pointer select-none">
+                        <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-colors ${
+                          isActive ? 'bg-blue-600 border-blue-600' : 'border-slate-300'
+                        }`}>
+                          {isActive && <span className="text-white text-xs font-bold">✓</span>}
+                        </div>
+                        <IsoSign code={rule.isoCode} icon={rule.icon} signType={rule.signType} size={36} />
+                        <span className="text-sm font-medium text-slate-800 flex-1">{rule.label.de}</span>
+                      </label>
+                      {isActive && (
+                        <div className="flex items-center gap-1.5 px-4 pb-3">
+                          <span className="text-xs text-slate-400 mr-1">Gilt für:</span>
+                          {RULE_TYPES.map(({ key, label }) => {
+                            const selected = ruleTypes.includes(key)
+                            return (
+                              <button key={key} type="button"
+                                onClick={() => toggleRuleType(rule.id, key)}
+                                className={`text-xs px-2.5 py-0.5 rounded-full border transition-colors ${
+                                  selected
+                                    ? 'bg-blue-600 text-white border-blue-600'
+                                    : 'border-slate-300 text-slate-500 hover:border-blue-400 hover:text-blue-600'
+                                }`}>
+                                {label}
+                              </button>
+                            )
+                          })}
+                        </div>
+                      )}
+                    </div>
                   )
                 })}
               </div>
@@ -283,8 +364,49 @@ export function AdminSettingsClient() {
       <div className="bg-white rounded-2xl border border-slate-100 p-6 mb-6">
         <h2 className="text-lg font-bold text-slate-900 mb-1">Weitere Hinweise</h2>
         <p className="text-sm text-slate-500 mb-5">
-          Individuelle Sicherheitshinweise — werden im Check-in Terminal angezeigt.
+          Individuelle Sicherheitshinweise — werden im Check-in Terminal bei der Belehrung angezeigt.
         </p>
+
+        {/* PDF Upload */}
+        <div className="mb-5">
+          <label className={labelCls}>PDF-Dokument (optional)</label>
+          {hintsPdfUrl ? (
+            <div className="flex items-center gap-3 px-4 py-3 bg-blue-50 border border-blue-200 rounded-xl">
+              <FileText className="w-5 h-5 text-blue-600 shrink-0" />
+              <a href={hintsPdfUrl} target="_blank" rel="noreferrer"
+                className="flex-1 text-sm text-blue-700 font-medium hover:underline truncate">
+                hints.pdf
+              </a>
+              <button type="button" onClick={handlePdfDelete}
+                className="text-slate-400 hover:text-red-500 transition-colors shrink-0">
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
+          ) : (
+            <div
+              onClick={() => fileInputRef.current?.click()}
+              className="flex flex-col items-center justify-center gap-2 px-4 py-6 rounded-xl border-2 border-dashed border-slate-300 hover:border-blue-400 hover:bg-blue-50 cursor-pointer transition-colors">
+              <FileText className="w-6 h-6 text-slate-400" />
+              <span className="text-sm text-slate-500">
+                {uploadingPdf ? 'Wird hochgeladen…' : 'PDF hochladen'}
+              </span>
+              <span className="text-xs text-slate-400">Klicken zum Auswählen</span>
+            </div>
+          )}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="application/pdf"
+            className="hidden"
+            onChange={e => {
+              const file = e.target.files?.[0]
+              if (file) void handlePdfUpload(file)
+              e.target.value = ''
+            }}
+          />
+        </div>
+
+        {/* Text Hints */}
         <div className="flex flex-col gap-2 mb-4">
           {getCustomHints().map((hint, i) => (
             <div key={i} className="flex items-center gap-3 px-4 py-3 bg-slate-50 rounded-xl border border-slate-200">
@@ -296,7 +418,7 @@ export function AdminSettingsClient() {
             </div>
           ))}
           {getCustomHints().length === 0 && (
-            <p className="text-sm text-slate-400 italic">Noch keine Hinweise hinzugefügt.</p>
+            <p className="text-sm text-slate-400 italic">Noch keine Texthinweise hinzugefügt.</p>
           )}
         </div>
         <div className="flex gap-2">
@@ -305,7 +427,7 @@ export function AdminSettingsClient() {
             value={newHint}
             onChange={e => setNewHint(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addHint() } }}
-            placeholder="Neuen Hinweis eingeben…"
+            placeholder="Neuen Texthinweis eingeben…"
             className="flex-1 px-4 py-3 rounded-xl border border-slate-200 text-sm outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-100"
           />
           <button type="button" onClick={addHint} disabled={!newHint.trim()}

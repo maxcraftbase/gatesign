@@ -1,10 +1,22 @@
 import type { Language } from './translations'
 
+export type SignType = 'mandatory' | 'prohibition' | 'warning' | 'emergency' | 'info'
+
 export interface SafetyRule {
   id: string
   icon: string
+  signType: SignType
   category: 'ppe' | 'prohibition' | 'behavior' | 'emergency' | 'vehicle' | 'legal'
   label: Record<Language, string>
+}
+
+// ISO 7010 color system
+export const SIGN_STYLES: Record<SignType, { bg: string; border: string; text: string; shape: string; label: string }> = {
+  mandatory:   { bg: 'bg-blue-600',   border: 'border-blue-700',  text: 'text-white',      shape: 'rounded-full', label: 'Gebot (blau)'       },
+  prohibition: { bg: 'bg-red-600',    border: 'border-red-700',   text: 'text-white',      shape: 'rounded-full', label: 'Verbot (rot)'       },
+  warning:     { bg: 'bg-yellow-400', border: 'border-yellow-500',text: 'text-slate-900',  shape: 'rounded',      label: 'Warnung (gelb)'     },
+  emergency:   { bg: 'bg-green-600',  border: 'border-green-700', text: 'text-white',      shape: 'rounded-sm',   label: 'Rettung (grün)'     },
+  info:        { bg: 'bg-slate-200',  border: 'border-slate-300', text: 'text-slate-700',  shape: 'rounded-sm',   label: 'Info (grau)'        },
 }
 
 export const SAFETY_RULE_CATEGORIES: Record<SafetyRule['category'], Record<Language, string>> = {
@@ -21,6 +33,7 @@ export const SAFETY_RULES: SafetyRule[] = [
   {
     id: 'vest',
     icon: '🦺',
+    signType: 'mandatory',
     category: 'ppe',
     label: {
       de: 'Warnweste und Sicherheitsschuhe tragen',
@@ -38,6 +51,7 @@ export const SAFETY_RULES: SafetyRule[] = [
   {
     id: 'hard_hat',
     icon: '⛑️',
+    signType: 'mandatory',
     category: 'ppe',
     label: {
       de: 'Schutzhelm tragen',
@@ -55,6 +69,7 @@ export const SAFETY_RULES: SafetyRule[] = [
   {
     id: 'safety_glasses',
     icon: '🥽',
+    signType: 'mandatory',
     category: 'ppe',
     label: {
       de: 'Schutzbrille tragen',
@@ -72,6 +87,7 @@ export const SAFETY_RULES: SafetyRule[] = [
   {
     id: 'gloves',
     icon: '🧤',
+    signType: 'mandatory',
     category: 'ppe',
     label: {
       de: 'Schutzhandschuhe tragen',
@@ -89,6 +105,7 @@ export const SAFETY_RULES: SafetyRule[] = [
   {
     id: 'ear_protection',
     icon: '🔇',
+    signType: 'mandatory',
     category: 'ppe',
     label: {
       de: 'Gehörschutz tragen',
@@ -108,6 +125,7 @@ export const SAFETY_RULES: SafetyRule[] = [
   {
     id: 'no_smoking',
     icon: '🚭',
+    signType: 'prohibition',
     category: 'prohibition',
     label: {
       de: 'Rauchen verboten',
@@ -125,6 +143,7 @@ export const SAFETY_RULES: SafetyRule[] = [
   {
     id: 'no_open_fire',
     icon: '🔥',
+    signType: 'prohibition',
     category: 'prohibition',
     label: {
       de: 'Offenes Feuer und Funkenbildung verboten',
@@ -142,6 +161,7 @@ export const SAFETY_RULES: SafetyRule[] = [
   {
     id: 'no_alcohol',
     icon: '🍺',
+    signType: 'prohibition',
     category: 'prohibition',
     label: {
       de: 'Alkohol- und Drogenverbot auf dem Betriebsgelände',
@@ -159,6 +179,7 @@ export const SAFETY_RULES: SafetyRule[] = [
   {
     id: 'no_phone',
     icon: '📵',
+    signType: 'prohibition',
     category: 'prohibition',
     label: {
       de: 'Handynutzung während der Fahrt verboten',
@@ -176,6 +197,7 @@ export const SAFETY_RULES: SafetyRule[] = [
   {
     id: 'no_entry',
     icon: '🚫',
+    signType: 'prohibition',
     category: 'prohibition',
     label: {
       de: 'Lagerhallen und Produktion: Zutritt verboten',
@@ -193,6 +215,7 @@ export const SAFETY_RULES: SafetyRule[] = [
   {
     id: 'no_headphones',
     icon: '🎧',
+    signType: 'prohibition',
     category: 'prohibition',
     label: {
       de: 'Kopfhörer tragen und Fotografieren verboten',
@@ -210,6 +233,7 @@ export const SAFETY_RULES: SafetyRule[] = [
   {
     id: 'no_overnight',
     icon: '🌙',
+    signType: 'prohibition',
     category: 'prohibition',
     label: {
       de: 'Übernachten auf dem Betriebsgelände verboten',
@@ -229,6 +253,7 @@ export const SAFETY_RULES: SafetyRule[] = [
   {
     id: 'forklift',
     icon: '⚠️',
+    signType: 'warning',
     category: 'behavior',
     label: {
       de: 'Achtung Staplerverkehr',
@@ -246,6 +271,7 @@ export const SAFETY_RULES: SafetyRule[] = [
   {
     id: 'stay_vehicle',
     icon: '🚛',
+    signType: 'mandatory',
     category: 'behavior',
     label: {
       de: 'Am Fahrzeug bleiben und Anweisungen beachten',
@@ -263,6 +289,7 @@ export const SAFETY_RULES: SafetyRule[] = [
   {
     id: 'speed_limit',
     icon: '🚶',
+    signType: 'warning',
     category: 'behavior',
     label: {
       de: 'Schrittgeschwindigkeit auf dem Betriebsgelände (5 km/h)',
@@ -280,6 +307,7 @@ export const SAFETY_RULES: SafetyRule[] = [
   {
     id: 'designated_paths',
     icon: '🛤️',
+    signType: 'mandatory',
     category: 'behavior',
     label: {
       de: 'Nur auf ausgewiesenen Wegen und Flächen bewegen',
@@ -297,6 +325,7 @@ export const SAFETY_RULES: SafetyRule[] = [
   {
     id: 'keep_clear',
     icon: '🚧',
+    signType: 'mandatory',
     category: 'behavior',
     label: {
       de: 'Haupteinfahrt freihalten',
@@ -314,6 +343,7 @@ export const SAFETY_RULES: SafetyRule[] = [
   {
     id: 'doors_closed',
     icon: '🚪',
+    signType: 'mandatory',
     category: 'behavior',
     label: {
       de: 'Tore und Türen stets geschlossen halten',
@@ -331,6 +361,7 @@ export const SAFETY_RULES: SafetyRule[] = [
   {
     id: 'cctv',
     icon: '📹',
+    signType: 'info',
     category: 'behavior',
     label: {
       de: 'Videoüberwachung auf dem Betriebsgelände',
@@ -348,6 +379,7 @@ export const SAFETY_RULES: SafetyRule[] = [
   {
     id: 'winter',
     icon: '❄️',
+    signType: 'warning',
     category: 'behavior',
     label: {
       de: 'Bei Schnee/Eisglätte: Räumdienst abwarten',
@@ -365,6 +397,7 @@ export const SAFETY_RULES: SafetyRule[] = [
   {
     id: 'waste',
     icon: '🗑️',
+    signType: 'mandatory',
     category: 'behavior',
     label: {
       de: 'Abfall ordnungsgemäß entsorgen',
@@ -384,6 +417,7 @@ export const SAFETY_RULES: SafetyRule[] = [
   {
     id: 'engine_off',
     icon: '🔑',
+    signType: 'mandatory',
     category: 'vehicle',
     label: {
       de: 'Motor abstellen beim Be- und Entladen',
@@ -401,6 +435,7 @@ export const SAFETY_RULES: SafetyRule[] = [
   {
     id: 'handbrake',
     icon: '🅿️',
+    signType: 'mandatory',
     category: 'vehicle',
     label: {
       de: 'Handbremse anziehen und Fahrzeug sichern',
@@ -418,6 +453,7 @@ export const SAFETY_RULES: SafetyRule[] = [
   {
     id: 'chocks',
     icon: '🔺',
+    signType: 'mandatory',
     category: 'vehicle',
     label: {
       de: 'Unterlegkeile vor und hinter den Rädern verwenden',
@@ -435,6 +471,7 @@ export const SAFETY_RULES: SafetyRule[] = [
   {
     id: 'seatbelt',
     icon: '🔒',
+    signType: 'mandatory',
     category: 'vehicle',
     label: {
       de: 'Sicherheitsgurt anlegen',
@@ -452,6 +489,7 @@ export const SAFETY_RULES: SafetyRule[] = [
   {
     id: 'load_securing',
     icon: '📦',
+    signType: 'mandatory',
     category: 'vehicle',
     label: {
       de: 'Ladungssicherung vor Abfahrt prüfen',
@@ -471,6 +509,7 @@ export const SAFETY_RULES: SafetyRule[] = [
   {
     id: 'emergency_exit',
     icon: '🚨',
+    signType: 'emergency',
     category: 'emergency',
     label: {
       de: 'Notausgänge und Fluchtwege freihalten',
@@ -488,6 +527,7 @@ export const SAFETY_RULES: SafetyRule[] = [
   {
     id: 'first_aid',
     icon: '🩺',
+    signType: 'emergency',
     category: 'emergency',
     label: {
       de: 'Standort des Erste-Hilfe-Kastens kennen',
@@ -505,6 +545,7 @@ export const SAFETY_RULES: SafetyRule[] = [
   {
     id: 'fire_extinguisher',
     icon: '🧯',
+    signType: 'emergency',
     category: 'emergency',
     label: {
       de: 'Standort der Feuerlöscher kennen',
@@ -522,6 +563,7 @@ export const SAFETY_RULES: SafetyRule[] = [
   {
     id: 'report_hazards',
     icon: '📋',
+    signType: 'emergency',
     category: 'emergency',
     label: {
       de: 'Gefahren und Unfälle sofort melden',
@@ -541,6 +583,7 @@ export const SAFETY_RULES: SafetyRule[] = [
   {
     id: 'loading_dock',
     icon: '🏗️',
+    signType: 'mandatory',
     category: 'legal',
     label: {
       de: 'Laderampe nur mit Einweisung durch Personal benutzen (DGUV Vorschrift 70)',
@@ -558,6 +601,7 @@ export const SAFETY_RULES: SafetyRule[] = [
   {
     id: 'adr_hazmat',
     icon: '☢️',
+    signType: 'warning',
     category: 'legal',
     label: {
       de: 'Gefahrgut-Kennzeichnung (ADR) beachten und Begleitpapiere bereithalten',
@@ -575,6 +619,7 @@ export const SAFETY_RULES: SafetyRule[] = [
   {
     id: 'no_pressure_vessels',
     icon: '⚗️',
+    signType: 'prohibition',
     category: 'legal',
     label: {
       de: 'Druckbehälter und Gasflaschen nur mit Genehmigung auf das Gelände (BetrSichV)',
@@ -592,6 +637,7 @@ export const SAFETY_RULES: SafetyRule[] = [
   {
     id: 'legal_instruction',
     icon: '⚖️',
+    signType: 'info',
     category: 'legal',
     label: {
       de: 'Diese Unterweisung gilt als Sicherheitsunterweisung gemäß §12 ArbSchG',

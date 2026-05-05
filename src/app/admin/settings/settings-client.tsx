@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Save, ChevronDown, ChevronUp, Upload, FileText, Loader2, CheckCircle2, ExternalLink, Trash2 } from 'lucide-react'
 import { LANGUAGES, VISITOR_TYPES } from '@/lib/translations'
-import { SAFETY_RULES, SAFETY_RULE_CATEGORIES } from '@/lib/safety-rules'
+import { SAFETY_RULES, SAFETY_RULE_CATEGORIES, SIGN_STYLES } from '@/lib/safety-rules'
 
 interface Settings {
   welcome_title: string
@@ -403,7 +403,9 @@ export function AdminSettingsClient() {
                       }`}>
                         {active && <span className="text-white text-xs font-bold">✓</span>}
                       </div>
-                      <span className="text-2xl">{rule.icon}</span>
+                      <div className={`w-9 h-9 flex items-center justify-center text-lg shrink-0 ${SIGN_STYLES[rule.signType].bg} ${SIGN_STYLES[rule.signType].shape}`}>
+                        {rule.icon}
+                      </div>
                       <span className="text-sm font-medium text-slate-800">{rule.label.de}</span>
                     </label>
                   )

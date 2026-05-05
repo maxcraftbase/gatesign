@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Save, ChevronDown, ChevronUp, Upload, FileText, Loader2, CheckCircle2, ExternalLink, Trash2 } from 'lucide-react'
 import { LANGUAGES, VISITOR_TYPES } from '@/lib/translations'
+import { SAFETY_RULES } from '@/lib/safety-rules'
 
 interface Settings {
   welcome_title: string
@@ -10,6 +11,12 @@ interface Settings {
   signature_required: string
   site_info: string
   briefing_version: string
+  hours_weekday: string
+  hours_fri: string
+  fri_closed: string
+  show_hint_refnr: string
+  show_hint_docs: string
+  active_safety_rules: string
 }
 
 interface Briefing {
@@ -32,6 +39,12 @@ export function AdminSettingsClient() {
     signature_required: 'false',
     site_info: '',
     briefing_version: '1.0',
+    hours_weekday: '',
+    hours_fri: '',
+    fri_closed: 'true',
+    show_hint_refnr: 'false',
+    show_hint_docs: 'false',
+    active_safety_rules: '[]',
   })
   const [briefings, setBriefings] = useState<Briefing[]>([])
   const [loading, setLoading] = useState(true)
@@ -257,6 +270,118 @@ export function AdminSettingsClient() {
               <span className="text-sm font-medium text-slate-700">Unterschrift erforderlich</span>
             </label>
           </div>
+        </div>
+      </div>
+
+      {/* Operating hours & hints */}
+      <div className="bg-white rounded-2xl border border-slate-100 p-6 mb-6">
+        <h2 className="text-lg font-bold text-slate-900 mb-1">Betriebszeiten & Hinweise</h2>
+        <p className="text-sm text-slate-500 mb-5">
+          Wird im Kiosk unter der Besuchertypauswahl angezeigt — automatisch in alle Sprachen übersetzt.
+        </p>
+        <div className="flex flex-col gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className={labelCls}>Mo – Do (Zeiten)</label>
+              <input
+                className={inputCls}
+                value={settings.hours_weekday}
+                onChange={e => setSettings(s => ({ ...s, hours_weekday: e.target.value }))}
+                placeholder="z.B. 8:00 – 14:30 Uhr"
+              />
+              <p className="text-xs text-slate-400 mt-1">Leer lassen = nicht anzeigen</p>
+            </div>
+            <div>
+              <label className={labelCls}>Freitag</label>
+              <label className="flex items-center gap-3 cursor-pointer mb-2">
+                <div
+                  onClick={() => setSettings(s => ({ ...s, fri_closed: s.fri_closed === 'true' ? 'false' : 'true' }))}
+                  className={`w-12 h-6 rounded-full transition-colors cursor-pointer flex items-center px-1 shrink-0 ${
+                    settings.fri_closed === 'true' ? 'bg-red-500' : 'bg-slate-300'
+                  }`}
+                >
+                  <div className={`w-4 h-4 bg-white rounded-full shadow transition-transform ${
+                    settings.fri_closed === 'true' ? 'translate-x-6' : 'translate-x-0'
+                  }`} />
+                </div>
+                <span className="text-sm font-medium text-slate-700">Geschlossen</span>
+              </label>
+              {settings.fri_closed !== 'true' && (
+                <input
+                  className={inputCls}
+                  value={settings.hours_fri}
+                  onChange={e => setSettings(s => ({ ...s, hours_fri: e.target.value }))}
+                  placeholder="z.B. 8:00 – 12:00 Uhr"
+                />
+              )}
+            </div>
+          </div>
+          <div className="flex flex-col gap-3 pt-1">
+            <label className="flex items-center gap-3 cursor-pointer">
+              <div
+                onClick={() => setSettings(s => ({ ...s, show_hint_refnr: s.show_hint_refnr === 'true' ? 'false' : 'true' }))}
+                className={`w-12 h-6 rounded-full transition-colors cursor-pointer flex items-center px-1 shrink-0 ${
+                  settings.show_hint_refnr === 'true' ? 'bg-blue-600' : 'bg-slate-300'
+                }`}
+              >
+                <div className={`w-4 h-4 bg-white rounded-full shadow transition-transform ${
+                  settings.show_hint_refnr === 'true' ? 'translate-x-6' : 'translate-x-0'
+                }`} />
+              </div>
+              <span className="text-sm font-medium text-slate-700">⚠️ &quot;Referenznummer bereit halten&quot; anzeigen</span>
+            </label>
+            <label className="flex items-center gap-3 cursor-pointer">
+              <div
+                onClick={() => setSettings(s => ({ ...s, show_hint_docs: s.show_hint_docs === 'true' ? 'false' : 'true' }))}
+                className={`w-12 h-6 rounded-full transition-colors cursor-pointer flex items-center px-1 shrink-0 ${
+                  settings.show_hint_docs === 'true' ? 'bg-blue-600' : 'bg-slate-300'
+                }`}
+              >
+                <div className={`w-4 h-4 bg-white rounded-full shadow transition-transform ${
+                  settings.show_hint_docs === 'true' ? 'translate-x-6' : 'translate-x-0'
+                }`} />
+              </div>
+              <span className="text-sm font-medium text-slate-700">📄 &quot;Fahrzeugpapiere bereit halten&quot; anzeigen</span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      {/* Safety rules library */}
+      <div className="bg-white rounded-2xl border border-slate-100 p-6 mb-6">
+        <h2 className="text-lg font-bold text-slate-900 mb-1">Sicherheitsregeln</h2>
+        <p className="text-sm text-slate-500 mb-5">
+          Auswählen was gilt — wird automatisch in alle Sprachen übersetzt und im Kiosk angezeigt.
+        </p>
+        <div className="flex flex-col gap-2">
+          {SAFETY_RULES.map(rule => {
+            const active = (() => {
+              try { return (JSON.parse(settings.active_safety_rules) as string[]).includes(rule.id) }
+              catch { return false }
+            })()
+            function toggle() {
+              const current: string[] = (() => {
+                try { return JSON.parse(settings.active_safety_rules) as string[] }
+                catch { return [] }
+              })()
+              const next = active ? current.filter(id => id !== rule.id) : [...current, rule.id]
+              setSettings(s => ({ ...s, active_safety_rules: JSON.stringify(next) }))
+            }
+            return (
+              <label key={rule.id} onClick={toggle}
+                className={`flex items-center gap-4 px-4 py-3 rounded-xl border cursor-pointer transition-colors select-none ${
+                  active ? 'bg-blue-50 border-blue-200' : 'border-slate-200 hover:bg-slate-50'
+                }`}>
+                <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-colors ${
+                  active ? 'bg-blue-600 border-blue-600' : 'border-slate-300'
+                }`}>
+                  {active && <span className="text-white text-xs font-bold">✓</span>}
+                </div>
+                <span className="text-2xl">{rule.icon}</span>
+                <span className="text-sm font-medium text-slate-800">{rule.label.de}</span>
+              </label>
+            )
+          })}
         </div>
       </div>
 

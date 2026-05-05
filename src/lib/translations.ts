@@ -61,6 +61,11 @@ export const translations: Record<Language, {
   required_fields: string
   loading: string
   error_generic: string
+  info_weekdays: string
+  info_friday: string
+  info_closed: string
+  info_hint_refnr: string
+  info_hint_docs: string
 }> = {
   de: {
     step_language: 'Sprache',
@@ -102,6 +107,11 @@ export const translations: Record<Language, {
     required_fields: 'Bitte füllen Sie alle Pflichtfelder aus.',
     loading: 'Bitte warten…',
     error_generic: 'Fehler. Bitte erneut versuchen.',
+    info_weekdays: 'Mo – Do',
+    info_friday: 'Fr',
+    info_closed: 'Geschlossen',
+    info_hint_refnr: 'Referenznummer bereit halten',
+    info_hint_docs: 'Fahrzeugpapiere bereit halten',
   },
   en: {
     step_language: 'Language',
@@ -143,6 +153,11 @@ export const translations: Record<Language, {
     required_fields: 'Please fill in all required fields.',
     loading: 'Please wait…',
     error_generic: 'Error. Please try again.',
+    info_weekdays: 'Mon – Thu',
+    info_friday: 'Fri',
+    info_closed: 'Closed',
+    info_hint_refnr: 'Keep reference number ready',
+    info_hint_docs: 'Keep vehicle documents ready',
   },
   pl: {
     step_language: 'Język',
@@ -184,6 +199,11 @@ export const translations: Record<Language, {
     required_fields: 'Proszę wypełnić wszystkie wymagane pola.',
     loading: 'Proszę czekać…',
     error_generic: 'Błąd. Spróbuj ponownie.',
+    info_weekdays: 'Pon – Czw',
+    info_friday: 'Pt',
+    info_closed: 'Zamknięte',
+    info_hint_refnr: 'Przygotuj numer referencyjny',
+    info_hint_docs: 'Przygotuj dokumenty pojazdu',
   },
   ro: {
     step_language: 'Limbă',
@@ -225,6 +245,11 @@ export const translations: Record<Language, {
     required_fields: 'Vă rugăm să completați toate câmpurile obligatorii.',
     loading: 'Vă rugăm să așteptați…',
     error_generic: 'Eroare. Vă rugăm să încercați din nou.',
+    info_weekdays: 'Lun – Joi',
+    info_friday: 'Vin',
+    info_closed: 'Închis',
+    info_hint_refnr: 'Pregătiți numărul de referință',
+    info_hint_docs: 'Pregătiți documentele vehiculului',
   },
   cs: {
     step_language: 'Jazyk',
@@ -266,6 +291,11 @@ export const translations: Record<Language, {
     required_fields: 'Prosím vyplňte všechna povinná pole.',
     loading: 'Prosím čekejte…',
     error_generic: 'Chyba. Prosím zkuste znovu.',
+    info_weekdays: 'Po – Čt',
+    info_friday: 'Pá',
+    info_closed: 'Zavřeno',
+    info_hint_refnr: 'Připravte referenční číslo',
+    info_hint_docs: 'Připravte doklady vozidla',
   },
   hu: {
     step_language: 'Nyelv',
@@ -307,6 +337,11 @@ export const translations: Record<Language, {
     required_fields: 'Kérjük, töltse ki az összes kötelező mezőt.',
     loading: 'Kérjük, várjon…',
     error_generic: 'Hiba. Kérjük, próbálja újra.',
+    info_weekdays: 'H – Cs',
+    info_friday: 'P',
+    info_closed: 'Zárva',
+    info_hint_refnr: 'Tartsa kész a referenciaszámot',
+    info_hint_docs: 'Tartsa kész a járműdokumentumokat',
   },
   bg: {
     step_language: 'Език',
@@ -348,6 +383,11 @@ export const translations: Record<Language, {
     required_fields: 'Моля, попълнете всички задължителни полета.',
     loading: 'Моля, изчакайте…',
     error_generic: 'Грешка. Моля, опитайте отново.',
+    info_weekdays: 'Пн – Чт',
+    info_friday: 'Пт',
+    info_closed: 'Затворено',
+    info_hint_refnr: 'Пригответе референтния номер',
+    info_hint_docs: 'Пригответе документите на МПС',
   },
   uk: {
     step_language: 'Мова',
@@ -389,6 +429,11 @@ export const translations: Record<Language, {
     required_fields: "Будь ласка, заповніть всі обов'язкові поля.",
     loading: 'Будь ласка, зачекайте…',
     error_generic: 'Помилка. Будь ласка, спробуйте ще раз.',
+    info_weekdays: 'Пн – Чт',
+    info_friday: 'Пт',
+    info_closed: 'Зачинено',
+    info_hint_refnr: 'Тримайте референс-номер напоготові',
+    info_hint_docs: 'Тримайте документи авто напоготові',
   },
   ru: {
     step_language: 'Язык',
@@ -430,6 +475,11 @@ export const translations: Record<Language, {
     required_fields: 'Пожалуйста, заполните все обязательные поля.',
     loading: 'Пожалуйста, подождите…',
     error_generic: 'Ошибка. Пожалуйста, попробуйте ещё раз.',
+    info_weekdays: 'Пн – Чт',
+    info_friday: 'Пт',
+    info_closed: 'Закрыто',
+    info_hint_refnr: 'Держите референс-номер наготове',
+    info_hint_docs: 'Держите документы на авто наготове',
   },
   tr: {
     step_language: 'Dil',
@@ -471,5 +521,10 @@ export const translations: Record<Language, {
     required_fields: 'Lütfen tüm zorunlu alanları doldurun.',
     loading: 'Lütfen bekleyin…',
     error_generic: 'Hata. Lütfen tekrar deneyin.',
+    info_weekdays: 'Pzt – Per',
+    info_friday: 'Cum',
+    info_closed: 'Kapalı',
+    info_hint_refnr: 'Referans numarasını hazır bulundurun',
+    info_hint_docs: 'Araç belgelerini hazır bulundurun',
   },
 }

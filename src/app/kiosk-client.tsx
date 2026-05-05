@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { CheckCircle, Lock } from 'lucide-react'
 import { translations, LANGUAGES, VISITOR_TYPES, type Language, type VisitorType } from '@/lib/translations'
+import { SAFETY_RULES } from '@/lib/safety-rules'
 import { SignaturePad, type SignaturePadHandle } from '@/components/kiosk/SignaturePad'
 
 // ─── Simple markdown renderer (no external dependency) ───────────────────────
@@ -150,8 +151,23 @@ function ProgressBar({ step, lang }: { step: number; lang: Language }) {
 }
 
 // ─── Step 2: Visitor type select ──────────────────────────────────────────────
-function VisitorTypeSelect({ lang, onSelect, onBack }: { lang: Language; onSelect: (t: VisitorType) => void; onBack: () => void }) {
+interface InfoPanelProps {
+  hoursWeekday: string
+  hoursFri: string
+  friClosed: boolean
+  showHintRefnr: boolean
+  showHintDocs: boolean
+}
+
+function VisitorTypeSelect({ lang, onSelect, onBack, info }: {
+  lang: Language
+  onSelect: (t: VisitorType) => void
+  onBack: () => void
+  info: InfoPanelProps
+}) {
   const t = translations[lang]
+  const hasInfo = info.hoursWeekday || info.showHintRefnr || info.showHintDocs
+
   return (
     <div className="flex flex-col flex-1 px-6 py-4">
       <h2 className="text-3xl font-bold text-slate-900 text-center mb-8">{t.choose_type}</h2>
@@ -167,7 +183,31 @@ function VisitorTypeSelect({ lang, onSelect, onBack }: { lang: Language; onSelec
           </button>
         ))}
       </div>
-      <div className="mt-6 max-w-3xl mx-auto w-full flex justify-center">
+
+      {hasInfo && (
+        <div className="mt-6 max-w-3xl mx-auto w-full bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 flex flex-col gap-2">
+          {info.hoursWeekday && (
+            <div className="flex flex-wrap gap-x-6 gap-y-1 text-base text-slate-700">
+              <span>
+                <span className="font-semibold">📅 {t.info_weekdays}:</span>{' '}
+                {info.hoursWeekday}
+              </span>
+              <span>
+                <span className="font-semibold">{t.info_friday}:</span>{' '}
+                {info.friClosed ? t.info_closed : info.hoursFri}
+              </span>
+            </div>
+          )}
+          {info.showHintRefnr && (
+            <p className="text-base text-slate-700">⚠️ {t.info_hint_refnr}</p>
+          )}
+          {info.showHintDocs && (
+            <p className="text-base text-slate-700">📄 {t.info_hint_docs}</p>
+          )}
+        </div>
+      )}
+
+      <div className="mt-4 max-w-3xl mx-auto w-full flex justify-center">
         <button onClick={onBack}
           className="w-full sm:w-auto px-8 py-4 text-xl font-semibold rounded-2xl bg-slate-100 hover:bg-slate-200 active:scale-95 text-slate-900 transition-all">
           {t.btn_back}
@@ -250,6 +290,7 @@ function CombinedFormStep({
   onChange,
   pdfUrl,
   signatureRequired,
+  activeRules,
   onConfirm,
   onBack,
 }: {
@@ -259,6 +300,7 @@ function CombinedFormStep({
   onChange: (f: FormData) => void
   pdfUrl: string
   signatureRequired: boolean
+  activeRules: string[]
   onConfirm: (signatureData: string | null) => void
   onBack: () => void
 }) {
@@ -353,15 +395,26 @@ function CombinedFormStep({
       <div className="bg-white rounded-2xl shadow-sm p-6 max-w-2xl mx-auto w-full mb-4">
         <h2 className="text-3xl font-bold text-slate-900 mb-5">{t.briefing_title}</h2>
 
+        {activeRules.length > 0 && (
+          <div className="flex flex-col gap-2 mb-6">
+            {SAFETY_RULES.filter(r => activeRules.includes(r.id)).map(rule => (
+              <div key={rule.id} className="flex items-center gap-4 bg-amber-50 border border-amber-200 rounded-xl px-5 py-3">
+                <span className="text-2xl shrink-0">{rule.icon}</span>
+                <span className="text-base font-medium text-slate-800">{rule.label[lang]}</span>
+              </div>
+            ))}
+          </div>
+        )}
+
         {pdfUrl ? (
           <div className="rounded-xl overflow-hidden border border-slate-200 mb-6">
             <iframe src={pdfUrl} className="w-full block" style={{ aspectRatio: '210/297' }} title="Safety Briefing" />
           </div>
-        ) : (
+        ) : activeRules.length === 0 ? (
           <div className="rounded-xl border border-slate-200 bg-slate-50 mb-6 flex items-center justify-center" style={{ height: '20vh' }}>
             <p className="text-slate-400 text-lg">Keine Belehrung hinterlegt.</p>
           </div>
-        )}
+        ) : null}
 
         <div className="mb-5">
           <div className="flex items-center justify-between mb-2">
@@ -472,6 +525,12 @@ export function KioskClient({ slug }: { slug: string }) {
   const [pdfUrls, setPdfUrls] = useState<Record<string, string>>({})
   const [welcomeTitle, setWelcomeTitle] = useState('Willkommen / Welcome')
   const [welcomeSubtitle, setWelcomeSubtitle] = useState('Bitte melden Sie sich hier an — Please register here')
+  const [hoursWeekday, setHoursWeekday] = useState('')
+  const [hoursFri, setHoursFri] = useState('')
+  const [friClosed, setFriClosed] = useState(true)
+  const [showHintRefnr, setShowHintRefnr] = useState(false)
+  const [showHintDocs, setShowHintDocs] = useState(false)
+  const [activeSafetyRules, setActiveSafetyRules] = useState<string[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [adminModalOpen, setAdminModalOpen] = useState(false)
@@ -509,6 +568,14 @@ export function KioskClient({ slug }: { slug: string }) {
         if (data.welcome_subtitle) setWelcomeSubtitle(data.welcome_subtitle)
         if (data.briefing_version) setBriefingVersion(data.briefing_version)
         if (data.signature_required) setSignatureRequired(data.signature_required === 'true')
+        if (data.hours_weekday) setHoursWeekday(data.hours_weekday)
+        if (data.hours_fri) setHoursFri(data.hours_fri)
+        if (data.fri_closed !== undefined) setFriClosed(data.fri_closed !== 'false')
+        if (data.show_hint_refnr) setShowHintRefnr(data.show_hint_refnr === 'true')
+        if (data.show_hint_docs) setShowHintDocs(data.show_hint_docs === 'true')
+        if (data.active_safety_rules) {
+          try { setActiveSafetyRules(JSON.parse(data.active_safety_rules)) } catch { /* ignore */ }
+        }
         const urls: Record<string, string> = {}
         for (const key of ['truck', 'visitor', 'service']) {
           if (data[`briefing_pdf_${key}`]) urls[key] = data[`briefing_pdf_${key}`]
@@ -618,10 +685,18 @@ export function KioskClient({ slug }: { slug: string }) {
 
       {step === 0 && <WelcomeScreen title={welcomeTitle} subtitle={welcomeSubtitle} onStart={() => setStep(1)} />}
       {step === 1 && <LanguageSelect onSelect={handleLanguageSelect} onBack={() => setStep(0)} />}
-      {step === 2 && <VisitorTypeSelect lang={lang} onSelect={handleVisitorTypeSelect} onBack={() => setStep(1)} />}
+      {step === 2 && (
+        <VisitorTypeSelect
+          lang={lang}
+          onSelect={handleVisitorTypeSelect}
+          onBack={() => setStep(1)}
+          info={{ hoursWeekday, hoursFri, friClosed, showHintRefnr, showHintDocs }}
+        />
+      )}
       {step === 3 && (
         <CombinedFormStep lang={lang} visitorType={visitorType} formData={formData}
           onChange={setFormData} pdfUrl={briefingPdfUrl} signatureRequired={signatureRequired}
+          activeRules={activeSafetyRules}
           onConfirm={handleBriefingConfirm} onBack={() => setStep(2)} />
       )}
       {step === 5 && <SuccessScreen lang={lang} onReset={handleReset} />}

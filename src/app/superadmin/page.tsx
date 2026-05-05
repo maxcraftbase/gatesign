@@ -85,16 +85,22 @@ export default function SuperadminPage() {
 
   async function handleImpersonate(company: Company) {
     setImpersonating(company.id)
-    const res = await fetch('/api/superadmin/impersonate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ companySlug: company.slug }),
-    })
-    if (res.ok) {
-      const data = await res.json() as { adminUrl: string }
-      window.open(data.adminUrl, '_blank')
+    const newTab = window.open('', '_blank')
+    try {
+      const res = await fetch('/api/superadmin/impersonate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ companySlug: company.slug }),
+      })
+      if (res.ok) {
+        const data = await res.json() as { adminUrl: string }
+        if (newTab) newTab.location.href = data.adminUrl
+      } else {
+        newTab?.close()
+      }
+    } finally {
+      setImpersonating(null)
     }
-    setImpersonating(null)
   }
 
   async function toggleStatus(company: Company) {

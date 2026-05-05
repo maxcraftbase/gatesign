@@ -32,6 +32,7 @@ interface Settings {
   active_safety_rules: string
   rule_visitor_types: string
   custom_hints: string
+  custom_hints_types: string
   hints_pdf_url: string
 }
 
@@ -82,6 +83,7 @@ export function AdminSettingsClient() {
     active_safety_rules: '[]',
     rule_visitor_types: '{}',
     custom_hints: '[]',
+    custom_hints_types: '[]',
     hints_pdf_url: '',
   })
   const [newHint, setNewHint] = useState('')
@@ -118,15 +120,48 @@ export function AdminSettingsClient() {
     try { return JSON.parse(settings.custom_hints) as string[] } catch { return [] }
   }
 
+  function getCustomHintsTypes(): string[][] {
+    try { return JSON.parse(settings.custom_hints_types) as string[][] } catch { return [] }
+  }
+
   function addHint() {
     const trimmed = newHint.trim()
     if (!trimmed) return
-    setSettings(s => ({ ...s, custom_hints: JSON.stringify([...getCustomHints(), trimmed]) }))
+    setSettings(s => ({
+      ...s,
+      custom_hints: JSON.stringify([...getCustomHints(), trimmed]),
+      custom_hints_types: JSON.stringify([...getCustomHintsTypes(), ['all']]),
+    }))
     setNewHint('')
   }
 
   function removeHint(index: number) {
-    setSettings(s => ({ ...s, custom_hints: JSON.stringify(getCustomHints().filter((_, i) => i !== index)) }))
+    setSettings(s => ({
+      ...s,
+      custom_hints: JSON.stringify(getCustomHints().filter((_, i) => i !== index)),
+      custom_hints_types: JSON.stringify(getCustomHintsTypes().filter((_, i) => i !== index)),
+    }))
+  }
+
+  function toggleHintType(index: number, type: string) {
+    const types = getCustomHintsTypes()
+    const current = types[index] ?? ['all']
+    let next: string[]
+    if (type === 'all') {
+      next = ['all']
+    } else {
+      const withoutAll = current.filter(t => t !== 'all')
+      if (withoutAll.includes(type)) {
+        next = withoutAll.filter(t => t !== type)
+        if (next.length === 0) next = ['all']
+      } else {
+        next = [...withoutAll, type]
+      }
+    }
+    const newTypes = [...types]
+    while (newTypes.length <= index) newTypes.push(['all'])
+    newTypes[index] = next
+    setSettings(s => ({ ...s, custom_hints_types: JSON.stringify(newTypes) }))
   }
 
   function getRuleVisitorTypes(): Record<string, string[]> {
@@ -492,7 +527,7 @@ export function AdminSettingsClient() {
             return (
               <div key={i} className="rounded-xl border border-slate-200 overflow-hidden">
                 <div className="flex items-center gap-3 px-4 py-3 bg-slate-50">
-                  <span className="flex-1 text-sm text-slate-800">{hint}</span>
+                  <span className="flex-1 text-sm text-slate-800 min-w-0">{hint}</span>
                   {hasTranslation && (
                     <button type="button"
                       onClick={() => setExpandedHint(isExpanded ? null : i)}
@@ -505,6 +540,25 @@ export function AdminSettingsClient() {
                     className="text-slate-400 hover:text-red-500 transition-colors shrink-0">
                     <X className="w-4 h-4" />
                   </button>
+                </div>
+                <div className="flex items-center gap-1.5 px-4 pb-2.5 border-b border-slate-100">
+                  <span className="text-xs text-slate-400 mr-1">Gilt für:</span>
+                  {RULE_TYPES.map(({ key, label }) => {
+                    const hintTypesArr = getCustomHintsTypes()
+                    const currentTypes = hintTypesArr[i] ?? ['all']
+                    const selected = currentTypes.includes(key)
+                    return (
+                      <button key={key} type="button"
+                        onClick={() => toggleHintType(i, key)}
+                        className={`text-xs px-2.5 py-0.5 rounded-full border transition-colors ${
+                          selected
+                            ? 'bg-blue-600 text-white border-blue-600'
+                            : 'border-slate-300 text-slate-500 hover:border-blue-400 hover:text-blue-600'
+                        }`}>
+                        {label}
+                      </button>
+                    )
+                  })}
                 </div>
                 {isExpanded && (
                   <div className="border-t border-slate-200 px-4 py-3 grid grid-cols-2 gap-x-6 gap-y-1.5 bg-white">

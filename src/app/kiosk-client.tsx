@@ -85,25 +85,28 @@ function AdminLoginModal({ onClose, onSuccess }: { onClose: () => void; onSucces
 // ─── Progress bar ─────────────────────────────────────────────────────────────
 function ProgressBar({ step, lang }: { step: number; lang: Language }) {
   const t = translations[lang]
-  // Map internal steps (1-5) to 4 visible progress steps
   const progressStep = step <= 1 ? 1 : step === 2 ? 2 : step === 3 ? 3 : 4
   const steps = [t.step_language, t.step_type, t.step_form, t.step_success]
   return (
-    <div className="flex items-center gap-1 px-4 py-3">
+    <div className="flex items-center px-1 py-2">
       {steps.map((label, i) => (
-        <div key={i} className="flex items-center gap-1 flex-1">
-          <div className={`flex items-center gap-1.5 ${i + 1 <= progressStep ? 'opacity-100' : 'opacity-40'}`}>
-            <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0 transition-colors ${
+        <div key={i} className="flex items-center flex-1 min-w-0">
+          <div className="flex flex-col items-center gap-0.5 shrink-0">
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all ${
               i + 1 < progressStep ? 'bg-emerald-500 text-white' :
-              i + 1 === progressStep ? 'bg-blue-600 text-white' :
-              'bg-slate-200 text-slate-400'
+              i + 1 === progressStep ? 'bg-blue-600 text-white ring-4 ring-blue-100' :
+              'bg-slate-100 text-slate-400'
             }`}>
               {i + 1 < progressStep ? '✓' : i + 1}
             </div>
-            <span className="text-xs font-medium text-slate-500 hidden md:block">{label}</span>
+            <span className={`text-xs font-medium whitespace-nowrap hidden sm:block transition-colors ${
+              i + 1 === progressStep ? 'text-blue-600' :
+              i + 1 < progressStep ? 'text-emerald-600' :
+              'text-slate-400'
+            }`}>{label}</span>
           </div>
           {i < steps.length - 1 && (
-            <div className={`h-0.5 flex-1 mx-1 rounded transition-colors ${i + 1 < progressStep ? 'bg-emerald-500' : 'bg-slate-200'}`} />
+            <div className={`h-0.5 flex-1 mx-2 mt-[-10px] rounded-full transition-colors ${i + 1 < progressStep ? 'bg-emerald-400' : 'bg-slate-200'}`} />
           )}
         </div>
       ))}
@@ -140,9 +143,8 @@ const TYPE_ICONS: Record<string, React.ReactNode> = {
     </svg>
   ),
   service: (
-    <svg viewBox="0 0 64 64" fill="none" className="w-14 h-14" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-      <path d="M42 10a14 14 0 0 1 0 20L20 52a6 6 0 0 1-8-8L34 22A14 14 0 0 1 42 10z" className="stroke-slate-700" fill="none"/>
-      <circle cx="16" cy="48" r="3" className="stroke-slate-700 fill-slate-700"/>
+    <svg viewBox="0 0 24 24" fill="none" className="w-14 h-14" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" stroke="#334155"/>
     </svg>
   ),
 }
@@ -211,20 +213,20 @@ function WelcomeScreen({
     <div className="flex flex-col items-center justify-center flex-1 gap-10 px-8">
       <div className="text-center flex flex-col items-center">
         {logoUrl && (
-          <div className="mb-6 flex items-center justify-center">
+          <div className="mb-4 flex items-center justify-center">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={logoUrl} alt="Logo" className="max-h-24 max-w-xs object-contain drop-shadow-sm" />
+            <img src={logoUrl} alt="Logo" className="max-h-16 max-w-xs object-contain drop-shadow-sm" />
           </div>
         )}
-        {companyName && !logoUrl && (
-          <p className="text-xl font-semibold text-blue-600 mb-3 tracking-wide">{companyName}</p>
+        {companyName && (
+          <p className="text-xl font-semibold text-slate-600 mb-3 tracking-wide">{companyName}</p>
         )}
         <h1 className="text-5xl font-bold text-slate-900 mb-4 leading-tight">{title}</h1>
         <p className="text-2xl text-slate-500">{subtitle}</p>
       </div>
       <button
         onClick={onStart}
-        className="bg-blue-600 hover:bg-blue-500 active:scale-95 transition-all text-white text-3xl font-bold px-16 py-6 rounded-2xl shadow-lg"
+        className="bg-slate-100 hover:bg-slate-200 active:scale-95 transition-all text-slate-900 text-3xl font-bold px-16 py-6 rounded-2xl shadow-sm"
       >
         Check-in starten
       </button>
@@ -282,6 +284,7 @@ function CombinedFormStep({
   activeRules,
   ruleVisitorTypes,
   customHints,
+  hintTypes,
   hintsPdfUrl,
   onConfirm,
   onBack,
@@ -295,6 +298,7 @@ function CombinedFormStep({
   activeRules: string[]
   ruleVisitorTypes: Record<string, string[]>
   customHints: string[]
+  hintTypes: string[][]
   hintsPdfUrl: string
   onConfirm: (signatureData: string | null) => void
   onBack: () => void
@@ -420,12 +424,16 @@ function CombinedFormStep({
 
         {(customHints.length > 0 || hintsPdfUrl) && (
           <div className="flex flex-col gap-2 mb-6">
-            {customHints.map((hint, i) => (
-              <div key={i} className="flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
-                <IsoSign code="W001" icon="⚠️" signType="warning" size={36} />
-                <span className="text-base text-slate-800">{hint}</span>
-              </div>
-            ))}
+            {customHints.map((hint, i) => {
+              const types = hintTypes[i] ?? ['all']
+              if (!types.includes('all') && !types.includes(visitorType)) return null
+              return (
+                <div key={i} className="flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3">
+                  <IsoSign code="W001" icon="⚠️" signType="warning" size={36} />
+                  <span className="text-base text-slate-800">{hint}</span>
+                </div>
+              )
+            })}
             {hintsPdfUrl && (
               <div className="rounded-xl overflow-hidden border border-slate-200">
                 <iframe src={hintsPdfUrl} className="w-full block" style={{ aspectRatio: '210/297' }} title="Weitere Hinweise" />
@@ -554,6 +562,7 @@ export function KioskClient({ slug }: { slug: string }) {
   const [sunClosed, setSunClosed] = useState(true)
   const [customHints, setCustomHints] = useState<string[]>([])
   const [customHintsTranslations, setCustomHintsTranslations] = useState<Record<string, string[]>>({})
+  const [customHintsTypes, setCustomHintsTypes] = useState<string[][]>([])
   const [activeSafetyRules, setActiveSafetyRules] = useState<string[]>([])
   const [ruleVisitorTypes, setRuleVisitorTypes] = useState<Record<string, string[]>>({})
   const [hintsPdfUrl, setHintsPdfUrl] = useState('')
@@ -608,6 +617,9 @@ export function KioskClient({ slug }: { slug: string }) {
         }
         if (data.custom_hints_translations) {
           try { setCustomHintsTranslations(JSON.parse(data.custom_hints_translations)) } catch { /* ignore */ }
+        }
+        if (data.custom_hints_types) {
+          try { setCustomHintsTypes(JSON.parse(data.custom_hints_types)) } catch { /* ignore */ }
         }
         if (data.active_safety_rules) {
           try { setActiveSafetyRules(JSON.parse(data.active_safety_rules)) } catch { /* ignore */ }
@@ -737,7 +749,7 @@ export function KioskClient({ slug }: { slug: string }) {
         <CombinedFormStep lang={lang} visitorType={visitorType} formData={formData}
           onChange={setFormData} pdfUrl={briefingPdfUrl} signatureRequired={signatureRequired}
           activeRules={activeSafetyRules} ruleVisitorTypes={ruleVisitorTypes}
-          customHints={customHintsTranslations[lang] ?? customHints} hintsPdfUrl={hintsPdfUrl}
+          customHints={customHintsTranslations[lang] ?? customHints} hintTypes={customHintsTypes} hintsPdfUrl={hintsPdfUrl}
           onConfirm={handleBriefingConfirm} onBack={() => setStep(2)} />
       )}
       {step === 5 && <SuccessScreen lang={lang} onReset={handleReset} />}

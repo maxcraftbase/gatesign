@@ -287,8 +287,7 @@ export const SAFETY_RULES: SafetyRule[] = [
   {
     id: 'stay_vehicle',
     icon: '🚛',
-    isoCode: 'M001',
-    signType: 'mandatory',
+    signType: 'warning',
     category: 'behavior',
     label: {
       de: 'Am Fahrzeug bleiben und Anweisungen beachten',
@@ -324,8 +323,7 @@ export const SAFETY_RULES: SafetyRule[] = [
   {
     id: 'designated_paths',
     icon: '🛤️',
-    isoCode: 'M001',
-    signType: 'mandatory',
+    signType: 'warning',
     category: 'behavior',
     label: {
       de: 'Nur auf ausgewiesenen Wegen und Flächen bewegen',
@@ -343,8 +341,7 @@ export const SAFETY_RULES: SafetyRule[] = [
   {
     id: 'keep_clear',
     icon: '↔️',
-    isoCode: 'M001',
-    signType: 'mandatory',
+    signType: 'warning',
     category: 'behavior',
     label: {
       de: 'Haupteinfahrt freihalten',
@@ -362,8 +359,7 @@ export const SAFETY_RULES: SafetyRule[] = [
   {
     id: 'doors_closed',
     icon: '🚪',
-    isoCode: 'M001',
-    signType: 'mandatory',
+    signType: 'warning',
     category: 'behavior',
     label: {
       de: 'Tore und Türen stets geschlossen halten',
@@ -381,7 +377,7 @@ export const SAFETY_RULES: SafetyRule[] = [
   {
     id: 'cctv',
     icon: '📹',
-    signType: 'info',
+    signType: 'warning',
     category: 'behavior',
     label: {
       de: 'Videoüberwachung auf dem Betriebsgelände',
@@ -418,8 +414,7 @@ export const SAFETY_RULES: SafetyRule[] = [
   {
     id: 'waste',
     icon: '🗑️',
-    isoCode: 'M001',
-    signType: 'mandatory',
+    signType: 'warning',
     category: 'behavior',
     label: {
       de: 'Abfall ordnungsgemäß entsorgen',
@@ -458,8 +453,7 @@ export const SAFETY_RULES: SafetyRule[] = [
   {
     id: 'handbrake',
     icon: '✋',
-    isoCode: 'M001',
-    signType: 'mandatory',
+    signType: 'warning',
     category: 'vehicle',
     label: {
       de: 'Handbremse anziehen und Fahrzeug sichern',
@@ -477,8 +471,7 @@ export const SAFETY_RULES: SafetyRule[] = [
   {
     id: 'chocks',
     icon: '⬛',
-    isoCode: 'M001',
-    signType: 'mandatory',
+    signType: 'warning',
     category: 'vehicle',
     label: {
       de: 'Unterlegkeile vor und hinter den Rädern verwenden',
@@ -515,8 +508,7 @@ export const SAFETY_RULES: SafetyRule[] = [
   {
     id: 'load_securing',
     icon: '📦',
-    isoCode: 'M001',
-    signType: 'mandatory',
+    signType: 'warning',
     category: 'vehicle',
     label: {
       de: 'Ladungssicherung vor Abfahrt prüfen',
@@ -671,7 +663,8 @@ export const SAFETY_RULES: SafetyRule[] = [
   {
     id: 'legal_instruction',
     icon: '⚖️',
-    signType: 'info',
+    isoCode: 'W001',
+    signType: 'warning',
     category: 'legal',
     label: {
       de: 'Diese Unterweisung gilt als Sicherheitsunterweisung gemäß §12 ArbSchG',

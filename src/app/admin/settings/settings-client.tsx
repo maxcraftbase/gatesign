@@ -417,6 +417,7 @@ export function AdminSettingsClient() {
                       </div>
                       <IsoSign
                         code={rule.isoCode}
+                        icon={rule.icon}
                         signType={rule.signType}
                         size={36}
                       />

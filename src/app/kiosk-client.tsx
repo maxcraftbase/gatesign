@@ -404,6 +404,7 @@ function CombinedFormStep({
                 <div key={rule.id} className="flex items-center gap-4 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3">
                   <IsoSign
                     code={rule.isoCode}
+                    icon={rule.icon}
                     signType={rule.signType}
                     size={44}
                   />

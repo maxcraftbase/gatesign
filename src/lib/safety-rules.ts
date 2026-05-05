@@ -173,7 +173,6 @@ export const SAFETY_RULES: SafetyRule[] = [
   {
     id: 'no_alcohol',
     icon: '🍺',
-    isoCode: 'P017',
     signType: 'prohibition',
     category: 'prohibition',
     label: {
@@ -210,8 +209,7 @@ export const SAFETY_RULES: SafetyRule[] = [
   },
   {
     id: 'no_entry',
-    icon: '🚫',
-    isoCode: 'P014',
+    icon: '🔒',
     signType: 'prohibition',
     category: 'prohibition',
     label: {
@@ -230,7 +228,6 @@ export const SAFETY_RULES: SafetyRule[] = [
   {
     id: 'no_headphones',
     icon: '🎧',
-    isoCode: 'P037',
     signType: 'prohibition',
     category: 'prohibition',
     label: {
@@ -248,7 +245,7 @@ export const SAFETY_RULES: SafetyRule[] = [
   },
   {
     id: 'no_overnight',
-    icon: '🌙',
+    icon: '🛌',
     signType: 'prohibition',
     category: 'prohibition',
     label: {
@@ -342,7 +339,7 @@ export const SAFETY_RULES: SafetyRule[] = [
   },
   {
     id: 'keep_clear',
-    icon: '🚧',
+    icon: '↔️',
     signType: 'mandatory',
     category: 'behavior',
     label: {
@@ -456,7 +453,7 @@ export const SAFETY_RULES: SafetyRule[] = [
   },
   {
     id: 'handbrake',
-    icon: '🅿️',
+    icon: '✋',
     signType: 'mandatory',
     category: 'vehicle',
     label: {
@@ -474,7 +471,7 @@ export const SAFETY_RULES: SafetyRule[] = [
   },
   {
     id: 'chocks',
-    icon: '🔺',
+    icon: '⬛',
     signType: 'mandatory',
     category: 'vehicle',
     label: {

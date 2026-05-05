@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { Save, ChevronDown, ChevronUp, Upload, FileText, Loader2, CheckCircle2, ExternalLink, Trash2, BookOpen } from 'lucide-react'
 import { LANGUAGES, VISITOR_TYPES } from '@/lib/translations'
 import { SAFETY_RULES, SAFETY_RULE_CATEGORIES, SIGN_STYLES } from '@/lib/safety-rules'
+import { IsoSign } from '@/components/IsoSign'
 
 interface Settings {
   welcome_title: string
@@ -414,9 +415,12 @@ export function AdminSettingsClient() {
                       }`}>
                         {active && <span className="text-white text-xs font-bold">✓</span>}
                       </div>
-                      <div className={`w-9 h-9 flex items-center justify-center text-lg shrink-0 ${SIGN_STYLES[rule.signType].bg} ${SIGN_STYLES[rule.signType].shape}`}>
-                        {rule.icon}
-                      </div>
+                      <IsoSign
+                        code={rule.isoCode ?? ''}
+                        fallback={rule.icon}
+                        fallbackClass={`${SIGN_STYLES[rule.signType].bg} ${SIGN_STYLES[rule.signType].shape}`}
+                        size={36}
+                      />
                       <span className="text-sm font-medium text-slate-800">{rule.label.de}</span>
                     </label>
                   )

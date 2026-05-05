@@ -5,6 +5,7 @@ import { CheckCircle, Lock } from 'lucide-react'
 import { translations, LANGUAGES, VISITOR_TYPES, type Language, type VisitorType } from '@/lib/translations'
 import { SAFETY_RULES, SIGN_STYLES } from '@/lib/safety-rules'
 import { SignaturePad, type SignaturePadHandle } from '@/components/kiosk/SignaturePad'
+import { IsoSign } from '@/components/IsoSign'
 
 // ─── Simple markdown renderer (no external dependency) ───────────────────────
 function renderMarkdown(text: string): React.ReactNode[] {
@@ -401,9 +402,12 @@ function CombinedFormStep({
               const s = SIGN_STYLES[rule.signType]
               return (
                 <div key={rule.id} className="flex items-center gap-4 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3">
-                  <div className={`w-11 h-11 flex items-center justify-center text-2xl shrink-0 ${s.bg} ${s.shape}`}>
-                    {rule.icon}
-                  </div>
+                  <IsoSign
+                    code={rule.isoCode ?? ''}
+                    fallback={rule.icon}
+                    fallbackClass={`${s.bg} ${s.shape}`}
+                    size={44}
+                  />
                   <span className="text-base font-medium text-slate-800">{rule.label[lang]}</span>
                 </div>
               )

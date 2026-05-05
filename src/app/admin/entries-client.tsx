@@ -114,85 +114,63 @@ export function AdminEntriesClient() {
         </div>
       ) : (
         <>
-          <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
-            <div className="overflow-hidden">
-              <table className="w-full text-sm table-fixed">
-                <thead>
-                  <tr className="border-b border-slate-100 text-slate-500 text-xs uppercase tracking-wide">
-                    <th className="px-4 py-3 text-left font-medium">Zeit</th>
-                    <th className="px-4 py-3 text-left font-medium">Typ</th>
-                    <th className="px-4 py-3 text-left font-medium">Fahrer</th>
-                    <th className="px-4 py-3 text-left font-medium">Firma</th>
-                    <th className="px-4 py-3 text-left font-medium">Kennzeichen</th>
-                    <th className="px-4 py-3 text-left font-medium">Telefon</th>
-                    <th className="px-4 py-3 text-left font-medium">Sprache</th>
-                    <th className="px-4 py-3 text-left font-medium">Belehrung</th>
-                    <th className="px-4 py-3 text-left font-medium">Unterschrift</th>
-                    <th className="px-4 py-3 text-left font-medium">Referenz</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {entries.map((entry, i) => (
-                    <tr
-                      key={entry.id}
-                      className={`border-b border-slate-50 hover:bg-slate-50 transition-colors ${i % 2 === 0 ? '' : 'bg-slate-50/30'}`}
-                    >
-                      <td className="px-4 py-3 text-slate-500 whitespace-nowrap">
-                        {formatDate(entry.created_at)}
-                      </td>
-                      <td className="px-4 py-3">
-                        {entry.visitor_type && VISITOR_TYPE_LABELS[entry.visitor_type] ? (
-                          <span className={`inline-flex items-center text-xs font-medium px-2 py-1 rounded-full ${VISITOR_TYPE_LABELS[entry.visitor_type].color}`}>
-                            {VISITOR_TYPE_LABELS[entry.visitor_type].label}
-                          </span>
-                        ) : (
-                          <span className="text-slate-400 text-xs">—</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 font-medium text-slate-900 whitespace-nowrap">
-                        {entry.driver_name}
-                      </td>
-                      <td className="px-4 py-3 text-slate-700 whitespace-nowrap">
-                        {entry.company_name}
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className="font-mono text-slate-800 bg-slate-100 px-2 py-0.5 rounded text-xs">
-                          {entry.license_plate}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-slate-500">
-                        {entry.phone ?? '—'}
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className="text-lg" title={entry.language}>
-                          {LANG_FLAGS[entry.language] ?? entry.language}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        {entry.briefing_accepted ? (
-                          <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 text-xs font-medium px-2 py-1 rounded-full">
-                            ✓ Akzeptiert
-                          </span>
-                        ) : (
-                          <span className="text-slate-400 text-xs">—</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3">
-                        {entry.has_signature ? (
-                          <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 text-xs font-medium px-2 py-1 rounded-full">
-                            ✓ Ja
-                          </span>
-                        ) : (
-                          <span className="text-slate-400 text-xs">—</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 text-slate-500 font-mono text-xs">
-                        {entry.reference_number ?? '—'}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+          <div className="flex flex-col gap-2">
+            {/* Header */}
+            <div className="grid grid-cols-[140px_80px_1fr_1fr_110px_120px_50px_90px_80px] gap-3 px-4 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">
+              <span>Zeit</span>
+              <span>Typ</span>
+              <span>Fahrer</span>
+              <span>Firma</span>
+              <span>Kennzeichen</span>
+              <span>Telefon</span>
+              <span>Spr.</span>
+              <span>Belehrung</span>
+              <span>Unterschrift</span>
+            </div>
+
+            {/* Rows */}
+            <div className="flex flex-col gap-1.5">
+              {entries.map(entry => (
+                <div key={entry.id}
+                  className="grid grid-cols-[140px_80px_1fr_1fr_110px_120px_50px_90px_80px] gap-3 items-center bg-white border border-slate-100 rounded-xl px-4 py-3 hover:border-slate-200 hover:shadow-sm transition-all">
+
+                  <span className="text-xs text-slate-500 whitespace-nowrap">{formatDate(entry.created_at)}</span>
+
+                  <span>
+                    {entry.visitor_type && VISITOR_TYPE_LABELS[entry.visitor_type] ? (
+                      <span className={`inline-flex items-center text-xs font-semibold px-2 py-0.5 rounded-full ${VISITOR_TYPE_LABELS[entry.visitor_type].color}`}>
+                        {VISITOR_TYPE_LABELS[entry.visitor_type].label}
+                      </span>
+                    ) : <span className="text-slate-300">—</span>}
+                  </span>
+
+                  <span className="font-semibold text-slate-900 text-sm truncate">{entry.driver_name}</span>
+
+                  <span className="text-slate-600 text-sm truncate">{entry.company_name}</span>
+
+                  <span className="font-mono text-slate-700 bg-slate-100 px-2 py-0.5 rounded text-xs w-fit">
+                    {entry.license_plate}
+                  </span>
+
+                  <span className="text-slate-500 text-xs truncate">{entry.phone ?? '—'}</span>
+
+                  <span className="text-base" title={entry.language}>
+                    {LANG_FLAGS[entry.language] ?? entry.language}
+                  </span>
+
+                  <span>
+                    {entry.briefing_accepted
+                      ? <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 text-xs font-semibold px-2 py-0.5 rounded-full">✓ Ja</span>
+                      : <span className="text-slate-300 text-xs">—</span>}
+                  </span>
+
+                  <span>
+                    {entry.has_signature
+                      ? <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-600 text-xs font-semibold px-2 py-0.5 rounded-full">✓ Ja</span>
+                      : <span className="text-slate-300 text-xs">—</span>}
+                  </span>
+                </div>
+              ))}
             </div>
           </div>
 

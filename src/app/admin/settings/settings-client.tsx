@@ -437,6 +437,14 @@ export function AdminSettingsClient() {
           </button>
         </div>
       </div>
+
+      <div className="flex justify-end pb-8">
+        <button onClick={handleSave} disabled={saving}
+          className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-900 text-white font-semibold hover:bg-slate-700 disabled:opacity-50 transition-colors">
+          <Save className="w-4 h-4" />
+          {saving ? 'Speichern…' : 'Speichern'}
+        </button>
+      </div>
     </div>
   )
 }

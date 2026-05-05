@@ -183,112 +183,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Dashboard Mockup */}
-      <section className="bg-slate-50 py-20">
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="text-center mb-10">
-            <span className="inline-block text-xs font-semibold bg-slate-900 text-white px-3 py-1 rounded-full mb-4 uppercase tracking-wide">
-              {t.mockup.badge}
-            </span>
-            <h2 className="text-2xl font-bold mb-3">{t.mockup.title}</h2>
-            <p className="text-slate-500 text-sm max-w-lg mx-auto">{t.mockup.sub}</p>
-          </div>
-
-          {/* Browser chrome */}
-          <div className="rounded-2xl overflow-hidden shadow-2xl border border-slate-200">
-            {/* Top bar */}
-            <div className="bg-slate-100 px-4 py-3 flex items-center gap-3 border-b border-slate-200">
-              <div className="flex gap-1.5">
-                <div className="w-3 h-3 rounded-full bg-red-400" />
-                <div className="w-3 h-3 rounded-full bg-amber-400" />
-                <div className="w-3 h-3 rounded-full bg-green-400" />
-              </div>
-              <div className="flex-1 bg-white rounded-md px-3 py-1 text-xs text-slate-400 font-mono">
-                gatesign.de/ihre-firma/admin
-              </div>
-            </div>
-
-            {/* App nav */}
-            <div className="bg-white border-b border-slate-100 px-6 h-12 flex items-center justify-between">
-              <div className="flex items-center gap-6">
-                <span className="font-bold text-slate-900 text-sm">GateSign</span>
-                <div className="flex gap-1">
-                  <span className="bg-slate-900 text-white text-xs font-semibold px-3 py-1.5 rounded-lg">
-                    {lang === 'de' ? 'Einträge' : 'Entries'}
-                  </span>
-                  <span className="text-slate-500 text-xs font-medium px-3 py-1.5 hover:bg-slate-50 rounded-lg cursor-pointer">
-                    {lang === 'de' ? 'Einstellungen' : 'Settings'}
-                  </span>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <span className="text-xs text-slate-400">← {lang === 'de' ? 'Check-In Terminal' : 'Check-In Terminal'}</span>
-                <span className="text-xs text-slate-400">{lang === 'de' ? 'Abmelden' : 'Log out'}</span>
-              </div>
-            </div>
-
-            {/* Content */}
-            <div className="bg-white">
-              <div className="px-6 py-5 flex items-center justify-between border-b border-slate-50">
-                <div>
-                  <h3 className="font-bold text-slate-900 text-base">
-                    {lang === 'de' ? 'Check-in Einträge' : 'Check-in Entries'}
-                  </h3>
-                  <p className="text-xs text-slate-400 mt-0.5">
-                    {mockEntries.length} {lang === 'de' ? 'Einträge gesamt' : 'entries total'}
-                  </p>
-                </div>
-                <div className="flex gap-2">
-                  <button className="text-xs border border-slate-200 text-slate-500 px-3 py-2 rounded-lg flex items-center gap-1.5 pointer-events-none">
-                    ↻ {lang === 'de' ? 'Aktualisieren' : 'Refresh'}
-                  </button>
-                  <button className="text-xs bg-slate-900 text-white px-3 py-2 rounded-lg flex items-center gap-1.5 pointer-events-none">
-                    ↓ CSV Export
-                  </button>
-                </div>
-              </div>
-
-              <div className="overflow-x-auto">
-                <table className="w-full text-xs">
-                  <thead>
-                    <tr className="border-b border-slate-100">
-                      {t.mockup.cols.map(col => (
-                        <th key={col} className="text-left px-4 py-3 text-slate-400 font-semibold uppercase tracking-wide whitespace-nowrap">
-                          {col}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {mockEntries.map((row, i) => (
-                      <tr key={i} className="border-b border-slate-50 last:border-b-0 hover:bg-slate-50/50">
-                        <td className="px-4 py-3 text-slate-400 whitespace-nowrap">{row.time}</td>
-                        <td className="px-4 py-3 font-medium text-slate-900 whitespace-nowrap">{row.name}</td>
-                        <td className="px-4 py-3 text-slate-600 whitespace-nowrap">{row.company}</td>
-                        <td className="px-4 py-3">
-                          <span className="font-mono bg-slate-100 text-slate-700 px-2 py-0.5 rounded text-xs">{row.plate}</span>
-                        </td>
-                        <td className="px-4 py-3 text-slate-500 whitespace-nowrap">{row.phone}</td>
-                        <td className="px-4 py-3 text-base">{row.flag}</td>
-                        <td className="px-4 py-3">
-                          <span className="inline-flex items-center gap-1 text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap">
-                            ✓ {t.mockup.accepted}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3">
-                          <span className="text-emerald-700 text-xs font-medium whitespace-nowrap">✓ {t.mockup.signed}</span>
-                        </td>
-                        <td className="px-4 py-3 text-slate-400 font-mono text-xs">{row.ref}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* Safety Briefing Section */}
       <section className="max-w-5xl mx-auto px-6 py-20">
         <div className="flex flex-col lg:flex-row gap-12 items-center">
@@ -340,6 +234,106 @@ export default function LandingPage() {
                 <span className="text-xs text-slate-400">
                   {lang === 'de' ? '6 Regeln aktiv · automatisch übersetzt' : '6 rules active · automatically translated'}
                 </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Dashboard Mockup */}
+      <section className="bg-slate-50 py-20">
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="text-center mb-10">
+            <span className="inline-block text-xs font-semibold bg-slate-900 text-white px-3 py-1 rounded-full mb-4 uppercase tracking-wide">
+              {t.mockup.badge}
+            </span>
+            <h2 className="text-2xl font-bold mb-3">{t.mockup.title}</h2>
+            <p className="text-slate-500 text-sm max-w-lg mx-auto">{t.mockup.sub}</p>
+          </div>
+
+          {/* Browser chrome */}
+          <div className="rounded-2xl overflow-hidden shadow-2xl border border-slate-200">
+            <div className="bg-slate-100 px-4 py-3 flex items-center gap-3 border-b border-slate-200">
+              <div className="flex gap-1.5">
+                <div className="w-3 h-3 rounded-full bg-red-400" />
+                <div className="w-3 h-3 rounded-full bg-amber-400" />
+                <div className="w-3 h-3 rounded-full bg-green-400" />
+              </div>
+              <div className="flex-1 bg-white rounded-md px-3 py-1 text-xs text-slate-400 font-mono">
+                gatesign.de/ihre-firma/admin
+              </div>
+            </div>
+            <div className="bg-white border-b border-slate-100 px-6 h-12 flex items-center justify-between">
+              <div className="flex items-center gap-6">
+                <span className="font-bold text-slate-900 text-sm">GateSign</span>
+                <div className="flex gap-1">
+                  <span className="bg-slate-900 text-white text-xs font-semibold px-3 py-1.5 rounded-lg">
+                    {lang === 'de' ? 'Einträge' : 'Entries'}
+                  </span>
+                  <span className="text-slate-500 text-xs font-medium px-3 py-1.5 rounded-lg">
+                    {lang === 'de' ? 'Einstellungen' : 'Settings'}
+                  </span>
+                </div>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="text-xs text-slate-400">← Check-In Terminal</span>
+                <span className="text-xs text-slate-400">{lang === 'de' ? 'Abmelden' : 'Log out'}</span>
+              </div>
+            </div>
+            <div className="bg-white">
+              <div className="px-6 py-5 flex items-center justify-between border-b border-slate-50">
+                <div>
+                  <h3 className="font-bold text-slate-900 text-base">
+                    {lang === 'de' ? 'Check-in Einträge' : 'Check-in Entries'}
+                  </h3>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    {mockEntries.length} {lang === 'de' ? 'Einträge gesamt' : 'entries total'}
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <button className="text-xs border border-slate-200 text-slate-500 px-3 py-2 rounded-lg pointer-events-none">
+                    ↻ {lang === 'de' ? 'Aktualisieren' : 'Refresh'}
+                  </button>
+                  <button className="text-xs bg-slate-900 text-white px-3 py-2 rounded-lg pointer-events-none">
+                    ↓ CSV Export
+                  </button>
+                </div>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="border-b border-slate-100">
+                      {t.mockup.cols.map(col => (
+                        <th key={col} className="text-left px-4 py-3 text-slate-400 font-semibold uppercase tracking-wide whitespace-nowrap">
+                          {col}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {mockEntries.map((row, i) => (
+                      <tr key={i} className="border-b border-slate-50 last:border-b-0 hover:bg-slate-50/50">
+                        <td className="px-4 py-3 text-slate-400 whitespace-nowrap">{row.time}</td>
+                        <td className="px-4 py-3 font-medium text-slate-900 whitespace-nowrap">{row.name}</td>
+                        <td className="px-4 py-3 text-slate-600 whitespace-nowrap">{row.company}</td>
+                        <td className="px-4 py-3">
+                          <span className="font-mono bg-slate-100 text-slate-700 px-2 py-0.5 rounded text-xs">{row.plate}</span>
+                        </td>
+                        <td className="px-4 py-3 text-slate-500 whitespace-nowrap">{row.phone}</td>
+                        <td className="px-4 py-3 text-base">{row.flag}</td>
+                        <td className="px-4 py-3">
+                          <span className="inline-flex items-center gap-1 text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap">
+                            ✓ {t.mockup.accepted}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className="text-emerald-700 text-xs font-medium whitespace-nowrap">✓ {t.mockup.signed}</span>
+                        </td>
+                        <td className="px-4 py-3 text-slate-400 font-mono text-xs">{row.ref}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>

@@ -17,7 +17,7 @@ const content = {
     nav: { login: 'Anmelden', register: 'Jetzt starten' },
     hero: {
       title: 'Digitales Check-in Terminal',
-      sub: 'Für Unternehmen mit Wareneingang und Lieferverkehr. Besucher und Fahrer selbst einchecken — sicher, schnell, in 10 Sprachen.',
+      sub: 'Für Unternehmen mit Wareneingang und Lieferverkehr. Besucher und Fahrer einchecken, Sicherheitsbelehrung bestätigen und digital unterschreiben — in 10 Sprachen.',
       cta: 'Kostenlos testen',
       login: 'Bereits Kunde? Anmelden',
     },
@@ -48,6 +48,17 @@ const content = {
       desc: 'Keine Einrichtungsgebühr. Keine Nutzungsabrechnung. Jederzeit kündbar.',
       cta: 'Jetzt starten',
     },
+    briefing: {
+      badge: 'Sicherheitsbelehrung',
+      title: 'Individuelle Belehrung — in jeder Sprache',
+      sub: 'Jeder Besucher sieht die Sicherheitsregeln in seiner eigenen Sprache. Sie legen fest, welche Regeln gelten — GateSign übersetzt automatisch.',
+      points: [
+        { icon: '🦺', title: 'ISO-konforme Regeln', text: 'Wählen Sie aus einer Bibliothek mit 28 vordefinierten Regeln — Warnweste, Staplerverkehr, Zutrittsverbote und mehr.' },
+        { icon: '📄', title: 'PDF-Belehrung je Besuchertyp', text: 'Separate Dokumente für LKW-Fahrer, Besucher und Dienstleister — jeder bekommt genau das, was für ihn gilt.' },
+        { icon: '✍️', title: 'Digitale Unterschrift', text: 'Rechtssichere Bestätigung direkt am Terminal. Alle Unterschriften werden mit Zeitstempel gespeichert.' },
+        { icon: '🌍', title: '10 Sprachen', text: 'Deutsch, Englisch, Polnisch, Rumänisch, Ukrainisch, Türkisch, Tschechisch, Ungarisch, Bulgarisch, Russisch.' },
+      ],
+    },
     mockup: {
       title: 'Alle Check-ins auf einen Blick',
       sub: 'Das Admin-Dashboard zeigt jeden Eintrag in Echtzeit — mit Sprache, Belehrungsstatus und Unterschrift.',
@@ -66,7 +77,7 @@ const content = {
     nav: { login: 'Log in', register: 'Get started' },
     hero: {
       title: 'Digital Check-in Terminal',
-      sub: 'For businesses with inbound deliveries and logistics traffic. Visitors and drivers check in themselves — safe, fast, in 10 languages.',
+      sub: 'For businesses with inbound deliveries and logistics traffic. Visitors and drivers check in, confirm safety briefings and sign digitally — in 10 languages.',
       cta: 'Try for free',
       login: 'Already a customer? Log in',
     },
@@ -96,6 +107,17 @@ const content = {
       period: 'per month & location',
       desc: 'No setup fee. No usage billing. Cancel anytime.',
       cta: 'Get started',
+    },
+    briefing: {
+      badge: 'Safety Briefing',
+      title: 'Individual briefing — in every language',
+      sub: 'Every visitor sees the safety rules in their own language. You decide which rules apply — GateSign translates automatically.',
+      points: [
+        { icon: '🦺', title: 'ISO-compliant rules', text: 'Choose from a library of 28 predefined rules — high-vis vest, forklift traffic, no-entry zones and more.' },
+        { icon: '📄', title: 'PDF briefing per visitor type', text: 'Separate documents for truck drivers, visitors and contractors — everyone gets exactly what applies to them.' },
+        { icon: '✍️', title: 'Digital signature', text: 'Legally sound confirmation directly at the terminal. All signatures are stored with a timestamp.' },
+        { icon: '🌍', title: '10 languages', text: 'German, English, Polish, Romanian, Ukrainian, Turkish, Czech, Hungarian, Bulgarian, Russian.' },
+      ],
     },
     mockup: {
       title: 'All check-ins at a glance',
@@ -261,6 +283,63 @@ export default function LandingPage() {
                     ))}
                   </tbody>
                 </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Safety Briefing Section */}
+      <section className="max-w-5xl mx-auto px-6 py-20">
+        <div className="flex flex-col lg:flex-row gap-12 items-center">
+          {/* Left: text */}
+          <div className="flex-1">
+            <span className="inline-block text-xs font-semibold bg-amber-100 text-amber-700 px-3 py-1 rounded-full mb-4 uppercase tracking-wide">
+              {t.briefing.badge}
+            </span>
+            <h2 className="text-3xl font-bold leading-tight mb-4">{t.briefing.title}</h2>
+            <p className="text-slate-500 leading-relaxed mb-8">{t.briefing.sub}</p>
+            <div className="space-y-5">
+              {t.briefing.points.map((p, i) => (
+                <div key={i} className="flex gap-4">
+                  <span className="text-2xl flex-shrink-0 mt-0.5">{p.icon}</span>
+                  <div>
+                    <p className="font-semibold text-slate-900 mb-0.5">{p.title}</p>
+                    <p className="text-sm text-slate-500 leading-relaxed">{p.text}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Right: visual */}
+          <div className="flex-1 w-full max-w-sm mx-auto lg:max-w-none">
+            <div className="bg-slate-900 rounded-2xl p-6 shadow-xl">
+              <p className="text-xs text-slate-400 font-semibold uppercase tracking-wide mb-4">
+                {lang === 'de' ? 'Sicherheitsregeln — Aktiv' : 'Safety Rules — Active'}
+              </p>
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  { icon: '🦺', de: 'Warnweste tragen', en: 'High-vis vest required' },
+                  { icon: '🚜', de: 'Staplerverkehr', en: 'Forklift traffic' },
+                  { icon: '🚷', de: 'Zutritt verboten', en: 'No unauthorised entry' },
+                  { icon: '🚗', de: 'Am Fahrzeug bleiben', en: 'Stay at vehicle' },
+                  { icon: '🐢', de: 'Schrittgeschwindigkeit', en: 'Walking pace only' },
+                  { icon: '🎧', de: 'Kopfhörer verboten', en: 'No headphones' },
+                ].map((rule, i) => (
+                  <div key={i} className="bg-amber-500/10 border border-amber-500/20 rounded-xl px-3 py-3 flex items-center gap-2">
+                    <span className="text-xl">{rule.icon}</span>
+                    <span className="text-xs text-amber-200 font-medium leading-tight">
+                      {lang === 'de' ? rule.de : rule.en}
+                    </span>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-4 pt-4 border-t border-slate-700 flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-emerald-400" />
+                <span className="text-xs text-slate-400">
+                  {lang === 'de' ? '6 Regeln aktiv · automatisch übersetzt' : '6 rules active · automatically translated'}
+                </span>
               </div>
             </div>
           </div>

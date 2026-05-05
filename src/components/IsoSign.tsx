@@ -86,8 +86,8 @@ function EngineOffSign({ size }: { size: number }) {
       <circle cx={smokeX - sr * 1.5} cy={smokeY - sr * 1.1} r={sr * 1.1} fill="none" stroke="#555" strokeWidth={size * 0.022} />
       <circle cx={smokeX - sr * 2.9} cy={smokeY - sr * 1.6} r={sr * 1.3} fill="none" stroke="#555" strokeWidth={size * 0.02} />
 
-      {/* Red prohibition ring */}
-      <circle cx={cx} cy={cy} r={r} fill="none" stroke="#dc2626" strokeWidth={border * 2} />
+      {/* Red prohibition ring — circleR inset by half ringW so outer edge = r */}
+      <circle cx={cx} cy={cy} r={r - border} fill="none" stroke="#dc2626" strokeWidth={border * 2} />
       {/* Red diagonal line */}
       <line
         x1={cx - r * 0.62} y1={cy - r * 0.62}
@@ -106,16 +106,17 @@ function SignShell({ signType, size, icon }: { signType: SignType; size: number;
   const fontSize = size * 0.5
 
   if (signType === 'limit') {
-    const border = r * 0.28
-    const innerR = r - border
+    const ringW = r * 0.3
+    const circleR = r - ringW / 2  // outer edge lands exactly at r
+    const innerR = r - ringW       // usable white area radius
     return (
       <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="shrink-0">
         <circle cx={cx} cy={cy} r={r} fill="white" />
-        <circle cx={cx} cy={cy} r={r} fill="none" stroke="#dc2626" strokeWidth={border * 2} />
+        <circle cx={cx} cy={cy} r={circleR} fill="none" stroke="#dc2626" strokeWidth={ringW} />
         <text
           x={cx} y={cy + innerR * 0.06}
           textAnchor="middle" dominantBaseline="central"
-          fontSize={innerR * 1.05} fontWeight="900"
+          fontSize={innerR * 1.55} fontWeight="900"
           fontFamily="Arial Black,Arial,sans-serif" fill="#111"
         >5</text>
       </svg>

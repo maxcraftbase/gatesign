@@ -65,7 +65,7 @@ export async function PUT(req: NextRequest) {
         value: String(value),
         updated_at: new Date().toISOString(),
       }))
-      await fetch(`${supabaseUrl}/rest/v1/app_settings`, {
+      const settingsWriteRes = await fetch(`${supabaseUrl}/rest/v1/app_settings`, {
         method: 'POST',
         headers: {
           apikey: anonKey,
@@ -75,6 +75,11 @@ export async function PUT(req: NextRequest) {
         },
         body: JSON.stringify(rows),
       })
+
+      if (!settingsWriteRes.ok) {
+        console.error('Settings save error:', await settingsWriteRes.text())
+        return NextResponse.json({ error: 'Einstellungen konnten nicht gespeichert werden.' }, { status: 500 })
+      }
     }
 
     if (briefings && Array.isArray(briefings)) {

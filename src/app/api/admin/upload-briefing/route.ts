@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
     const publicUrl = `${supabaseUrl}/storage/v1/object/public/briefings/${fileName}`
     const settingKey = `briefing_pdf_${visitorType}`
 
-    await fetch(`${supabaseUrl}/rest/v1/app_settings`, {
+    const settingsRes = await fetch(`${supabaseUrl}/rest/v1/app_settings`, {
       method: 'POST',
       headers: {
         apikey: anonKey,
@@ -58,6 +58,11 @@ export async function POST(req: NextRequest) {
         updated_at: new Date().toISOString(),
       }]),
     })
+
+    if (!settingsRes.ok) {
+      console.error('Briefing settings save error:', await settingsRes.text())
+      return NextResponse.json({ error: 'PDF hochgeladen, aber Einstellung konnte nicht gespeichert werden.' }, { status: 500 })
+    }
 
     return NextResponse.json({ success: true, url: publicUrl })
   } catch {

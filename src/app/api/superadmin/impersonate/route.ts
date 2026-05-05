@@ -6,7 +6,7 @@ function hashPassword(pw: string) {
 }
 
 function isAuthorized(req: NextRequest): boolean {
-  const expected = process.env.SUPERADMIN_PASSWORD
+  const expected = process.env.SUPERADMIN_PASSWORD?.trim()
   if (!expected) return false
   return req.cookies.get('gs-superadmin')?.value === hashPassword(expected)
 }

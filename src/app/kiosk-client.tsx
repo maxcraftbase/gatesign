@@ -123,6 +123,30 @@ interface InfoPanelProps {
   customHints: string[]
 }
 
+const TYPE_ICONS: Record<string, React.ReactNode> = {
+  truck: (
+    <svg viewBox="0 0 64 64" fill="none" className="w-14 h-14" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <rect x="2" y="18" width="36" height="26" rx="3" className="stroke-slate-700" fill="none"/>
+      <path d="M38 28h14l8 10v8H38V28z" className="stroke-slate-700" fill="none"/>
+      <circle cx="14" cy="48" r="5" className="stroke-slate-700" fill="none"/>
+      <circle cx="48" cy="48" r="5" className="stroke-slate-700" fill="none"/>
+      <line x1="19" y1="48" x2="43" y2="48" className="stroke-slate-700"/>
+    </svg>
+  ),
+  visitor: (
+    <svg viewBox="0 0 64 64" fill="none" className="w-14 h-14" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="32" cy="18" r="10" className="stroke-slate-700" fill="none"/>
+      <path d="M8 56c0-13.255 10.745-24 24-24s24 10.745 24 24" className="stroke-slate-700" fill="none"/>
+    </svg>
+  ),
+  service: (
+    <svg viewBox="0 0 64 64" fill="none" className="w-14 h-14" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M42 10a14 14 0 0 1 0 20L20 52a6 6 0 0 1-8-8L34 22A14 14 0 0 1 42 10z" className="stroke-slate-700" fill="none"/>
+      <circle cx="16" cy="48" r="3" className="stroke-slate-700 fill-slate-700"/>
+    </svg>
+  ),
+}
+
 function VisitorTypeSelect({ lang, onSelect, onBack, info }: {
   lang: Language
   onSelect: (t: VisitorType) => void
@@ -131,37 +155,31 @@ function VisitorTypeSelect({ lang, onSelect, onBack, info }: {
 }) {
   const t = translations[lang]
   const hasHours = !!info.hoursWeekday
-  const hasInfo = hasHours || info.customHints.length > 0
 
   return (
     <div className="flex flex-col flex-1 px-6 py-4">
       <h2 className="text-3xl font-bold text-slate-900 text-center mb-8">{t.choose_type}</h2>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-3xl mx-auto w-full">
-        {VISITOR_TYPES.map(({ type, icon, labelKey }) => (
+        {VISITOR_TYPES.map(({ type, labelKey }) => (
           <button
             key={type}
             onClick={() => onSelect(type)}
-            className="flex flex-col items-center gap-4 bg-white hover:bg-slate-50 active:scale-95 active:bg-blue-50 transition-all rounded-2xl p-8 border border-slate-200 hover:border-blue-500 shadow-sm"
+            className="flex flex-col items-center gap-5 bg-white hover:bg-slate-50 active:scale-95 active:bg-blue-50 transition-all rounded-2xl p-8 border border-slate-200 hover:border-blue-400 shadow-sm text-slate-600 hover:text-blue-600"
           >
-            <span className="text-6xl">{icon}</span>
+            {TYPE_ICONS[type]}
             <span className="text-slate-900 font-bold text-xl text-center">{t[labelKey]}</span>
           </button>
         ))}
       </div>
 
-      {hasInfo && (
-        <div className="mt-6 max-w-3xl mx-auto w-full bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4 flex flex-col gap-2">
-          {hasHours && (
-            <div className="flex flex-wrap gap-x-6 gap-y-1 text-base text-slate-700">
-              <span><span className="font-semibold">📅 {t.info_weekdays}:</span> {info.hoursWeekday}</span>
-              <span><span className="font-semibold">{t.info_friday}:</span> {info.friClosed ? t.info_closed : info.hoursFri}</span>
-              <span><span className="font-semibold">Sa:</span> {info.satClosed ? t.info_closed : info.hoursSat}</span>
-              <span><span className="font-semibold">So:</span> {info.sunClosed ? t.info_closed : info.hoursSun}</span>
-            </div>
-          )}
-          {info.customHints.map((hint, i) => (
-            <p key={i} className="text-base text-slate-700">ℹ️ {hint}</p>
-          ))}
+      {hasHours && (
+        <div className="mt-6 max-w-3xl mx-auto w-full bg-slate-50 border border-slate-200 rounded-2xl px-6 py-4">
+          <div className="flex flex-wrap gap-x-6 gap-y-1 text-base text-slate-700">
+            <span><span className="font-semibold">{t.info_weekdays}:</span> {info.hoursWeekday}</span>
+            <span><span className="font-semibold">{t.info_friday}:</span> {info.friClosed ? t.info_closed : info.hoursFri}</span>
+            <span><span className="font-semibold">Sa:</span> {info.satClosed ? t.info_closed : info.hoursSat}</span>
+            <span><span className="font-semibold">So:</span> {info.sunClosed ? t.info_closed : info.hoursSun}</span>
+          </div>
         </div>
       )}
 
@@ -180,17 +198,25 @@ function WelcomeScreen({
   title,
   subtitle,
   companyName,
+  logoUrl,
   onStart,
 }: {
   title: string
   subtitle: string
   companyName: string
+  logoUrl: string
   onStart: () => void
 }) {
   return (
     <div className="flex flex-col items-center justify-center flex-1 gap-10 px-8">
-      <div className="text-center">
-        {companyName && (
+      <div className="text-center flex flex-col items-center">
+        {logoUrl && (
+          <div className="mb-6 flex items-center justify-center">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={logoUrl} alt="Logo" className="max-h-24 max-w-xs object-contain drop-shadow-sm" />
+          </div>
+        )}
+        {companyName && !logoUrl && (
           <p className="text-xl font-semibold text-blue-600 mb-3 tracking-wide">{companyName}</p>
         )}
         <h1 className="text-5xl font-bold text-slate-900 mb-4 leading-tight">{title}</h1>
@@ -518,6 +544,7 @@ export function KioskClient({ slug }: { slug: string }) {
   const [welcomeTitle, setWelcomeTitle] = useState('Willkommen / Welcome')
   const [welcomeSubtitle, setWelcomeSubtitle] = useState('Bitte melden Sie sich hier an — Please register here')
   const [companyName, setCompanyName] = useState('')
+  const [logoUrl, setLogoUrl] = useState('')
   const [hoursWeekday, setHoursWeekday] = useState('')
   const [hoursFri, setHoursFri] = useState('')
   const [friClosed, setFriClosed] = useState(true)
@@ -564,6 +591,7 @@ export function KioskClient({ slug }: { slug: string }) {
       .then(r => r.json())
       .then((data: Record<string, string>) => {
         if (data.company_name) setCompanyName(data.company_name)
+        if (data.logo_url) setLogoUrl(data.logo_url)
         if (data.welcome_title) setWelcomeTitle(data.welcome_title)
         if (data.welcome_subtitle) setWelcomeSubtitle(data.welcome_subtitle)
         if (data.briefing_version) setBriefingVersion(data.briefing_version)
@@ -695,14 +723,14 @@ export function KioskClient({ slug }: { slug: string }) {
         </div>
       )}
 
-      {step === 0 && <WelcomeScreen title={welcomeTitle} subtitle={welcomeSubtitle} companyName={companyName} onStart={() => setStep(1)} />}
+      {step === 0 && <WelcomeScreen title={welcomeTitle} subtitle={welcomeSubtitle} companyName={companyName} logoUrl={logoUrl} onStart={() => setStep(1)} />}
       {step === 1 && <LanguageSelect onSelect={handleLanguageSelect} onBack={() => setStep(0)} />}
       {step === 2 && (
         <VisitorTypeSelect
           lang={lang}
           onSelect={handleVisitorTypeSelect}
           onBack={() => setStep(1)}
-          info={{ hoursWeekday, hoursFri, friClosed, hoursSat, satClosed, hoursSun, sunClosed, customHints }}
+          info={{ hoursWeekday, hoursFri, friClosed, hoursSat, satClosed, hoursSun, sunClosed, customHints: [] }}
         />
       )}
       {step === 3 && (

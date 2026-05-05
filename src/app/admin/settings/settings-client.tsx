@@ -17,6 +17,7 @@ const RULE_TYPES = [
 
 interface Settings {
   company_name: string
+  logo_url: string
   welcome_title: string
   welcome_subtitle: string
   signature_required: string
@@ -66,6 +67,7 @@ function DayRow({ label, closedKey, hoursKey, settings, setSettings }: {
 export function AdminSettingsClient() {
   const [settings, setSettings] = useState<Settings>({
     company_name: '',
+    logo_url: '',
     welcome_title: 'Willkommen / Welcome',
     welcome_subtitle: 'Bitte melden Sie sich hier an — Please register here',
     signature_required: 'false',
@@ -85,6 +87,7 @@ export function AdminSettingsClient() {
   const [newHint, setNewHint] = useState('')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [uploadingLogo, setUploadingLogo] = useState(false)
   const [uploadingPdf, setUploadingPdf] = useState(false)
   const [translations, setTranslations] = useState<Record<string, string[]>>({})
   const [expandedHint, setExpandedHint] = useState<number | null>(null)
@@ -93,6 +96,7 @@ export function AdminSettingsClient() {
   const [translateError, setTranslateError] = useState('')
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
+  const logoInputRef = useRef<HTMLInputElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -152,6 +156,23 @@ export function AdminSettingsClient() {
     setSettings(s => ({ ...s, rule_visitor_types: JSON.stringify({ ...map, [ruleId]: next }) }))
   }
 
+  async function handleLogoUpload(file: File) {
+    setUploadingLogo(true)
+    const fd = new FormData()
+    fd.append('file', file)
+    const res = await fetch('/api/admin/upload-logo', { method: 'POST', body: fd })
+    if (res.ok) {
+      const data = await res.json() as { url: string }
+      setSettings(s => ({ ...s, logo_url: data.url }))
+    }
+    setUploadingLogo(false)
+  }
+
+  async function handleLogoDelete() {
+    await fetch('/api/admin/upload-logo', { method: 'DELETE' })
+    setSettings(s => ({ ...s, logo_url: '' }))
+  }
+
   async function handlePdfUpload(file: File) {
     setUploadingPdf(true)
     const fd = new FormData()
@@ -202,6 +223,9 @@ export function AdminSettingsClient() {
       } else {
         setSuccess(true)
         setTimeout(() => setSuccess(false), 3000)
+        if (getCustomHints().length > 0) {
+          void handleTranslate()
+        }
       }
     } catch {
       setError('Netzwerkfehler.')
@@ -258,6 +282,56 @@ export function AdminSettingsClient() {
       <div className="bg-white rounded-2xl border border-slate-100 p-6 mb-6">
         <h2 className="text-lg font-bold text-slate-900 mb-5">Allgemein</h2>
         <div className="flex flex-col gap-5">
+
+          {/* Logo */}
+          <div>
+            <label className={labelCls}>Logo</label>
+            {settings.logo_url ? (
+              <div className="flex items-center gap-4 p-4 bg-slate-50 border border-slate-200 rounded-xl">
+                <div className="w-24 h-16 flex items-center justify-center bg-white rounded-lg border border-slate-200 overflow-hidden shrink-0">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={settings.logo_url} alt="Logo" className="max-w-full max-h-full object-contain p-1" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-slate-700 mb-1">Logo hochgeladen</p>
+                  <p className="text-xs text-slate-400">Wird im Terminal auf dem Willkommensbildschirm angezeigt.</p>
+                </div>
+                <div className="flex flex-col gap-2 shrink-0">
+                  <button type="button" onClick={() => logoInputRef.current?.click()}
+                    className="text-xs px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100 transition-colors">
+                    Ersetzen
+                  </button>
+                  <button type="button" onClick={handleLogoDelete}
+                    className="text-xs px-3 py-1.5 rounded-lg border border-red-100 text-red-500 hover:bg-red-50 transition-colors">
+                    Löschen
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div onClick={() => logoInputRef.current?.click()}
+                className="flex flex-col items-center justify-center gap-3 h-32 rounded-xl border-2 border-dashed border-slate-200 hover:border-blue-400 hover:bg-blue-50 cursor-pointer transition-all group">
+                <div className="w-10 h-10 rounded-full bg-slate-100 group-hover:bg-blue-100 flex items-center justify-center transition-colors">
+                  <svg className="w-5 h-5 text-slate-400 group-hover:text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                  </svg>
+                </div>
+                <div className="text-center">
+                  <p className="text-sm font-medium text-slate-600 group-hover:text-blue-600 transition-colors">
+                    {uploadingLogo ? 'Wird hochgeladen…' : 'Logo hochladen'}
+                  </p>
+                  <p className="text-xs text-slate-400 mt-0.5">PNG, JPG, SVG oder WebP — max. 2 MB</p>
+                </div>
+              </div>
+            )}
+            <input ref={logoInputRef} type="file" accept="image/png,image/jpeg,image/jpg,image/svg+xml,image/webp"
+              className="hidden"
+              onChange={e => {
+                const file = e.target.files?.[0]
+                if (file) void handleLogoUpload(file)
+                e.target.value = ''
+              }} />
+          </div>
+
           <div>
             <label className={labelCls}>Firmenname</label>
             <input className={inputCls} value={settings.company_name}
@@ -396,53 +470,16 @@ export function AdminSettingsClient() {
         })}
       </div>
 
-      {/* Weitere Hinweise */}
+      {/* Texthinweise */}
       <div className="bg-white rounded-2xl border border-slate-100 p-6 mb-6">
-        <h2 className="text-lg font-bold text-slate-900 mb-1">Weitere Hinweise</h2>
+        <h2 className="text-lg font-bold text-slate-900 mb-1">Texthinweise</h2>
         <p className="text-sm text-slate-500 mb-5">
-          Individuelle Sicherheitshinweise — werden im Check-in Terminal bei der Belehrung angezeigt.
+          Individuelle Hinweise — werden im Terminal bei der Belehrung angezeigt und automatisch übersetzt.
         </p>
 
-        {/* PDF Upload */}
-        <div className="mb-5">
-          <label className={labelCls}>PDF-Dokument (optional)</label>
-          {hintsPdfUrl ? (
-            <div className="flex items-center gap-3 px-4 py-3 bg-blue-50 border border-blue-200 rounded-xl">
-              <FileText className="w-5 h-5 text-blue-600 shrink-0" />
-              <a href={hintsPdfUrl} target="_blank" rel="noreferrer"
-                className="flex-1 text-sm text-blue-700 font-medium hover:underline truncate">
-                hints.pdf
-              </a>
-              <button type="button" onClick={handlePdfDelete}
-                className="text-slate-400 hover:text-red-500 transition-colors shrink-0">
-                <Trash2 className="w-4 h-4" />
-              </button>
-            </div>
-          ) : (
-            <div
-              onClick={() => fileInputRef.current?.click()}
-              className="flex flex-col items-center justify-center gap-2 px-4 py-6 rounded-xl border-2 border-dashed border-slate-300 hover:border-blue-400 hover:bg-blue-50 cursor-pointer transition-colors">
-              <FileText className="w-6 h-6 text-slate-400" />
-              <span className="text-sm text-slate-500">
-                {uploadingPdf ? 'Wird hochgeladen…' : 'PDF hochladen'}
-              </span>
-              <span className="text-xs text-slate-400">Klicken zum Auswählen</span>
-            </div>
-          )}
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="application/pdf"
-            className="hidden"
-            onChange={e => {
-              const file = e.target.files?.[0]
-              if (file) void handlePdfUpload(file)
-              e.target.value = ''
-            }}
-          />
-        </div>
+        {translateSuccess && <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-xl px-4 py-2.5 mb-4 text-sm flex items-center gap-2"><Languages className="w-4 h-4" /> Automatisch in alle Sprachen übersetzt.</div>}
+        {translateError && <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-2.5 mb-4 text-sm">{translateError}</div>}
 
-        {/* Text Hints */}
         <div className="flex flex-col gap-2 mb-4">
           {getCustomHints().map((hint, i) => {
             const hasTranslation = Object.keys(translations).length > 0
@@ -483,37 +520,51 @@ export function AdminSettingsClient() {
             )
           })}
           {getCustomHints().length === 0 && (
-            <p className="text-sm text-slate-400 italic">Noch keine Texthinweise hinzugefügt.</p>
+            <p className="text-sm text-slate-400 italic">Noch keine Hinweise hinzugefügt.</p>
           )}
         </div>
 
-        {getCustomHints().length > 0 && (
-          <div className="flex items-center gap-3 mb-4">
-            <button type="button" onClick={handleTranslate} disabled={translating}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50 transition-colors">
-              <Languages className="w-4 h-4" />
-              {translating ? 'Wird übersetzt…' : 'In alle Sprachen übersetzen'}
-            </button>
-            {translateSuccess && <span className="text-sm text-emerald-600 font-medium">✓ Übersetzt</span>}
-            {translateError && <span className="text-sm text-red-600">{translateError}</span>}
-          </div>
-        )}
-
         <div className="flex gap-2">
-          <input
-            type="text"
-            value={newHint}
-            onChange={e => setNewHint(e.target.value)}
+          <input type="text" value={newHint} onChange={e => setNewHint(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addHint() } }}
-            placeholder="Neuen Texthinweis eingeben…"
-            className="flex-1 px-4 py-3 rounded-xl border border-slate-200 text-sm outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-100"
-          />
+            placeholder="Neuen Hinweis eingeben…"
+            className="flex-1 px-4 py-3 rounded-xl border border-slate-200 text-sm outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-100" />
           <button type="button" onClick={addHint} disabled={!newHint.trim()}
             className="flex items-center gap-2 px-4 py-3 rounded-xl bg-slate-900 text-white font-semibold hover:bg-slate-700 disabled:opacity-50 transition-colors text-sm">
             <Plus className="w-4 h-4" />
             Hinzufügen
           </button>
         </div>
+      </div>
+
+      {/* PDF-Dokument */}
+      <div className="bg-white rounded-2xl border border-slate-100 p-6 mb-6">
+        <h2 className="text-lg font-bold text-slate-900 mb-1">Hinweis-Dokument</h2>
+        <p className="text-sm text-slate-500 mb-5">
+          PDF wird im Terminal direkt in der Belehrung angezeigt.
+        </p>
+        {hintsPdfUrl ? (
+          <div className="flex items-center gap-3 px-4 py-3 bg-blue-50 border border-blue-200 rounded-xl">
+            <FileText className="w-5 h-5 text-blue-600 shrink-0" />
+            <a href={hintsPdfUrl} target="_blank" rel="noreferrer"
+              className="flex-1 text-sm text-blue-700 font-medium hover:underline truncate">
+              hints.pdf
+            </a>
+            <button type="button" onClick={handlePdfDelete}
+              className="text-slate-400 hover:text-red-500 transition-colors shrink-0">
+              <Trash2 className="w-4 h-4" />
+            </button>
+          </div>
+        ) : (
+          <div onClick={() => fileInputRef.current?.click()}
+            className="flex flex-col items-center justify-center gap-2 px-4 py-6 rounded-xl border-2 border-dashed border-slate-300 hover:border-blue-400 hover:bg-blue-50 cursor-pointer transition-colors">
+            <FileText className="w-6 h-6 text-slate-400" />
+            <span className="text-sm text-slate-500">{uploadingPdf ? 'Wird hochgeladen…' : 'PDF hochladen'}</span>
+            <span className="text-xs text-slate-400">Klicken zum Auswählen</span>
+          </div>
+        )}
+        <input ref={fileInputRef} type="file" accept="application/pdf" className="hidden"
+          onChange={e => { const file = e.target.files?.[0]; if (file) void handlePdfUpload(file); e.target.value = '' }} />
       </div>
 
       <div className="flex justify-end pb-8">

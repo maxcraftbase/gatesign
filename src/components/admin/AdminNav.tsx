@@ -42,7 +42,7 @@ export function AdminNav({ slug }: { slug: string }) {
           </nav>
         </div>
         <div className="flex items-center gap-4">
-          <Link href={`/${slug}`} className="text-sm text-slate-500 hover:text-slate-900 transition-colors">
+          <Link href={`/${slug}`} className="text-sm font-medium text-slate-700 border border-slate-300 rounded-lg px-3 py-1.5 hover:bg-slate-50 hover:border-slate-400 transition-colors">
             ← Check-In Terminal
           </Link>
           <button onClick={handleLogout} className="text-sm text-slate-500 hover:text-slate-900 transition-colors">

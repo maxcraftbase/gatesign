@@ -16,7 +16,7 @@ export function IsoSign({
 }) {
   const [failed, setFailed] = useState(false)
 
-  if (failed) {
+  if (!code || failed) {
     return (
       <div
         className={`flex items-center justify-center shrink-0 ${fallbackClass}`}

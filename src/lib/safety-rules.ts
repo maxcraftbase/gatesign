@@ -249,7 +249,6 @@ export const SAFETY_RULES: SafetyRule[] = [
   {
     id: 'no_overnight',
     icon: '🌙',
-    isoCode: 'P031',
     signType: 'prohibition',
     category: 'prohibition',
     label: {
@@ -289,7 +288,6 @@ export const SAFETY_RULES: SafetyRule[] = [
   {
     id: 'stay_vehicle',
     icon: '🚛',
-    isoCode: 'M019',
     signType: 'mandatory',
     category: 'behavior',
     label: {
@@ -308,7 +306,6 @@ export const SAFETY_RULES: SafetyRule[] = [
   {
     id: 'speed_limit',
     icon: '🚶',
-    isoCode: 'W001',
     signType: 'warning',
     category: 'behavior',
     label: {
@@ -346,7 +343,6 @@ export const SAFETY_RULES: SafetyRule[] = [
   {
     id: 'keep_clear',
     icon: '🚧',
-    isoCode: 'M025',
     signType: 'mandatory',
     category: 'behavior',
     label: {
@@ -384,7 +380,6 @@ export const SAFETY_RULES: SafetyRule[] = [
   {
     id: 'cctv',
     icon: '📹',
-    isoCode: 'W026',
     signType: 'info',
     category: 'behavior',
     label: {
@@ -462,7 +457,6 @@ export const SAFETY_RULES: SafetyRule[] = [
   {
     id: 'handbrake',
     icon: '🅿️',
-    isoCode: 'M038',
     signType: 'mandatory',
     category: 'vehicle',
     label: {
@@ -481,7 +475,6 @@ export const SAFETY_RULES: SafetyRule[] = [
   {
     id: 'chocks',
     icon: '🔺',
-    isoCode: 'M047',
     signType: 'mandatory',
     category: 'vehicle',
     label: {

@@ -11,7 +11,7 @@ function isAuthorized(req: NextRequest): boolean {
   return req.cookies.get('gs-superadmin')?.value === hashPassword(expected)
 }
 
-export function generateImpersonateToken(companyId: string, timestamp: number): string {
+function generateImpersonateToken(companyId: string, timestamp: number): string {
   const secret = process.env.SUPABASE_SERVICE_ROLE_KEY!
   return createHmac('sha256', secret).update(`${companyId}:${timestamp}`).digest('hex')
 }

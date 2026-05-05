@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { IsoSign } from '@/components/IsoSign'
 
 const mockEntries = [
   { time: '05.05.26, 08:14', name: 'Tomasz Kowalski', company: 'DHL Express', plate: 'WA 4821 PL', phone: '+48 602 334 891', flag: '🇵🇱', ref: 'LFS-2291' },
@@ -214,15 +215,15 @@ export default function LandingPage() {
               </p>
               <div className="grid grid-cols-2 gap-3">
                 {[
-                  { icon: '🦺', de: 'Warnweste tragen', en: 'High-vis vest required' },
-                  { icon: '🚜', de: 'Staplerverkehr', en: 'Forklift traffic' },
-                  { icon: '🚷', de: 'Zutritt verboten', en: 'No unauthorised entry' },
-                  { icon: '🚗', de: 'Am Fahrzeug bleiben', en: 'Stay at vehicle' },
-                  { icon: '🐢', de: 'Schrittgeschwindigkeit', en: 'Walking pace only' },
-                  { icon: '🎧', de: 'Kopfhörer verboten', en: 'No headphones' },
+                  { code: 'M015', signType: 'mandatory' as const, icon: '🦺', de: 'Warnweste tragen', en: 'High-vis vest required' },
+                  { code: 'W014', signType: 'warning' as const, de: 'Staplerverkehr', en: 'Forklift traffic' },
+                  { code: 'P004', signType: 'prohibition' as const, de: 'Zutritt verboten', en: 'No unauthorised entry' },
+                  { code: 'W001', signType: 'warning' as const, de: 'Am Fahrzeug bleiben', en: 'Stay at vehicle' },
+                  { signType: 'limit' as const, de: 'Schrittgeschwindigkeit', en: 'Walking pace only' },
+                  { signType: 'prohibition' as const, icon: '🎧', de: 'Kopfhörer verboten', en: 'No headphones' },
                 ].map((rule, i) => (
                   <div key={i} className="bg-amber-50 border border-amber-200 rounded-xl px-3 py-3 flex items-center gap-2">
-                    <span className="text-xl">{rule.icon}</span>
+                    <IsoSign code={(rule as { code?: string }).code} icon={(rule as { icon?: string }).icon} signType={rule.signType} size={36} />
                     <span className="text-xs text-amber-900 font-medium leading-tight">
                       {lang === 'de' ? rule.de : rule.en}
                     </span>

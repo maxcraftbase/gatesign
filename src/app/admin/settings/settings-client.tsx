@@ -5,6 +5,9 @@ import { Save, BookOpen, Plus, X } from 'lucide-react'
 import { SAFETY_RULES, SAFETY_RULE_CATEGORIES } from '@/lib/safety-rules'
 import { IsoSign } from '@/components/IsoSign'
 
+const inputCls = 'w-full px-4 py-3 rounded-xl border border-slate-200 text-base outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-100'
+const labelCls = 'block text-sm font-semibold text-slate-700 mb-1.5'
+
 interface Settings {
   welcome_title: string
   welcome_subtitle: string
@@ -19,6 +22,35 @@ interface Settings {
   sun_closed: string
   active_safety_rules: string
   custom_hints: string
+}
+
+function DayRow({ label, closedKey, hoursKey, settings, setSettings }: {
+  label: string
+  closedKey: keyof Settings
+  hoursKey: keyof Settings
+  settings: Settings
+  setSettings: React.Dispatch<React.SetStateAction<Settings>>
+}) {
+  const isClosed = settings[closedKey] === 'true'
+  return (
+    <div>
+      <label className={labelCls}>{label}</label>
+      <label className="flex items-center gap-3 cursor-pointer mb-2">
+        <div
+          onClick={() => setSettings(s => ({ ...s, [closedKey]: isClosed ? 'false' : 'true' } as Settings))}
+          className={`w-12 h-6 rounded-full transition-colors cursor-pointer flex items-center px-1 shrink-0 ${isClosed ? 'bg-red-500' : 'bg-slate-300'}`}
+        >
+          <div className={`w-4 h-4 bg-white rounded-full shadow transition-transform ${isClosed ? 'translate-x-6' : 'translate-x-0'}`} />
+        </div>
+        <span className="text-sm font-medium text-slate-700">Geschlossen</span>
+      </label>
+      {!isClosed && (
+        <input className={inputCls} value={settings[hoursKey] as string}
+          onChange={e => setSettings(s => ({ ...s, [hoursKey]: e.target.value } as Settings))}
+          placeholder="z.B. 8:00 – 12:00 Uhr" />
+      )}
+    </div>
+  )
 }
 
 export function AdminSettingsClient() {
@@ -100,9 +132,6 @@ export function AdminSettingsClient() {
     )
   }
 
-  const inputCls = 'w-full px-4 py-3 rounded-xl border border-slate-200 text-base outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-100'
-  const labelCls = 'block text-sm font-semibold text-slate-700 mb-1.5'
-
   const activeRules: string[] = (() => {
     try { return JSON.parse(settings.active_safety_rules) as string[] } catch { return [] }
   })()
@@ -111,29 +140,6 @@ export function AdminSettingsClient() {
 
   function toggleAllRules() {
     setSettings(s => ({ ...s, active_safety_rules: allSelected ? '[]' : JSON.stringify(allRuleIds) }))
-  }
-
-  function DayRow({ label, closedKey, hoursKey }: { label: string; closedKey: keyof Settings; hoursKey: keyof Settings }) {
-    const isClosed = settings[closedKey] === 'true'
-    return (
-      <div>
-        <label className={labelCls}>{label}</label>
-        <label className="flex items-center gap-3 cursor-pointer mb-2">
-          <div
-            onClick={() => setSettings(s => ({ ...s, [closedKey]: isClosed ? 'false' : 'true' }))}
-            className={`w-12 h-6 rounded-full transition-colors cursor-pointer flex items-center px-1 shrink-0 ${isClosed ? 'bg-red-500' : 'bg-slate-300'}`}
-          >
-            <div className={`w-4 h-4 bg-white rounded-full shadow transition-transform ${isClosed ? 'translate-x-6' : 'translate-x-0'}`} />
-          </div>
-          <span className="text-sm font-medium text-slate-700">Geschlossen</span>
-        </label>
-        {!isClosed && (
-          <input className={inputCls} value={settings[hoursKey] as string}
-            onChange={e => setSettings(s => ({ ...s, [hoursKey]: e.target.value }))}
-            placeholder="z.B. 8:00 – 12:00 Uhr" />
-        )}
-      </div>
-    )
   }
 
   return (
@@ -206,9 +212,9 @@ export function AdminSettingsClient() {
               placeholder="z.B. 8:00 – 14:30 Uhr" />
             <p className="text-xs text-slate-400 mt-1">Leer lassen = nicht anzeigen</p>
           </div>
-          <DayRow label="Freitag" closedKey="fri_closed" hoursKey="hours_fri" />
-          <DayRow label="Samstag" closedKey="sat_closed" hoursKey="hours_sat" />
-          <DayRow label="Sonntag" closedKey="sun_closed" hoursKey="hours_sun" />
+          <DayRow label="Freitag" closedKey="fri_closed" hoursKey="hours_fri" settings={settings} setSettings={setSettings} />
+          <DayRow label="Samstag" closedKey="sat_closed" hoursKey="hours_sat" settings={settings} setSettings={setSettings} />
+          <DayRow label="Sonntag" closedKey="sun_closed" hoursKey="hours_sun" settings={settings} setSettings={setSettings} />
         </div>
       </div>
 

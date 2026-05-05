@@ -3,49 +3,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { CheckCircle, Lock } from 'lucide-react'
 import { translations, LANGUAGES, VISITOR_TYPES, type Language, type VisitorType } from '@/lib/translations'
-import { SAFETY_RULES, SIGN_STYLES } from '@/lib/safety-rules'
+import { SAFETY_RULES } from '@/lib/safety-rules'
 import { SignaturePad, type SignaturePadHandle } from '@/components/kiosk/SignaturePad'
 import { IsoSign } from '@/components/IsoSign'
-
-// ─── Simple markdown renderer (no external dependency) ───────────────────────
-function renderMarkdown(text: string): React.ReactNode[] {
-  const lines = text.split('\n')
-  const nodes: React.ReactNode[] = []
-
-  lines.forEach((line, i) => {
-    if (line.startsWith('# ')) {
-      nodes.push(
-        <h2 key={i} className="text-2xl font-bold text-slate-900 mb-4 mt-2">
-          {line.slice(2)}
-        </h2>
-      )
-    } else if (line.match(/^\d+\.\s/)) {
-      const content = line.replace(/^\d+\.\s/, '')
-      nodes.push(
-        <li key={i} className="mb-3 text-slate-700 text-lg leading-relaxed">
-          {renderInline(content)}
-        </li>
-      )
-    } else if (line.trim() === '') {
-      nodes.push(<br key={i} />)
-    } else {
-      nodes.push(
-        <p key={i} className="text-slate-700 text-lg leading-relaxed mb-2">
-          {renderInline(line)}
-        </p>
-      )
-    }
-  })
-
-  return nodes
-}
-
-function renderInline(text: string): React.ReactNode {
-  const parts = text.split(/\*\*(.+?)\*\*/)
-  return parts.map((part, i) =>
-    i % 2 === 1 ? <strong key={i} className="font-semibold text-slate-900">{part}</strong> : part
-  )
-}
 
 // ─── Admin login modal ───────────────────────────────────────────────────────
 function AdminLoginModal({ onClose, onSuccess }: { onClose: () => void; onSuccess: (slug: string) => void }) {
@@ -219,15 +179,20 @@ function VisitorTypeSelect({ lang, onSelect, onBack, info }: {
 function WelcomeScreen({
   title,
   subtitle,
+  companyName,
   onStart,
 }: {
   title: string
   subtitle: string
+  companyName: string
   onStart: () => void
 }) {
   return (
     <div className="flex flex-col items-center justify-center flex-1 gap-10 px-8">
       <div className="text-center">
+        {companyName && (
+          <p className="text-xl font-semibold text-blue-600 mb-3 tracking-wide">{companyName}</p>
+        )}
         <h1 className="text-5xl font-bold text-slate-900 mb-4 leading-tight">{title}</h1>
         <p className="text-2xl text-slate-500">{subtitle}</p>
       </div>
@@ -396,7 +361,6 @@ function CombinedFormStep({
         {activeRules.length > 0 && (
           <div className="flex flex-col gap-2 mb-6">
             {SAFETY_RULES.filter(r => activeRules.includes(r.id)).map(rule => {
-              const s = SIGN_STYLES[rule.signType]
               return (
                 <div key={rule.id} className="flex items-center gap-4 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3">
                   <IsoSign
@@ -531,6 +495,7 @@ export function KioskClient({ slug }: { slug: string }) {
   const [pdfUrls, setPdfUrls] = useState<Record<string, string>>({})
   const [welcomeTitle, setWelcomeTitle] = useState('Willkommen / Welcome')
   const [welcomeSubtitle, setWelcomeSubtitle] = useState('Bitte melden Sie sich hier an — Please register here')
+  const [companyName, setCompanyName] = useState('')
   const [hoursWeekday, setHoursWeekday] = useState('')
   const [hoursFri, setHoursFri] = useState('')
   const [friClosed, setFriClosed] = useState(true)
@@ -573,6 +538,7 @@ export function KioskClient({ slug }: { slug: string }) {
     fetch(`/api/settings?slug=${slug}`)
       .then(r => r.json())
       .then((data: Record<string, string>) => {
+        if (data.company_name) setCompanyName(data.company_name)
         if (data.welcome_title) setWelcomeTitle(data.welcome_title)
         if (data.welcome_subtitle) setWelcomeSubtitle(data.welcome_subtitle)
         if (data.briefing_version) setBriefingVersion(data.briefing_version)
@@ -597,7 +563,7 @@ export function KioskClient({ slug }: { slug: string }) {
         setPdfUrls(urls)
       })
       .catch(() => {})
-  }, [])
+  }, [slug])
 
   function handleLanguageSelect(selected: Language) {
     setLang(selected)
@@ -697,7 +663,7 @@ export function KioskClient({ slug }: { slug: string }) {
         </div>
       )}
 
-      {step === 0 && <WelcomeScreen title={welcomeTitle} subtitle={welcomeSubtitle} onStart={() => setStep(1)} />}
+      {step === 0 && <WelcomeScreen title={welcomeTitle} subtitle={welcomeSubtitle} companyName={companyName} onStart={() => setStep(1)} />}
       {step === 1 && <LanguageSelect onSelect={handleLanguageSelect} onBack={() => setStep(0)} />}
       {step === 2 && (
         <VisitorTypeSelect

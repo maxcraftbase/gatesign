@@ -1,12 +1,11 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname, useRouter } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 import { clsx } from 'clsx'
 
 export function AdminNav({ slug }: { slug: string }) {
   const pathname = usePathname()
-  const router = useRouter()
   const base = `/${slug}/admin`
 
   const navItems = [

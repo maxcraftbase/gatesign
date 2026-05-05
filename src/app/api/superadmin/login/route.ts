@@ -17,9 +17,10 @@ export async function POST(req: NextRequest) {
     const res = NextResponse.json({ success: true })
     res.cookies.set('gs-superadmin', token, {
       httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       path: '/',
-      maxAge: 8 * 60 * 60, // 8 hours
+      maxAge: 8 * 60 * 60,
     })
     return res
   } catch (err) {

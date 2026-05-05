@@ -40,6 +40,11 @@ function isTokenExpired(token: string): boolean {
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
+  // Skip non-admin API routes entirely
+  if (pathname.startsWith('/api/') && !pathname.startsWith('/api/admin/')) {
+    return NextResponse.next()
+  }
+
   // Site-wide password protection
   const sitePassword = process.env.SITE_PASSWORD?.trim()
   if (sitePassword && pathname !== '/password') {
@@ -52,13 +57,22 @@ export function middleware(request: NextRequest) {
     }
   }
 
+  // Guard all /api/admin/* routes — return 401 JSON if not authenticated
+  if (pathname.startsWith('/api/admin/')) {
+    const token = getAccessToken(request)
+    if (!token || isTokenExpired(token)) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+    return NextResponse.next()
+  }
+
   // Match /[slug]/admin/* but not /[slug]/admin/login
   const adminMatch = pathname.match(/^\/([^/]+)\/admin(\/.*)?$/)
   if (adminMatch) {
     const rest = adminMatch[2] ?? ''
     if (rest === '/login' || rest.startsWith('/login/')) return NextResponse.next()
 
-const token = getAccessToken(request)
+    const token = getAccessToken(request)
     if (!token || isTokenExpired(token)) {
       const slug = adminMatch[1]
       return NextResponse.redirect(new URL(`/${slug}/admin/login`, request.url))
@@ -69,5 +83,5 @@ const token = getAccessToken(request)
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|api/|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'],
 }

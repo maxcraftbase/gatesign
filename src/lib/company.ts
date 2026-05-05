@@ -23,8 +23,16 @@ export async function getCompanyBySlug(slug: string): Promise<{ id: string; name
 }
 
 export async function getCompanyByOwner(accessToken: string): Promise<{ id: string; name: string; slug: string } | null> {
+  // Extract owner_id from JWT sub claim — explicit filter, independent of RLS config
+  let ownerId: string | null = null
+  try {
+    const payload = JSON.parse(Buffer.from(accessToken.split('.')[1], 'base64url').toString('utf-8'))
+    ownerId = payload.sub ?? null
+  } catch { /* ignore */ }
+  if (!ownerId) return null
+
   const res = await fetch(
-    `${SUPABASE_URL}/rest/v1/companies?select=id,name,slug&limit=1`,
+    `${SUPABASE_URL}/rest/v1/companies?owner_id=eq.${encodeURIComponent(ownerId)}&select=id,name,slug&limit=1`,
     { headers: { apikey: ANON_KEY, Authorization: `Bearer ${accessToken}` }, cache: 'no-store' }
   )
   if (!res.ok) return null

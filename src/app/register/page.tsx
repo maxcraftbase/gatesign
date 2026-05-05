@@ -58,7 +58,7 @@ export default function RegisterPage() {
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1.5">Firmenname</label>
               <input type="text" value={companyName} onChange={e => setCompanyName(e.target.value)}
-                placeholder="z.B. MB Spritzgusstechnik GmbH" required autoComplete="organization"
+                placeholder="z.B. Muster Logistik GmbH" required autoComplete="organization"
                 className={inputCls} />
             </div>
             <div>

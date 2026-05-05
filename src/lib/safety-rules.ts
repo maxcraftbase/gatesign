@@ -433,9 +433,8 @@ export const SAFETY_RULES: SafetyRule[] = [
   // ── Fahrzeug ─────────────────────────────────────────────────────────────────
   {
     id: 'engine_off',
-    icon: '🔑',
-    isoCode: 'M021',
-    signType: 'mandatory',
+    isoCode: 'ENGINE_OFF',
+    signType: 'prohibition',
     category: 'vehicle',
     label: {
       de: 'Motor abstellen beim Be- und Entladen',

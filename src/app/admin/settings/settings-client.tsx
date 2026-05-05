@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { Save, BookOpen, Plus, X, FileText, Trash2, Languages } from 'lucide-react'
+import { Save, BookOpen, Plus, X, FileText, Trash2, Languages, ChevronDown, ChevronUp } from 'lucide-react'
 import { SAFETY_RULES, SAFETY_RULE_CATEGORIES } from '@/lib/safety-rules'
 import { IsoSign } from '@/components/IsoSign'
 
@@ -86,6 +86,8 @@ export function AdminSettingsClient() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [uploadingPdf, setUploadingPdf] = useState(false)
+  const [translations, setTranslations] = useState<Record<string, string[]>>({})
+  const [expandedHint, setExpandedHint] = useState<number | null>(null)
   const [translating, setTranslating] = useState(false)
   const [translateSuccess, setTranslateSuccess] = useState(false)
   const [translateError, setTranslateError] = useState('')
@@ -97,7 +99,12 @@ export function AdminSettingsClient() {
     fetch('/api/admin/settings')
       .then(r => r.json())
       .then(data => {
-        if (data.settings) setSettings(prev => ({ ...prev, ...data.settings }))
+        if (data.settings) {
+          setSettings(prev => ({ ...prev, ...data.settings }))
+          if (data.settings.custom_hints_translations) {
+            try { setTranslations(JSON.parse(data.settings.custom_hints_translations)) } catch { /* ignore */ }
+          }
+        }
       })
       .catch(() => setError('Fehler beim Laden der Einstellungen.'))
       .finally(() => setLoading(false))
@@ -168,6 +175,8 @@ export function AdminSettingsClient() {
     setTranslateSuccess(false)
     const res = await fetch('/api/admin/translate-hints', { method: 'POST' })
     if (res.ok) {
+      const data = await res.json() as { translations: Record<string, string[]> }
+      setTranslations(data.translations)
       setTranslateSuccess(true)
       setTimeout(() => setTranslateSuccess(false), 4000)
     } else {
@@ -435,15 +444,44 @@ export function AdminSettingsClient() {
 
         {/* Text Hints */}
         <div className="flex flex-col gap-2 mb-4">
-          {getCustomHints().map((hint, i) => (
-            <div key={i} className="flex items-center gap-3 px-4 py-3 bg-slate-50 rounded-xl border border-slate-200">
-              <span className="flex-1 text-sm text-slate-800">{hint}</span>
-              <button type="button" onClick={() => removeHint(i)}
-                className="text-slate-400 hover:text-red-500 transition-colors shrink-0">
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-          ))}
+          {getCustomHints().map((hint, i) => {
+            const hasTranslation = Object.keys(translations).length > 0
+            const isExpanded = expandedHint === i
+            const LANG_LABELS: Record<string, string> = {
+              de: '🇩🇪 DE', en: '🇬🇧 EN', pl: '🇵🇱 PL', ro: '🇷🇴 RO',
+              cs: '🇨🇿 CS', hu: '🇭🇺 HU', bg: '🇧🇬 BG', uk: '🇺🇦 UK',
+              ru: '🇷🇺 RU', tr: '🇹🇷 TR',
+            }
+            return (
+              <div key={i} className="rounded-xl border border-slate-200 overflow-hidden">
+                <div className="flex items-center gap-3 px-4 py-3 bg-slate-50">
+                  <span className="flex-1 text-sm text-slate-800">{hint}</span>
+                  {hasTranslation && (
+                    <button type="button"
+                      onClick={() => setExpandedHint(isExpanded ? null : i)}
+                      className="flex items-center gap-1 text-xs text-slate-500 hover:text-blue-600 transition-colors shrink-0">
+                      <Languages className="w-3.5 h-3.5" />
+                      {isExpanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                    </button>
+                  )}
+                  <button type="button" onClick={() => removeHint(i)}
+                    className="text-slate-400 hover:text-red-500 transition-colors shrink-0">
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+                {isExpanded && (
+                  <div className="border-t border-slate-200 px-4 py-3 grid grid-cols-2 gap-x-6 gap-y-1.5 bg-white">
+                    {Object.entries(LANG_LABELS).map(([lang, label]) => (
+                      <div key={lang} className="flex items-start gap-2 text-xs">
+                        <span className="text-slate-400 font-medium shrink-0 w-10">{label}</span>
+                        <span className="text-slate-700">{translations[lang]?.[i] ?? '—'}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )
+          })}
           {getCustomHints().length === 0 && (
             <p className="text-sm text-slate-400 italic">Noch keine Texthinweise hinzugefügt.</p>
           )}

@@ -15,6 +15,13 @@ interface Entry {
   briefing_accepted_at: string | null
   has_signature: boolean
   reference_number: string | null
+  visitor_type: string | null
+}
+
+const VISITOR_TYPE_LABELS: Record<string, { label: string; color: string }> = {
+  truck:   { label: 'LKW',       color: 'bg-amber-50 text-amber-700' },
+  visitor: { label: 'Besucher',  color: 'bg-blue-50 text-blue-700' },
+  service: { label: 'Dienst',    color: 'bg-violet-50 text-violet-700' },
 }
 
 const LANG_FLAGS: Record<string, string> = {
@@ -113,6 +120,7 @@ export function AdminEntriesClient() {
                 <thead>
                   <tr className="border-b border-slate-100 text-slate-500 text-xs uppercase tracking-wide">
                     <th className="px-4 py-3 text-left font-medium">Zeit</th>
+                    <th className="px-4 py-3 text-left font-medium">Typ</th>
                     <th className="px-4 py-3 text-left font-medium">Fahrer</th>
                     <th className="px-4 py-3 text-left font-medium">Firma</th>
                     <th className="px-4 py-3 text-left font-medium">Kennzeichen</th>
@@ -131,6 +139,15 @@ export function AdminEntriesClient() {
                     >
                       <td className="px-4 py-3 text-slate-500 whitespace-nowrap">
                         {formatDate(entry.created_at)}
+                      </td>
+                      <td className="px-4 py-3">
+                        {entry.visitor_type && VISITOR_TYPE_LABELS[entry.visitor_type] ? (
+                          <span className={`inline-flex items-center text-xs font-medium px-2 py-1 rounded-full ${VISITOR_TYPE_LABELS[entry.visitor_type].color}`}>
+                            {VISITOR_TYPE_LABELS[entry.visitor_type].label}
+                          </span>
+                        ) : (
+                          <span className="text-slate-400 text-xs">—</span>
+                        )}
                       </td>
                       <td className="px-4 py-3 font-medium text-slate-900 whitespace-nowrap">
                         {entry.driver_name}

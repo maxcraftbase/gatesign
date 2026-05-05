@@ -69,12 +69,12 @@ export const translations: Record<Language, {
 }> = {
   de: {
     step_language: 'Sprache',
-    step_type: 'Vorgang',
+    step_type: 'Check-in Typ',
     step_form: 'Daten',
     step_briefing: 'Sicherheit',
     step_success: 'Fertig',
     choose_language: 'Sprache wählen',
-    choose_type: 'Vorgang wählen',
+    choose_type: 'Check-in Typ wählen',
     type_truck: 'LKW / Lieferung',
     type_visitor: 'Besucher',
     type_service: 'Dienstleister',

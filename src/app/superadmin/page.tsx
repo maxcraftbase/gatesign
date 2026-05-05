@@ -68,7 +68,7 @@ export default function SuperadminPage() {
     })
     if (!res.ok) {
       const d = await res.json()
-      setLoginError(d.error ?? 'Fehler')
+      setLoginError((d.error ?? 'Fehler') + (d.debug ? ` (${d.debug})` : ''))
       setLoginLoading(false)
       return
     }

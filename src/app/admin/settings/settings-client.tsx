@@ -16,6 +16,7 @@ const RULE_TYPES = [
 ] as const
 
 interface Settings {
+  company_name: string
   welcome_title: string
   welcome_subtitle: string
   signature_required: string
@@ -64,6 +65,7 @@ function DayRow({ label, closedKey, hoursKey, settings, setSettings }: {
 
 export function AdminSettingsClient() {
   const [settings, setSettings] = useState<Settings>({
+    company_name: '',
     welcome_title: 'Willkommen / Welcome',
     welcome_subtitle: 'Bitte melden Sie sich hier an — Please register here',
     signature_required: 'false',
@@ -247,6 +249,13 @@ export function AdminSettingsClient() {
       <div className="bg-white rounded-2xl border border-slate-100 p-6 mb-6">
         <h2 className="text-lg font-bold text-slate-900 mb-5">Allgemein</h2>
         <div className="flex flex-col gap-5">
+          <div>
+            <label className={labelCls}>Firmenname</label>
+            <input className={inputCls} value={settings.company_name}
+              onChange={e => setSettings(s => ({ ...s, company_name: e.target.value }))}
+              placeholder="z.B. Muster Logistik GmbH" />
+            <p className="text-xs text-slate-400 mt-1">Wird im Terminal über dem Willkommenstitel angezeigt.</p>
+          </div>
           <div>
             <label className={labelCls}>Willkommenstitel</label>
             <input className={inputCls} value={settings.welcome_title}

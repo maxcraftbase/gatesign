@@ -115,8 +115,8 @@ export function AdminEntriesClient() {
       ) : (
         <>
           <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+            <div className="overflow-hidden">
+              <table className="w-full text-sm table-fixed">
                 <thead>
                   <tr className="border-b border-slate-100 text-slate-500 text-xs uppercase tracking-wide">
                     <th className="px-4 py-3 text-left font-medium">Zeit</th>

@@ -21,7 +21,7 @@ export async function GET() {
     ])
 
     const settingsRows: { key: string; value: string }[] = await settingsRes.json()
-    const settings: Record<string, string> = {}
+    const settings: Record<string, string> = { company_name: ctx.company.name }
     for (const row of settingsRows) settings[row.key] = row.value
 
     const briefings = await briefingsRes.json()
@@ -43,7 +43,23 @@ export async function PUT(req: NextRequest) {
     const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
     if (settings && typeof settings === 'object') {
-      const rows = Object.entries(settings as Record<string, string>).map(([key, value]) => ({
+      const allSettings = settings as Record<string, string>
+
+      if (allSettings.company_name) {
+        await fetch(`${supabaseUrl}/rest/v1/companies?id=eq.${ctx.company.id}`, {
+          method: 'PATCH',
+          headers: {
+            apikey: anonKey,
+            Authorization: `Bearer ${ctx.accessToken}`,
+            'Content-Type': 'application/json',
+            Prefer: 'return=minimal',
+          },
+          body: JSON.stringify({ name: allSettings.company_name }),
+        })
+      }
+
+      const { company_name: _cn, ...settingsWithoutName } = allSettings
+      const rows = Object.entries(settingsWithoutName).map(([key, value]) => ({
         company_id: ctx.company.id,
         key,
         value: String(value),

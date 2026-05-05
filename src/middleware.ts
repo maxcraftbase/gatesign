@@ -41,7 +41,7 @@ export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // Site-wide password protection
-  const sitePassword = process.env.SITE_PASSWORD
+  const sitePassword = process.env.SITE_PASSWORD?.trim()
   if (sitePassword && pathname !== '/password') {
     const auth = request.cookies.get('site_auth')?.value
     if (auth !== sitePassword) {

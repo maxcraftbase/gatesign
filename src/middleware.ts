@@ -58,19 +58,7 @@ export function middleware(request: NextRequest) {
     const rest = adminMatch[2] ?? ''
     if (rest === '/login' || rest.startsWith('/login/')) return NextResponse.next()
 
-    // Allow superadmin impersonation cookie
-    const impersonate = request.cookies.get('gs-impersonate')?.value
-    if (impersonate) {
-      const parts = impersonate.split(':')
-      if (parts.length === 3) {
-        const timestamp = parseInt(parts[1], 10)
-        if (!isNaN(timestamp) && Date.now() / 1000 - timestamp < 3600) {
-          return NextResponse.next()
-        }
-      }
-    }
-
-    const token = getAccessToken(request)
+const token = getAccessToken(request)
     if (!token || isTokenExpired(token)) {
       const slug = adminMatch[1]
       return NextResponse.redirect(new URL(`/${slug}/admin/login`, request.url))

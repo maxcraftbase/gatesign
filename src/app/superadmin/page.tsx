@@ -37,7 +37,6 @@ export default function SuperadminPage() {
   const [totalCheckIns, setTotalCheckIns] = useState(0)
   const [dataLoading, setDataLoading] = useState(false)
   const [toggling, setToggling] = useState<string | null>(null)
-  const [impersonating, setImpersonating] = useState<string | null>(null)
 
   // Agents
   const [activeTab, setActiveTab] = useState<'companies' | 'agents'>('companies')
@@ -83,27 +82,7 @@ export default function SuperadminPage() {
     setCompanies([])
   }
 
-  async function handleImpersonate(company: Company) {
-    setImpersonating(company.id)
-    const newTab = window.open('', '_blank')
-    try {
-      const res = await fetch('/api/superadmin/impersonate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ companySlug: company.slug }),
-      })
-      if (res.ok) {
-        const data = await res.json() as { adminUrl: string }
-        if (newTab) newTab.location.href = window.location.origin + data.adminUrl
-      } else {
-        newTab?.close()
-      }
-    } finally {
-      setImpersonating(null)
-    }
-  }
-
-  async function toggleStatus(company: Company) {
+async function toggleStatus(company: Company) {
     setToggling(company.id)
     // trial → active → inactive → active
     const next = company.subscription_status === 'active' ? 'inactive' : 'active'
@@ -349,14 +328,7 @@ export default function SuperadminPage() {
                           >
                             Agenten
                           </button>
-                          <button
-                            onClick={() => handleImpersonate(c)}
-                            disabled={impersonating === c.id}
-                            className="text-xs text-blue-400 hover:text-blue-300 border border-blue-800 hover:border-blue-600 hover:bg-blue-950 px-3 py-1.5 rounded-lg transition-colors disabled:opacity-40 font-medium"
-                          >
-                            {impersonating === c.id ? '…' : 'Einloggen ↗'}
-                          </button>
-                          <button
+<button
                             onClick={() => toggleStatus(c)}
                             disabled={toggling === c.id}
                             className={`text-xs px-3 py-1.5 rounded-lg transition-colors disabled:opacity-40 font-medium ${

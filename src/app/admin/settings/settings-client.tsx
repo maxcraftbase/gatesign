@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Save, ChevronDown, ChevronUp, Upload, FileText, Loader2, CheckCircle2, ExternalLink, Trash2 } from 'lucide-react'
 import { LANGUAGES, VISITOR_TYPES } from '@/lib/translations'
-import { SAFETY_RULES } from '@/lib/safety-rules'
+import { SAFETY_RULES, SAFETY_RULE_CATEGORIES } from '@/lib/safety-rules'
 
 interface Settings {
   welcome_title: string
@@ -353,36 +353,44 @@ export function AdminSettingsClient() {
         <p className="text-sm text-slate-500 mb-5">
           Auswählen was gilt — wird automatisch in alle Sprachen übersetzt und im Kiosk angezeigt.
         </p>
-        <div className="flex flex-col gap-2">
-          {SAFETY_RULES.map(rule => {
-            const active = (() => {
-              try { return (JSON.parse(settings.active_safety_rules) as string[]).includes(rule.id) }
-              catch { return false }
-            })()
-            function toggle() {
-              const current: string[] = (() => {
-                try { return JSON.parse(settings.active_safety_rules) as string[] }
-                catch { return [] }
-              })()
-              const next = active ? current.filter(id => id !== rule.id) : [...current, rule.id]
-              setSettings(s => ({ ...s, active_safety_rules: JSON.stringify(next) }))
-            }
-            return (
-              <label key={rule.id} onClick={toggle}
-                className={`flex items-center gap-4 px-4 py-3 rounded-xl border cursor-pointer transition-colors select-none ${
-                  active ? 'bg-blue-50 border-blue-200' : 'border-slate-200 hover:bg-slate-50'
-                }`}>
-                <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-colors ${
-                  active ? 'bg-blue-600 border-blue-600' : 'border-slate-300'
-                }`}>
-                  {active && <span className="text-white text-xs font-bold">✓</span>}
-                </div>
-                <span className="text-2xl">{rule.icon}</span>
-                <span className="text-sm font-medium text-slate-800">{rule.label.de}</span>
-              </label>
-            )
-          })}
-        </div>
+        {(['ppe', 'prohibition', 'behavior', 'vehicle', 'emergency'] as const).map(cat => {
+          const rulesInCat = SAFETY_RULES.filter(r => r.category === cat)
+          return (
+            <div key={cat} className="mb-5">
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">{SAFETY_RULE_CATEGORIES[cat].de}</p>
+              <div className="flex flex-col gap-2">
+                {rulesInCat.map(rule => {
+                  const active = (() => {
+                    try { return (JSON.parse(settings.active_safety_rules) as string[]).includes(rule.id) }
+                    catch { return false }
+                  })()
+                  function toggle() {
+                    const current: string[] = (() => {
+                      try { return JSON.parse(settings.active_safety_rules) as string[] }
+                      catch { return [] }
+                    })()
+                    const next = active ? current.filter(id => id !== rule.id) : [...current, rule.id]
+                    setSettings(s => ({ ...s, active_safety_rules: JSON.stringify(next) }))
+                  }
+                  return (
+                    <label key={rule.id} onClick={toggle}
+                      className={`flex items-center gap-4 px-4 py-3 rounded-xl border cursor-pointer transition-colors select-none ${
+                        active ? 'bg-blue-50 border-blue-200' : 'border-slate-200 hover:bg-slate-50'
+                      }`}>
+                      <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-colors ${
+                        active ? 'bg-blue-600 border-blue-600' : 'border-slate-300'
+                      }`}>
+                        {active && <span className="text-white text-xs font-bold">✓</span>}
+                      </div>
+                      <span className="text-2xl">{rule.icon}</span>
+                      <span className="text-sm font-medium text-slate-800">{rule.label.de}</span>
+                    </label>
+                  )
+                })}
+              </div>
+            </div>
+          )
+        })}
       </div>
 
       {/* PDF Upload per visitor type */}

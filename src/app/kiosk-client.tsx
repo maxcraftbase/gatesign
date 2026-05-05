@@ -401,13 +401,9 @@ function CombinedFormStep({
               </div>
             ))}
             {hintsPdfUrl && (
-              <a href={hintsPdfUrl} target="_blank" rel="noreferrer"
-                className="flex items-center gap-3 bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 hover:bg-blue-100 transition-colors">
-                <span className="text-blue-600 text-xl shrink-0">📄</span>
-                <span className="text-base font-medium text-blue-700">
-                  {lang === 'de' ? 'Weitere Hinweise öffnen' : 'Open additional notes'}
-                </span>
-              </a>
+              <div className="rounded-xl overflow-hidden border border-slate-200">
+                <iframe src={hintsPdfUrl} className="w-full block" style={{ aspectRatio: '210/297' }} title="Weitere Hinweise" />
+              </div>
             )}
           </div>
         )}

@@ -40,6 +40,18 @@ function isTokenExpired(token: string): boolean {
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
+  // Site-wide password protection
+  const sitePassword = process.env.SITE_PASSWORD
+  if (sitePassword && pathname !== '/password') {
+    const auth = request.cookies.get('site_auth')?.value
+    if (auth !== sitePassword) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/password'
+      url.search = ''
+      return NextResponse.redirect(url)
+    }
+  }
+
   // Match /[slug]/admin/* but not /[slug]/admin/login
   const adminMatch = pathname.match(/^\/([^/]+)\/admin(\/.*)?$/)
   if (adminMatch) {

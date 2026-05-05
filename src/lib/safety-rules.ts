@@ -1,10 +1,10 @@
 import type { Language } from './translations'
 
-export type SignType = 'mandatory' | 'prohibition' | 'warning' | 'emergency' | 'info'
+export type SignType = 'mandatory' | 'prohibition' | 'warning' | 'emergency' | 'info' | 'limit'
 
 export interface SafetyRule {
   id: string
-  icon: string
+  icon?: string
   isoCode?: string
   signType: SignType
   category: 'ppe' | 'prohibition' | 'behavior' | 'emergency' | 'vehicle' | 'legal'
@@ -22,6 +22,7 @@ export const SIGN_STYLES: Record<SignType, { bg: string; border: string; text: s
   warning:     { bg: 'bg-yellow-400', border: 'border-yellow-500',text: 'text-slate-900',  shape: 'rounded',      label: 'Warnung (gelb)'     },
   emergency:   { bg: 'bg-green-600',  border: 'border-green-700', text: 'text-white',      shape: 'rounded-sm',   label: 'Rettung (grün)'     },
   info:        { bg: 'bg-slate-200',  border: 'border-slate-300', text: 'text-slate-700',  shape: 'rounded-sm',   label: 'Info (grau)'        },
+  limit:       { bg: 'bg-white',      border: 'border-red-600',   text: 'text-slate-900',  shape: 'rounded-full', label: 'Tempolimit'          },
 }
 
 export const SAFETY_RULE_CATEGORIES: Record<SafetyRule['category'], Record<Language, string>> = {
@@ -286,7 +287,6 @@ export const SAFETY_RULES: SafetyRule[] = [
   },
   {
     id: 'stay_vehicle',
-    icon: '🚛',
     signType: 'warning',
     category: 'behavior',
     label: {
@@ -304,8 +304,7 @@ export const SAFETY_RULES: SafetyRule[] = [
   },
   {
     id: 'speed_limit',
-    icon: '🚶',
-    signType: 'warning',
+    signType: 'limit',
     category: 'behavior',
     label: {
       de: 'Schrittgeschwindigkeit auf dem Betriebsgelände (5 km/h)',
@@ -322,7 +321,6 @@ export const SAFETY_RULES: SafetyRule[] = [
   },
   {
     id: 'designated_paths',
-    icon: '🛤️',
     signType: 'warning',
     category: 'behavior',
     label: {
@@ -340,7 +338,6 @@ export const SAFETY_RULES: SafetyRule[] = [
   },
   {
     id: 'keep_clear',
-    icon: '↔️',
     signType: 'warning',
     category: 'behavior',
     label: {
@@ -358,7 +355,6 @@ export const SAFETY_RULES: SafetyRule[] = [
   },
   {
     id: 'doors_closed',
-    icon: '🚪',
     signType: 'warning',
     category: 'behavior',
     label: {
@@ -376,7 +372,7 @@ export const SAFETY_RULES: SafetyRule[] = [
   },
   {
     id: 'cctv',
-    icon: '📹',
+    isoCode: 'CAMERA',
     signType: 'warning',
     category: 'behavior',
     label: {
@@ -413,7 +409,6 @@ export const SAFETY_RULES: SafetyRule[] = [
   },
   {
     id: 'waste',
-    icon: '🗑️',
     signType: 'warning',
     category: 'behavior',
     label: {
@@ -452,7 +447,6 @@ export const SAFETY_RULES: SafetyRule[] = [
   },
   {
     id: 'handbrake',
-    icon: '✋',
     signType: 'warning',
     category: 'vehicle',
     label: {
@@ -470,7 +464,6 @@ export const SAFETY_RULES: SafetyRule[] = [
   },
   {
     id: 'chocks',
-    icon: '⬛',
     signType: 'warning',
     category: 'vehicle',
     label: {
@@ -507,7 +500,6 @@ export const SAFETY_RULES: SafetyRule[] = [
   },
   {
     id: 'load_securing',
-    icon: '📦',
     signType: 'warning',
     category: 'vehicle',
     label: {

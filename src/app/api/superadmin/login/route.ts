@@ -9,9 +9,12 @@ export async function POST(req: NextRequest) {
   try {
     const { password } = await req.json()
     const expected = process.env.SUPERADMIN_PASSWORD
-    if (!expected) return NextResponse.json({ error: 'Not configured.' }, { status: 500 })
+    if (!expected) return NextResponse.json({ error: 'SUPERADMIN_PASSWORD nicht gesetzt in Railway.' }, { status: 500 })
     if (password !== expected) {
-      return NextResponse.json({ error: 'Falsches Passwort.' }, { status: 401 })
+      return NextResponse.json({
+        error: 'Falsches Passwort.',
+        debug: `Erwartet: ${expected.length} Zeichen, Eingabe: ${password.length} Zeichen`,
+      }, { status: 401 })
     }
     const token = hashPassword(expected)
     const res = NextResponse.json({ success: true })

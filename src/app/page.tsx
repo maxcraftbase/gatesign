@@ -14,6 +14,7 @@ const content = {
     },
     how: {
       title: 'So funktioniert GateSign',
+      step: 'Schritt',
       steps: [
         { icon: '⚙️', title: 'Einrichten', text: 'Sicherheitsregeln, Betriebszeiten und Belehrungstexte in wenigen Minuten konfigurieren.' },
         { icon: '📱', title: 'Terminal aufstellen', text: 'Tablet oder Touchscreen am Eingang platzieren — als PWA, kein App-Store nötig.' },
@@ -54,6 +55,7 @@ const content = {
     },
     how: {
       title: 'How GateSign works',
+      step: 'Step',
       steps: [
         { icon: '⚙️', title: 'Set up', text: 'Configure safety rules, opening hours and briefing texts in minutes.' },
         { icon: '📱', title: 'Place terminal', text: 'Mount a tablet or touchscreen at your entrance — as a PWA, no app store needed.' },
@@ -144,7 +146,7 @@ export default function LandingPage() {
           {t.how.steps.map((step, i) => (
             <div key={i} className="text-center">
               <div className="text-4xl mb-4">{step.icon}</div>
-              <div className="text-sm font-semibold text-slate-400 mb-1">Schritt {i + 1}</div>
+              <div className="text-sm font-semibold text-slate-400 mb-1">{t.how.step} {i + 1}</div>
               <h3 className="text-lg font-bold mb-2">{step.title}</h3>
               <p className="text-slate-500 text-sm leading-relaxed">{step.text}</p>
             </div>

@@ -74,6 +74,7 @@ export default function SuperadminPage() {
 
   async function toggleStatus(company: Company) {
     setToggling(company.id)
+    // trial → active → inactive → active
     const next = company.subscription_status === 'active' ? 'inactive' : 'active'
     await fetch('/api/superadmin/data', {
       method: 'PATCH',
@@ -146,7 +147,7 @@ export default function SuperadminPage() {
 
       <main className="max-w-6xl mx-auto px-6 py-8">
         {/* Stats */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-8">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
           <div className="bg-white rounded-2xl border border-slate-100 p-5">
             <p className="text-xs text-slate-400 font-medium uppercase tracking-wide mb-1">Unternehmen</p>
             <p className="text-3xl font-bold text-slate-900">{companies.length}</p>
@@ -159,6 +160,12 @@ export default function SuperadminPage() {
             <p className="text-xs text-slate-400 font-medium uppercase tracking-wide mb-1">Aktive Abos</p>
             <p className="text-3xl font-bold text-slate-900">
               {companies.filter(c => c.subscription_status === 'active').length}
+            </p>
+          </div>
+          <div className="bg-white rounded-2xl border border-slate-100 p-5">
+            <p className="text-xs text-slate-400 font-medium uppercase tracking-wide mb-1">In Testphase</p>
+            <p className="text-3xl font-bold text-amber-500">
+              {companies.filter(c => c.subscription_status === 'trial').length}
             </p>
           </div>
         </div>
@@ -213,10 +220,18 @@ export default function SuperadminPage() {
                         <span className={`inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full ${
                           c.subscription_status === 'active'
                             ? 'bg-emerald-50 text-emerald-700'
+                            : c.subscription_status === 'trial'
+                            ? 'bg-amber-50 text-amber-700'
                             : 'bg-slate-100 text-slate-400'
                         }`}>
-                          <span className={`w-1.5 h-1.5 rounded-full ${c.subscription_status === 'active' ? 'bg-emerald-500' : 'bg-slate-300'}`} />
-                          {c.subscription_status === 'active' ? 'Aktiv' : 'Inaktiv'}
+                          <span className={`w-1.5 h-1.5 rounded-full ${
+                            c.subscription_status === 'active' ? 'bg-emerald-500'
+                            : c.subscription_status === 'trial' ? 'bg-amber-400'
+                            : 'bg-slate-300'
+                          }`} />
+                          {c.subscription_status === 'active' ? 'Aktiv'
+                            : c.subscription_status === 'trial' ? 'Testphase'
+                            : 'Inaktiv'}
                         </span>
                       </td>
                       <td className="px-4 py-4 text-right">

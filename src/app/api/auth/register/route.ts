@@ -45,13 +45,14 @@ export async function POST(req: NextRequest) {
 
     // 4. Send welcome email (best-effort, don't fail registration)
     try {
-      const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://gatesign-production.up.railway.app'
+      const appUrl = (process.env.NEXT_PUBLIC_APP_URL ?? 'https://gatesign-production.up.railway.app').replace(/\/$/, '')
       const terminalUrl = `${appUrl}/${slug}`
       const adminUrl = `${appUrl}/${slug}/admin`
+      const setupUrl = `${appUrl}/einrichtung`
       await sendEmail({
         to: email,
         subject: `Willkommen bei GateSign — ${companyName}`,
-        html: welcomeHtml(companyName, terminalUrl, adminUrl),
+        html: welcomeHtml(companyName, terminalUrl, adminUrl, setupUrl),
       })
     } catch (emailErr) { console.error('[register] welcome email failed:', emailErr) }
 
@@ -71,7 +72,7 @@ export async function POST(req: NextRequest) {
   }
 }
 
-function welcomeHtml(companyName: string, terminalUrl: string, adminUrl: string) {
+function welcomeHtml(companyName: string, terminalUrl: string, adminUrl: string, setupUrl: string) {
   return `<!DOCTYPE html>
 <html lang="de">
 <head><meta charset="UTF-8"></head>
@@ -95,7 +96,7 @@ function welcomeHtml(companyName: string, terminalUrl: string, adminUrl: string)
       <p style="color:#475569;font-size:13px;margin:0 0 12px">
         Die vollständige <strong>Einrichtungsanleitung</strong> (iPad, Windows, Android) finden Sie hier:
       </p>
-      <a href="https://gatesign-production.up.railway.app/einrichtung" style="display:inline-block;background:#2563eb;color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-size:14px;font-weight:600;margin-bottom:24px">
+      <a href="${setupUrl}" style="display:inline-block;background:#2563eb;color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-size:14px;font-weight:600;margin-bottom:24px">
         Einrichtungsanleitung öffnen →
       </a>
       <br>
@@ -104,7 +105,7 @@ function welcomeHtml(companyName: string, terminalUrl: string, adminUrl: string)
       </a>
     </div>
     <div style="padding:16px 32px;background:#f8fafc;border-top:1px solid #e2e8f0">
-      <p style="margin:0;color:#94a3b8;font-size:11px">GateSign · Bei Fragen: support@gatesign.app</p>
+      <p style="margin:0;color:#94a3b8;font-size:11px">GateSign · Bei Fragen: info@alpha-consult.one</p>
     </div>
   </div>
 </body>

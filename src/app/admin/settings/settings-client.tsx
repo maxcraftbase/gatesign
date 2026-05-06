@@ -450,7 +450,15 @@ export function AdminSettingsClient() {
             <label className={labelCls}>Mo – Do</label>
             <input className={inputCls} value={settings.hours_weekday}
               onChange={e => setSettings(s => ({ ...s, hours_weekday: e.target.value }))}
-              placeholder="z.B. 8:00 – 14:30 Uhr" />
+              onBlur={e => {
+                const formatted = e.target.value.trim().replace(
+                  /^(\d{1,2})(?::(\d{0,2}))?[-–\s]+(\d{1,2})(?::(\d{0,2}))?$/,
+                  (_, h1, m1 = '00', h2, m2 = '00') =>
+                    `${h1.padStart(2, '0')}:${m1.padEnd(2, '0')} – ${h2.padStart(2, '0')}:${m2.padEnd(2, '0')}`
+                )
+                setSettings(s => ({ ...s, hours_weekday: formatted }))
+              }}
+              placeholder="z.B. 08:00 – 17:00" />
             <p className="text-xs text-slate-400 mt-1">Leer lassen = nicht anzeigen</p>
           </div>
           <DayRow label="Freitag" closedKey="fri_closed" hoursKey="hours_fri" settings={settings} setSettings={setSettings} />

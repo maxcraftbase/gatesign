@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, Suspense } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 
@@ -11,17 +11,23 @@ function ResetForm() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
   const [loading, setLoading] = useState(false)
+  // Capture tokens immediately on mount before Next.js can strip the hash
+  const [tokenHash, setTokenHash] = useState<string | undefined>()
+  const [accessToken, setAccessToken] = useState<string | undefined>()
 
-  // Read token from URL fragment or query param (only available client-side)
-  // generate_link sends access_token directly; forgot-password sends token_hash
-  const getTokenInfo = (): { token_hash?: string; access_token?: string } => {
-    if (typeof window === 'undefined') return {}
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => {
     const hash = window.location.hash
     const params = new URLSearchParams(hash.slice(1))
-    const access_token = params.get('access_token') ?? undefined
-    const token_hash = params.get('token_hash') ?? searchParams.get('token_hash') ?? undefined
-    return { access_token, token_hash }
-  }
+    const at = params.get('access_token') ?? undefined
+    const th = params.get('token_hash') ?? searchParams.get('token_hash') ?? undefined
+    setAccessToken(at)
+    setTokenHash(th)
+    // Clean up the hash so tokens don't stay in the URL
+    if (at || th) {
+      window.history.replaceState(null, '', window.location.pathname)
+    }
+  }, [searchParams])
 
   function validatePassword(pw: string): string | null {
     if (pw.length < 8) return 'Mindestens 8 Zeichen erforderlich.'
@@ -37,14 +43,13 @@ function ResetForm() {
     const pwError = validatePassword(password)
     if (pwError) { setError(pwError); return }
     if (password !== confirm) { setError('Passwörter stimmen nicht überein.'); return }
-    const { token_hash, access_token } = getTokenInfo()
-    if (!token_hash && !access_token) { setError('Ungültiger Reset-Link.'); return }
+    if (!tokenHash && !accessToken) { setError('Ungültiger Reset-Link.'); return }
 
     setLoading(true)
     const res = await fetch('/api/auth/reset-password', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token_hash, access_token, password }),
+      body: JSON.stringify({ token_hash: tokenHash, access_token: accessToken, password }),
     })
     const data = await res.json()
     setLoading(false)
@@ -59,8 +64,8 @@ function ResetForm() {
       {success ? (
         <div className="text-center">
           <div className="text-4xl mb-4">✅</div>
-          <h2 className="text-lg font-bold text-slate-900 mb-2">Passwort geändert</h2>
-          <p className="text-sm text-slate-500 mb-6">Sie können sich jetzt mit Ihrem neuen Passwort anmelden.</p>
+          <h2 className="text-lg font-bold text-slate-900 mb-2">Passwort gesetzt</h2>
+          <p className="text-sm text-slate-500 mb-6">Du kannst dich jetzt mit deinem neuen Passwort anmelden.</p>
           <Link href="/login" className="inline-block w-full py-3 bg-slate-900 text-white font-semibold rounded-xl hover:bg-slate-700 transition-colors text-center">
             Zur Anmeldung
           </Link>

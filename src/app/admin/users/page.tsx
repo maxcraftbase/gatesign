@@ -1,10 +1,10 @@
 import { redirect } from 'next/navigation'
 import { getAdminContext } from '@/lib/admin-auth'
-import { AdminSettingsClient } from './settings-client'
+import { UsersClient } from './users-client'
 
-export default async function SettingsPage() {
+export default async function UsersPage() {
   const ctx = await getAdminContext()
   if (!ctx) redirect('/login')
   if (ctx.role !== 'admin') redirect('/admin')
-  return <AdminSettingsClient />
+  return <UsersClient currentUserId={ctx.userId} />
 }

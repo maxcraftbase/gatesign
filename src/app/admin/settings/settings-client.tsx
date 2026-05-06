@@ -37,6 +37,7 @@ interface Settings {
   briefing_pdf_truck: string
   briefing_pdf_visitor: string
   briefing_pdf_service: string
+  settings_password: string
 }
 
 function DayRow({ label, closedKey, hoursKey, settings, setSettings }: {
@@ -99,6 +100,7 @@ export function AdminSettingsClient() {
     briefing_pdf_truck: '',
     briefing_pdf_visitor: '',
     briefing_pdf_service: '',
+    settings_password: '',
   })
   const [newHint, setNewHint] = useState('')
   const [loading, setLoading] = useState(true)

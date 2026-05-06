@@ -4,13 +4,17 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { clsx } from 'clsx'
 
-export function AdminNav({ slug }: { slug: string }) {
+export function AdminNav({ slug, role }: { slug: string; role?: 'admin' | 'member' }) {
   const pathname = usePathname()
   const base = `/${slug}/admin`
 
   const navItems = [
-    { href: base, label: 'Einträge' },
-    { href: `${base}/settings`, label: 'Einstellungen' },
+    { href: base, label: 'Einträge', exact: true },
+    ...(role === 'admin' ? [
+      { href: `${base}/settings`, label: 'Einstellungen', exact: false },
+      { href: `${base}/users`, label: 'Nutzer', exact: false },
+      { href: `${base}/audit`, label: 'Protokoll', exact: false },
+    ] : []),
   ]
 
   async function handleLogout() {
@@ -30,7 +34,7 @@ export function AdminNav({ slug }: { slug: string }) {
                 href={item.href}
                 className={clsx(
                   'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
-                  (item.href === base ? pathname === base : pathname.startsWith(item.href))
+                  (item.exact ? pathname === base : pathname.startsWith(item.href))
                     ? 'bg-slate-900 text-white'
                     : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                 )}

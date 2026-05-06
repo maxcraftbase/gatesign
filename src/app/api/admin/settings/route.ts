@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAdminContext } from '@/lib/admin-auth'
+import { logAction } from '@/lib/audit'
 
 export async function GET() {
   try {
@@ -104,6 +105,7 @@ export async function PUT(req: NextRequest) {
       }
     }
 
+    await logAction(ctx, 'settings_saved', {})
     return NextResponse.json({ success: true })
   } catch (err) {
     return NextResponse.json({ error: 'Interner Fehler.' }, { status: 500 })

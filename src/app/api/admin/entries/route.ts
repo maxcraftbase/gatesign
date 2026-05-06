@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
 
     const params = new URLSearchParams({
       company_id: `eq.${ctx.company.id}`,
-      select: 'id,created_at,driver_name,company_name,license_plate,trailer_plate,phone,language,visitor_type,briefing_accepted,briefing_accepted_at,has_signature,reference_number,contact_person',
+      select: 'id,created_at,driver_name,company_name,license_plate,trailer_plate,phone,language,visitor_type,briefing_accepted,briefing_accepted_at,has_signature,reference_number,contact_person,staff_note,staff_note_translated',
       order: 'created_at.desc',
       limit: String(limit),
       offset: String(offset),
@@ -31,7 +31,7 @@ export async function GET(req: NextRequest) {
 
     const data = await res.json()
     const total = parseInt(res.headers.get('content-range')?.split('/')[1] ?? '0')
-    return NextResponse.json({ entries: data, total, page, limit })
+    return NextResponse.json({ entries: data, total, page, limit, companyName: ctx.company.name })
   } catch (err) {
     return NextResponse.json({ error: 'Interner Fehler.' }, { status: 500 })
   }

@@ -89,7 +89,7 @@ export function UsersClient({ currentUserId }: { currentUserId: string }) {
   async function saveContactPersons(persons: string[]) {
     setSavingContacts(true)
     await fetch('/api/admin/settings', {
-      method: 'POST',
+      method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ settings: { contact_persons: JSON.stringify(persons) } }),
     }).catch(() => {})

@@ -550,48 +550,6 @@ export function AdminSettingsClient() {
         })}
       </div>
 
-      {/* Belehrungsdokumente */}
-      <div className="bg-white rounded-2xl border border-slate-100 p-6 mb-6">
-        <h2 className="text-lg font-bold text-slate-900 mb-1">Belehrungsdokumente</h2>
-        <p className="text-sm text-slate-500 mb-5">
-          Je Besuchertyp ein PDF — wird im Terminal während der Belehrung angezeigt.
-        </p>
-        <div className="flex flex-col gap-4">
-          {([['truck', 'LKW'], ['visitor', 'Besucher'], ['service', 'Dienstleister']] as const).map(([type, label]) => {
-            const key = `briefing_pdf_${type}` as keyof Settings
-            const url = settings[key] as string
-            const uploading = uploadingBriefing[type] ?? false
-            const inputId = `briefing-input-${type}`
-            return (
-              <div key={type}>
-                <p className="text-sm font-semibold text-slate-700 mb-2">{label}</p>
-                {url ? (
-                  <div className="flex items-center gap-3 px-4 py-3 bg-blue-50 border border-blue-200 rounded-xl">
-                    <FileText className="w-5 h-5 text-blue-600 shrink-0" />
-                    <a href={url} target="_blank" rel="noreferrer"
-                      className="flex-1 text-sm text-blue-700 font-medium hover:underline truncate">
-                      briefing_{type}.pdf
-                    </a>
-                    <button type="button" onClick={() => void handleBriefingDelete(type)}
-                      className="text-slate-400 hover:text-red-500 transition-colors shrink-0">
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                ) : (
-                  <label htmlFor={inputId}
-                    className="flex flex-col items-center justify-center gap-2 px-4 py-5 rounded-xl border-2 border-dashed border-slate-300 hover:border-blue-400 hover:bg-blue-50 cursor-pointer transition-colors">
-                    <FileText className="w-6 h-6 text-slate-400" />
-                    <span className="text-sm text-slate-500">{uploading ? 'Wird hochgeladen…' : 'PDF hochladen'}</span>
-                  </label>
-                )}
-                <input id={inputId} type="file" accept="application/pdf" className="hidden"
-                  onChange={e => { const f = e.target.files?.[0]; if (f) void handleBriefingUpload(f, type); e.target.value = '' }} />
-              </div>
-            )
-          })}
-        </div>
-      </div>
-
       {/* Texthinweise */}
       <div className="bg-white rounded-2xl border border-slate-100 p-6 mb-6">
         <h2 className="text-lg font-bold text-slate-900 mb-1">Texthinweise</h2>
@@ -649,9 +607,9 @@ export function AdminSettingsClient() {
                 </div>
                 {isExpanded && (
                   <div className="border-t border-slate-200 px-4 py-3 grid grid-cols-2 gap-x-6 gap-y-1.5 bg-white">
-                    {Object.entries(LANG_LABELS).map(([lang, label]) => (
+                    {Object.entries(LANG_LABELS).map(([lang, lbl]) => (
                       <div key={lang} className="flex items-start gap-2 text-xs">
-                        <span className="text-slate-400 font-medium shrink-0 w-10">{label}</span>
+                        <span className="text-slate-400 font-medium shrink-0 w-10">{lbl}</span>
                         <span className="text-slate-700">{translations[lang]?.[i] ?? '—'}</span>
                       </div>
                     ))}
@@ -678,34 +636,46 @@ export function AdminSettingsClient() {
         </div>
       </div>
 
-      {/* PDF-Dokument */}
+      {/* Hinweisdokumente */}
       <div className="bg-white rounded-2xl border border-slate-100 p-6 mb-6">
-        <h2 className="text-lg font-bold text-slate-900 mb-1">Hinweis-Dokument</h2>
+        <h2 className="text-lg font-bold text-slate-900 mb-1">Hinweisdokumente</h2>
         <p className="text-sm text-slate-500 mb-5">
-          PDF wird im Terminal direkt in der Belehrung angezeigt.
+          Je Besuchertyp ein PDF — wird im Terminal während der Belehrung angezeigt.
         </p>
-        {hintsPdfUrl ? (
-          <div className="flex items-center gap-3 px-4 py-3 bg-blue-50 border border-blue-200 rounded-xl">
-            <FileText className="w-5 h-5 text-blue-600 shrink-0" />
-            <a href={hintsPdfUrl} target="_blank" rel="noreferrer"
-              className="flex-1 text-sm text-blue-700 font-medium hover:underline truncate">
-              hints.pdf
-            </a>
-            <button type="button" onClick={handlePdfDelete}
-              className="text-slate-400 hover:text-red-500 transition-colors shrink-0">
-              <Trash2 className="w-4 h-4" />
-            </button>
-          </div>
-        ) : (
-          <div onClick={() => fileInputRef.current?.click()}
-            className="flex flex-col items-center justify-center gap-2 px-4 py-6 rounded-xl border-2 border-dashed border-slate-300 hover:border-blue-400 hover:bg-blue-50 cursor-pointer transition-colors">
-            <FileText className="w-6 h-6 text-slate-400" />
-            <span className="text-sm text-slate-500">{uploadingPdf ? 'Wird hochgeladen…' : 'PDF hochladen'}</span>
-            <span className="text-xs text-slate-400">Klicken zum Auswählen</span>
-          </div>
-        )}
-        <input ref={fileInputRef} type="file" accept="application/pdf" className="hidden"
-          onChange={e => { const file = e.target.files?.[0]; if (file) void handlePdfUpload(file); e.target.value = '' }} />
+        <div className="flex flex-col gap-4">
+          {([['truck', 'LKW'], ['visitor', 'Besucher'], ['service', 'Dienstleister']] as const).map(([type, label]) => {
+            const key = `briefing_pdf_${type}` as keyof Settings
+            const url = settings[key] as string
+            const uploading = uploadingBriefing[type] ?? false
+            const inputId = `briefing-input-${type}`
+            return (
+              <div key={type}>
+                <p className="text-sm font-semibold text-slate-700 mb-2">{label}</p>
+                {url ? (
+                  <div className="flex items-center gap-3 px-4 py-3 bg-blue-50 border border-blue-200 rounded-xl">
+                    <FileText className="w-5 h-5 text-blue-600 shrink-0" />
+                    <a href={url} target="_blank" rel="noreferrer"
+                      className="flex-1 text-sm text-blue-700 font-medium hover:underline truncate">
+                      briefing_{type}.pdf
+                    </a>
+                    <button type="button" onClick={() => void handleBriefingDelete(type)}
+                      className="text-slate-400 hover:text-red-500 transition-colors shrink-0">
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <label htmlFor={inputId}
+                    className="flex flex-col items-center justify-center gap-2 px-4 py-5 rounded-xl border-2 border-dashed border-slate-300 hover:border-blue-400 hover:bg-blue-50 cursor-pointer transition-colors">
+                    <FileText className="w-6 h-6 text-slate-400" />
+                    <span className="text-sm text-slate-500">{uploading ? 'Wird hochgeladen…' : 'PDF hochladen'}</span>
+                  </label>
+                )}
+                <input id={inputId} type="file" accept="application/pdf" className="hidden"
+                  onChange={e => { const f = e.target.files?.[0]; if (f) void handleBriefingUpload(f, type); e.target.value = '' }} />
+              </div>
+            )
+          })}
+        </div>
       </div>
 
       <div className="flex justify-end pb-8">

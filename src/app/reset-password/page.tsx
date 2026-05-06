@@ -15,15 +15,15 @@ function ResetForm() {
   const [tokenHash, setTokenHash] = useState<string | undefined>()
   const [accessToken, setAccessToken] = useState<string | undefined>()
 
-  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => {
     const hash = window.location.hash
     const params = new URLSearchParams(hash.slice(1))
     const at = params.get('access_token') ?? undefined
     const th = params.get('token_hash') ?? searchParams.get('token_hash') ?? undefined
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setAccessToken(at)
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setTokenHash(th)
-    // Clean up the hash so tokens don't stay in the URL
     if (at || th) {
       window.history.replaceState(null, '', window.location.pathname)
     }

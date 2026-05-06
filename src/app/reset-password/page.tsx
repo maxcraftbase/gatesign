@@ -61,7 +61,7 @@ function ResetForm() {
           <div className="text-4xl mb-4">✅</div>
           <h2 className="text-lg font-bold text-slate-900 mb-2">Passwort geändert</h2>
           <p className="text-sm text-slate-500 mb-6">Sie können sich jetzt mit Ihrem neuen Passwort anmelden.</p>
-          <Link href="/" className="inline-block w-full py-3 bg-slate-900 text-white font-semibold rounded-xl hover:bg-slate-700 transition-colors text-center">
+          <Link href="/login" className="inline-block w-full py-3 bg-slate-900 text-white font-semibold rounded-xl hover:bg-slate-700 transition-colors text-center">
             Zur Anmeldung
           </Link>
         </div>

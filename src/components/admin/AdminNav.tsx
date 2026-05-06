@@ -13,7 +13,7 @@ export function AdminNav({ slug, role }: { slug: string; role?: 'admin' | 'membe
   const navItems = [
     { href: base, label: 'Einträge', active: pathname === base },
     ...(role === 'admin' ? [
-      { href: `${base}/settings`, label: 'Einstellungen', active: isInSettings },
+      { href: `${base}/settings`, label: 'Admin', active: isInSettings },
     ] : []),
   ]
 

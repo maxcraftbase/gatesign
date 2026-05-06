@@ -75,11 +75,6 @@ function printEntry(entry: Entry, companyName: string, logoUrl?: string, company
 
   const visitorTypeLabel = entry.visitor_type === 'truck' ? t.truck : entry.visitor_type === 'visitor' ? t.visitor : entry.visitor_type === 'service' ? t.service : entry.visitor_type ?? '—'
 
-  const companyPdfPage = companyPdfUrl ? `
-<div style="page-break-before:always;width:100%;height:100vh;margin:0;padding:0;">
-  <iframe src="${companyPdfUrl}#toolbar=0&navpanes=0&scrollbar=0" style="width:100%;height:100%;border:none;" title="Unternehmens-Dokument"></iframe>
-</div>` : ''
-
   const html = `<!DOCTYPE html>
 <html lang="${entry.language}">
 <head>
@@ -141,7 +136,6 @@ function printEntry(entry: Entry, companyName: string, logoUrl?: string, company
 </div>
 ${note ? `<hr class="divider"/><div class="note-box"><div class="note-label">${bilingual('noteLabel')}</div><div class="note-text">${note}</div></div>` : ''}
 <div class="footer">${t.footer}</div>
-${companyPdfPage}
 </body>
 </html>`
 
@@ -150,7 +144,13 @@ ${companyPdfPage}
   w.document.write(html)
   w.document.close()
   w.focus()
-  setTimeout(() => { w.print(); w.close() }, companyPdfUrl ? 1200 : 400)
+  setTimeout(() => {
+    w.print()
+    w.close()
+    if (companyPdfUrl) {
+      setTimeout(() => { window.open(companyPdfUrl, '_blank') }, 600)
+    }
+  }, 400)
 }
 
 // ─── Detail Modal ─────────────────────────────────────────────────────────────

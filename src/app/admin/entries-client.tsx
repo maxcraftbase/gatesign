@@ -63,7 +63,7 @@ const PDF_LABELS: Record<string, Record<string, string>> = {
 }
 
 // ─── Print PDF ────────────────────────────────────────────────────────────────
-function printEntry(entry: Entry, companyName: string, logoUrl?: string, companyPdfUrl?: string) {
+async function printEntry(entry: Entry, companyName: string, logoUrl?: string, companyPdfUrl?: string) {
   const flag = LANG_FLAGS[entry.language] ?? ''
   const langName = LANG_NAMES[entry.language] ?? entry.language
   const date = formatDate(entry.created_at)
@@ -139,18 +139,37 @@ ${note ? `<hr class="divider"/><div class="note-box"><div class="note-label">${b
 </body>
 </html>`
 
+  let companyPagesHtml = ''
+  if (companyPdfUrl) {
+    try {
+      const pdfjsLib = await import('pdfjs-dist')
+      pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs'
+      const pdfBytes = await fetch(companyPdfUrl).then(r => r.arrayBuffer())
+      const pdfDoc = await pdfjsLib.getDocument({ data: pdfBytes }).promise
+      for (let i = 1; i <= pdfDoc.numPages; i++) {
+        const page = await pdfDoc.getPage(i)
+        const viewport = page.getViewport({ scale: 2.0 })
+        const canvas = document.createElement('canvas')
+        canvas.width = viewport.width
+        canvas.height = viewport.height
+        await page.render({ canvas, canvasContext: canvas.getContext('2d')!, viewport }).promise
+        companyPagesHtml += `<div style="page-break-before:always;margin:0;padding:0;"><img src="${canvas.toDataURL('image/jpeg', 0.92)}" style="width:100%;display:block;" /></div>`
+      }
+    } catch (err) {
+      console.error('Company PDF render error:', err)
+    }
+  }
+
+  const fullHtml = companyPagesHtml
+    ? html.replace('</body>', `${companyPagesHtml}</body>`)
+    : html
+
   const w = window.open('', '_blank', 'width=800,height=900')
   if (!w) return
-  w.document.write(html)
+  w.document.write(fullHtml)
   w.document.close()
   w.focus()
-  setTimeout(() => {
-    w.print()
-    w.close()
-    if (companyPdfUrl) {
-      setTimeout(() => { window.open(companyPdfUrl, '_blank') }, 600)
-    }
-  }, 400)
+  setTimeout(() => { w.print(); w.close() }, 400)
 }
 
 // ─── Detail Modal ─────────────────────────────────────────────────────────────
@@ -231,7 +250,7 @@ function EntryModal({ entry, companyName, logoUrl, companyPdfUrl, contactPersons
           <div className="flex items-center gap-2">
             <button onClick={() => {
               void fetch(`/api/admin/entries/${entry.id}/print`, { method: 'POST' })
-              printEntry({ ...entry, staff_note: note, staff_note_translated: translated, assigned_contact: assignedContact || null }, companyName, logoUrl, companyPdfUrl)
+              void printEntry({ ...entry, staff_note: note, staff_note_translated: translated, assigned_contact: assignedContact || null }, companyName, logoUrl, companyPdfUrl)
             }}
               className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-sm font-medium transition-colors">
               <Printer className="w-4 h-4" />

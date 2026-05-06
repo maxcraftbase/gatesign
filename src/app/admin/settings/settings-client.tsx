@@ -37,6 +37,7 @@ interface Settings {
   briefing_pdf_truck: string
   briefing_pdf_visitor: string
   briefing_pdf_service: string
+  settings_password: string
 }
 
 function DayRow({ label, closedKey, hoursKey, settings, setSettings }: {
@@ -99,6 +100,7 @@ export function AdminSettingsClient() {
     briefing_pdf_truck: '',
     briefing_pdf_visitor: '',
     briefing_pdf_service: '',
+    settings_password: '',
   })
   const [newHint, setNewHint] = useState('')
   const [loading, setLoading] = useState(true)
@@ -675,6 +677,26 @@ export function AdminSettingsClient() {
               </div>
             )
           })}
+        </div>
+      </div>
+
+      {/* Masterpasswort */}
+      <div className="bg-white rounded-2xl border border-slate-100 p-6 mb-6">
+        <h2 className="text-lg font-bold text-slate-900 mb-1">Masterpasswort</h2>
+        <p className="text-sm text-slate-500 mb-5">
+          Schützt die Einstellungen vor unberechtigtem Zugriff. Mitarbeiter ohne dieses Passwort können nur die Einträge einsehen.
+        </p>
+        <div>
+          <label className={labelCls}>Masterpasswort</label>
+          <input
+            type="password"
+            className={inputCls}
+            value={settings.settings_password}
+            onChange={e => setSettings(s => ({ ...s, settings_password: e.target.value }))}
+            placeholder="Passwort festlegen…"
+            autoComplete="new-password"
+          />
+          <p className="text-xs text-slate-400 mt-1">Leer lassen = kein Passwortschutz. Nach dem Speichern beim nächsten Einstellungs-Aufruf gefragt.</p>
         </div>
       </div>
 

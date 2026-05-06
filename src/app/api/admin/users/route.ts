@@ -32,29 +32,43 @@ export async function POST(req: NextRequest) {
 
   // Check if user already exists in this company
   const existing = await fetch(
-    `${supabaseUrl}/rest/v1/company_users?company_id=eq.${ctx.company.id}&email=eq.${encodeURIComponent(email)}&select=id`,
+    `${supabaseUrl}/rest/v1/company_users?company_id=eq.${ctx.company.id}&email=eq.${encodeURIComponent(email)}&select=id,status`,
     { headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}` }, cache: 'no-store' }
   )
-  const existingRows = await existing.json()
-  if (existingRows.length > 0) return NextResponse.json({ error: 'Nutzer bereits eingeladen' }, { status: 409 })
-
-  // Create pending company_users entry
-  const insertRes = await fetch(`${supabaseUrl}/rest/v1/company_users`, {
-    method: 'POST',
-    headers: {
-      apikey: serviceKey, Authorization: `Bearer ${serviceKey}`,
-      'Content-Type': 'application/json', Prefer: 'return=minimal',
-    },
-    body: JSON.stringify({
-      company_id: ctx.company.id,
-      email: email.toLowerCase().trim(),
-      name: name ?? null,
-      role,
-      status: 'pending',
-      invited_by: ctx.userId,
-    }),
-  })
-  if (!insertRes.ok) return NextResponse.json({ error: 'Fehler beim Anlegen' }, { status: 500 })
+  const existingRows: { id: string; status: string }[] = await existing.json()
+  if (existingRows.length > 0) {
+    // Active users cannot be re-invited
+    if (existingRows[0].status === 'active') {
+      return NextResponse.json({ error: 'Nutzer ist bereits aktiv' }, { status: 409 })
+    }
+    // Pending users: update name/role and resend invite below (fall through)
+    await fetch(`${supabaseUrl}/rest/v1/company_users?id=eq.${existingRows[0].id}`, {
+      method: 'PATCH',
+      headers: {
+        apikey: serviceKey, Authorization: `Bearer ${serviceKey}`,
+        'Content-Type': 'application/json', Prefer: 'return=minimal',
+      },
+      body: JSON.stringify({ name: name ?? null, role, invited_by: ctx.userId }),
+    })
+  } else {
+    // Create new pending entry
+    const insertRes = await fetch(`${supabaseUrl}/rest/v1/company_users`, {
+      method: 'POST',
+      headers: {
+        apikey: serviceKey, Authorization: `Bearer ${serviceKey}`,
+        'Content-Type': 'application/json', Prefer: 'return=minimal',
+      },
+      body: JSON.stringify({
+        company_id: ctx.company.id,
+        email: email.toLowerCase().trim(),
+        name: name ?? null,
+        role,
+        status: 'pending',
+        invited_by: ctx.userId,
+      }),
+    })
+    if (!insertRes.ok) return NextResponse.json({ error: 'Fehler beim Anlegen' }, { status: 500 })
+  }
 
   // Generate invite link via Supabase (does not send email)
   const linkRes = await fetch(`${supabaseUrl}/auth/v1/admin/generate_link`, {

@@ -286,6 +286,7 @@ function CombinedFormStep({
   customHints,
   hintTypes,
   hintsPdfUrl,
+  contactPersons,
   onConfirm,
   onBack,
 }: {
@@ -300,6 +301,7 @@ function CombinedFormStep({
   customHints: string[]
   hintTypes: string[][]
   hintsPdfUrl: string
+  contactPersons: string[]
   onConfirm: (signatureData: string | null) => void
   onBack: () => void
 }) {
@@ -379,9 +381,28 @@ function CombinedFormStep({
           {(visitorType === 'visitor' || visitorType === 'service') && (
             <div>
               <label className={labelCls}>{t.field_contact_person} <span className="text-red-500">*</span></label>
-              <input className={inputCls} placeholder={t.field_contact_placeholder}
-                value={formData.contactPerson} onChange={e => onChange({ ...formData, contactPerson: e.target.value })}
-                autoComplete="off" />
+              {contactPersons.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {contactPersons.map(person => (
+                    <button
+                      key={person}
+                      type="button"
+                      onClick={() => onChange({ ...formData, contactPerson: formData.contactPerson === person ? '' : person })}
+                      className={`px-5 py-3 rounded-xl border-2 text-base font-semibold transition-colors ${
+                        formData.contactPerson === person
+                          ? 'bg-slate-900 border-slate-900 text-white'
+                          : 'bg-white border-slate-200 text-slate-700 hover:border-slate-400'
+                      }`}
+                    >
+                      {person}
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <input className={inputCls} placeholder={t.field_contact_placeholder}
+                  value={formData.contactPerson} onChange={e => onChange({ ...formData, contactPerson: e.target.value })}
+                  autoComplete="off" />
+              )}
             </div>
           )}
           {error && (
@@ -555,6 +576,7 @@ export function KioskClient({ slug }: { slug: string }) {
   const [satClosed, setSatClosed] = useState(true)
   const [hoursSun, setHoursSun] = useState('')
   const [sunClosed, setSunClosed] = useState(true)
+  const [contactPersons, setContactPersons] = useState<string[]>([])
   const [customHints, setCustomHints] = useState<string[]>([])
   const [customHintsTranslations, setCustomHintsTranslations] = useState<Record<string, string[]>>({})
   const [customHintsTypes, setCustomHintsTypes] = useState<string[][]>([])
@@ -617,6 +639,9 @@ export function KioskClient({ slug }: { slug: string }) {
         if (data.sat_closed !== undefined) setSatClosed(data.sat_closed !== 'false')
         if (data.hours_sun) setHoursSun(data.hours_sun)
         if (data.sun_closed !== undefined) setSunClosed(data.sun_closed !== 'false')
+        if (data.contact_persons) {
+          try { setContactPersons(JSON.parse(data.contact_persons)) } catch { /* ignore */ }
+        }
         if (data.custom_hints) {
           try { setCustomHints(JSON.parse(data.custom_hints)) } catch { /* ignore */ }
         }
@@ -756,6 +781,7 @@ export function KioskClient({ slug }: { slug: string }) {
           onChange={setFormData} pdfUrl={briefingPdfUrl} signatureRequired={signatureRequired}
           activeRules={activeSafetyRules} ruleVisitorTypes={ruleVisitorTypes}
           customHints={customHintsTranslations[lang] ?? customHints} hintTypes={customHintsTypes} hintsPdfUrl={hintsPdfUrl}
+          contactPersons={contactPersons}
           onConfirm={handleBriefingConfirm} onBack={() => setStep(2)} />
       )}
       {step === 5 && <SuccessScreen lang={lang} onReset={handleReset} />}

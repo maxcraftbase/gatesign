@@ -38,6 +38,7 @@ interface Settings {
   briefing_pdf_visitor: string
   briefing_pdf_service: string
   settings_password: string
+  contact_persons: string
 }
 
 function DayRow({ label, closedKey, hoursKey, settings, setSettings }: {
@@ -101,8 +102,10 @@ export function AdminSettingsClient() {
     briefing_pdf_visitor: '',
     briefing_pdf_service: '',
     settings_password: '',
+    contact_persons: '[]',
   })
   const [newHint, setNewHint] = useState('')
+  const [newContactPerson, setNewContactPerson] = useState('')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [uploadingLogo, setUploadingLogo] = useState(false)
@@ -179,6 +182,21 @@ export function AdminSettingsClient() {
     while (newTypes.length <= index) newTypes.push(['all'])
     newTypes[index] = next
     setSettings(s => ({ ...s, custom_hints_types: JSON.stringify(newTypes) }))
+  }
+
+  function getContactPersons(): string[] {
+    try { return JSON.parse(settings.contact_persons) as string[] } catch { return [] }
+  }
+
+  function addContactPerson() {
+    const trimmed = newContactPerson.trim()
+    if (!trimmed) return
+    setSettings(s => ({ ...s, contact_persons: JSON.stringify([...getContactPersons(), trimmed]) }))
+    setNewContactPerson('')
+  }
+
+  function removeContactPerson(index: number) {
+    setSettings(s => ({ ...s, contact_persons: JSON.stringify(getContactPersons().filter((_, i) => i !== index)) }))
   }
 
   function getRuleVisitorTypes(): Record<string, string[]> {
@@ -677,6 +695,40 @@ export function AdminSettingsClient() {
               </div>
             )
           })}
+        </div>
+      </div>
+
+      {/* Ansprechpartner */}
+      <div className="bg-white rounded-2xl border border-slate-100 p-6 mb-6">
+        <h2 className="text-lg font-bold text-slate-900 mb-1">Ansprechpartner</h2>
+        <p className="text-sm text-slate-500 mb-5">
+          Besucher und Dienstleister können beim Check-in einen Ansprechpartner auswählen. Wenn keine hinterlegt sind, wird ein Freitextfeld angezeigt.
+        </p>
+        <div className="flex flex-col gap-2 mb-4">
+          {getContactPersons().map((person, i) => (
+            <div key={i} className="flex items-center justify-between px-4 py-3 bg-slate-50 rounded-xl border border-slate-200">
+              <span className="text-sm font-medium text-slate-800">{person}</span>
+              <button onClick={() => removeContactPerson(i)} className="text-slate-400 hover:text-red-500 transition-colors">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          ))}
+          {getContactPersons().length === 0 && (
+            <p className="text-sm text-slate-400 italic">Noch keine Ansprechpartner hinterlegt.</p>
+          )}
+        </div>
+        <div className="flex gap-2">
+          <input
+            className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 text-sm outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-100"
+            placeholder="Name eingeben…"
+            value={newContactPerson}
+            onChange={e => setNewContactPerson(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addContactPerson() } }}
+          />
+          <button onClick={addContactPerson}
+            className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-slate-900 text-white text-sm font-semibold hover:bg-slate-700 transition-colors">
+            <Plus className="w-4 h-4" /> Hinzufügen
+          </button>
         </div>
       </div>
 

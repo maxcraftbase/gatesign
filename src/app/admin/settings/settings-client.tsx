@@ -37,6 +37,7 @@ interface Settings {
   briefing_pdf_truck: string
   briefing_pdf_visitor: string
   briefing_pdf_service: string
+  company_pdf_url: string
   settings_password: string
   contact_persons: string
 }
@@ -101,6 +102,7 @@ export function AdminSettingsClient() {
     briefing_pdf_truck: '',
     briefing_pdf_visitor: '',
     briefing_pdf_service: '',
+    company_pdf_url: '',
     settings_password: '',
     contact_persons: '[]',
   })
@@ -111,6 +113,7 @@ export function AdminSettingsClient() {
   const [uploadingLogo, setUploadingLogo] = useState(false)
   const [uploadingPdf, setUploadingPdf] = useState(false)
   const [uploadingBriefing, setUploadingBriefing] = useState<Record<string, boolean>>({})
+  const [uploadingCompanyPdf, setUploadingCompanyPdf] = useState(false)
   const [translations, setTranslations] = useState<Record<string, string[]>>({})
   const [expandedHint, setExpandedHint] = useState<number | null>(null)
   const [translating, setTranslating] = useState(false)
@@ -120,6 +123,7 @@ export function AdminSettingsClient() {
   const [success, setSuccess] = useState(false)
   const logoInputRef = useRef<HTMLInputElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const companyPdfInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     fetch('/api/admin/settings')
@@ -280,6 +284,23 @@ export function AdminSettingsClient() {
   async function handlePdfDelete() {
     await fetch('/api/admin/upload-hints-pdf', { method: 'DELETE' })
     setSettings(s => ({ ...s, hints_pdf_url: '' }))
+  }
+
+  async function handleCompanyPdfUpload(file: File) {
+    setUploadingCompanyPdf(true)
+    const fd = new FormData()
+    fd.append('file', file)
+    const res = await fetch('/api/admin/upload-company-pdf', { method: 'POST', body: fd })
+    if (res.ok) {
+      const data = await res.json() as { url: string }
+      setSettings(s => ({ ...s, company_pdf_url: data.url }))
+    }
+    setUploadingCompanyPdf(false)
+  }
+
+  async function handleCompanyPdfDelete() {
+    await fetch('/api/admin/upload-company-pdf', { method: 'DELETE' })
+    setSettings(s => ({ ...s, company_pdf_url: '' }))
   }
 
   async function handleTranslate() {
@@ -696,6 +717,36 @@ export function AdminSettingsClient() {
             )
           })}
         </div>
+      </div>
+
+      {/* Unternehmens-PDF */}
+      <div className="bg-white rounded-2xl border border-slate-100 p-6 mb-6">
+        <h2 className="text-lg font-bold text-slate-900 mb-1">Unternehmens-PDF</h2>
+        <p className="text-sm text-slate-500 mb-5">
+          Wird beim Drucken automatisch als zusätzliche Seite angehängt (z.B. Geländeplan, Sicherheitsunterweisung).
+        </p>
+        {settings.company_pdf_url ? (
+          <div className="flex items-center gap-3 px-4 py-3 bg-blue-50 border border-blue-200 rounded-xl">
+            <FileText className="w-5 h-5 text-blue-600 shrink-0" />
+            <a href={settings.company_pdf_url} target="_blank" rel="noreferrer"
+              className="flex-1 text-sm text-blue-700 font-medium hover:underline truncate">
+              company.pdf
+            </a>
+            <button type="button" onClick={() => void handleCompanyPdfDelete()}
+              className="text-slate-400 hover:text-red-500 transition-colors shrink-0">
+              <Trash2 className="w-4 h-4" />
+            </button>
+          </div>
+        ) : (
+          <div onClick={() => companyPdfInputRef.current?.click()}
+            className="flex flex-col items-center justify-center gap-2 px-4 py-8 rounded-xl border-2 border-dashed border-slate-300 hover:border-blue-400 hover:bg-blue-50 cursor-pointer transition-colors">
+            <FileText className="w-6 h-6 text-slate-400" />
+            <span className="text-sm text-slate-500">{uploadingCompanyPdf ? 'Wird hochgeladen…' : 'PDF hochladen'}</span>
+            <span className="text-xs text-slate-400">max. 20 MB</span>
+          </div>
+        )}
+        <input ref={companyPdfInputRef} type="file" accept="application/pdf" className="hidden"
+          onChange={e => { const f = e.target.files?.[0]; if (f) void handleCompanyPdfUpload(f); e.target.value = '' }} />
       </div>
 
       <div className="flex justify-end pb-8">

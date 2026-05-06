@@ -63,14 +63,22 @@ const PDF_LABELS: Record<string, Record<string, string>> = {
 }
 
 // ─── Print PDF ────────────────────────────────────────────────────────────────
-function printEntry(entry: Entry, companyName: string, logoUrl?: string) {
+function printEntry(entry: Entry, companyName: string, logoUrl?: string, companyPdfUrl?: string) {
   const flag = LANG_FLAGS[entry.language] ?? ''
   const langName = LANG_NAMES[entry.language] ?? entry.language
   const date = formatDate(entry.created_at)
   const note = entry.staff_note_translated || entry.staff_note || ''
+  const de = PDF_LABELS.de
   const t = PDF_LABELS[entry.language] ?? PDF_LABELS.de
+  const bilingual = (key: keyof typeof de) =>
+    entry.language !== 'de' ? `${de[key]} / ${t[key]}` : t[key]
 
   const visitorTypeLabel = entry.visitor_type === 'truck' ? t.truck : entry.visitor_type === 'visitor' ? t.visitor : entry.visitor_type === 'service' ? t.service : entry.visitor_type ?? '—'
+
+  const companyPdfPage = companyPdfUrl ? `
+<div style="page-break-before:always;width:100%;height:100vh;margin:0;padding:0;">
+  <iframe src="${companyPdfUrl}#toolbar=0&navpanes=0&scrollbar=0" style="width:100%;height:100%;border:none;" title="Unternehmens-Dokument"></iframe>
+</div>` : ''
 
   const html = `<!DOCTYPE html>
 <html lang="${entry.language}">
@@ -87,8 +95,8 @@ function printEntry(entry: Entry, companyName: string, logoUrl?: string) {
   .header-right { text-align: right; }
   .doc-title { font-size: 13px; font-weight: 700; color: #334155; text-transform: uppercase; letter-spacing: 0.06em; }
   .doc-date { font-size: 12px; color: #475569; margin-top: 2px; }
-  .grid { display: grid; grid-template-columns: 180px 1fr; gap: 10px 16px; margin-bottom: 24px; }
-  .label { color: #334155; font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; padding-top: 2px; }
+  .grid { display: grid; grid-template-columns: 220px 1fr; gap: 10px 16px; margin-bottom: 24px; }
+  .label { color: #334155; font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; padding-top: 2px; line-height: 1.35; }
   .value { font-size: 15px; font-weight: 500; }
   .plate { display: inline-block; padding: 3px 12px; border-radius: 4px; font-size: 13px; font-weight: 700; background: #f1f5f9; color: #0f172a; border: 1px solid #94a3b8; letter-spacing: 0.04em; font-family: monospace; }
   .plate-sep { font-size: 11px; color: #475569; margin: 0 6px; vertical-align: middle; }
@@ -98,6 +106,7 @@ function printEntry(entry: Entry, companyName: string, logoUrl?: string) {
   .divider { border: none; border-top: 1px solid #cbd5e1; margin: 24px 0; }
   .footer { font-size: 10px; color: #94a3b8; margin-top: 40px; text-align: center; }
   .check { color: #10b981; font-weight: bold; }
+  @media print { body { padding: 20px; } }
 </style>
 </head>
 <body>
@@ -108,30 +117,31 @@ function printEntry(entry: Entry, companyName: string, logoUrl?: string) {
     <div class="company-name">${companyName}</div>
   </div>
   <div class="header-right">
-    <div class="doc-title">${t.title}</div>
+    <div class="doc-title">${entry.language !== 'de' ? `${de.title} / ${t.title}` : t.title}</div>
     <div class="doc-date">${date}</div>
   </div>
 </div>
 
 <div class="grid">
-  <div class="label">${t.name}</div><div class="value">${entry.driver_name}</div>
-  <div class="label">${t.company}</div><div class="value">${entry.company_name}</div>
-  <div class="label">${t.plate}</div>
+  <div class="label">${bilingual('name')}</div><div class="value">${entry.driver_name}</div>
+  <div class="label">${bilingual('company')}</div><div class="value">${entry.company_name}</div>
+  <div class="label">${bilingual('plate')}</div>
   <div class="value">
     <span class="plate">${entry.license_plate}</span>
-    ${entry.trailer_plate ? `<span class="plate-sep">·</span><span class="plate">${entry.trailer_plate}</span><span style="font-size:11px;color:#94a3b8;margin-left:4px">(${t.trailer})</span>` : ''}
+    ${entry.trailer_plate ? `<span class="plate-sep">·</span><span class="plate">${entry.trailer_plate}</span><span style="font-size:11px;color:#94a3b8;margin-left:4px">(${bilingual('trailer')})</span>` : ''}
   </div>
-  ${entry.phone ? `<div class="label">${t.phone}</div><div class="value">${entry.phone}</div>` : ''}
-  ${entry.contact_person ? `<div class="label">${t.contactPerson}</div><div class="value">${entry.contact_person}</div>` : ''}
-  ${entry.reference_number ? `<div class="label">${t.reference}</div><div class="value">${entry.reference_number}</div>` : ''}
-  <div class="label">${t.visitorType}</div><div class="value">${visitorTypeLabel}</div>
-  <div class="label">${t.language}</div><div class="value">${flag} ${langName}</div>
-  <div class="label">${t.briefing}</div><div class="value">${entry.briefing_accepted ? `<span class="check">${t.accepted}</span>` : '—'}</div>
-  <div class="label">${t.signature}</div><div class="value">${entry.has_signature ? `<span class="check">${t.yes}</span>` : '—'}</div>
-  ${entry.assigned_contact ? `<div class="label">${t.assignedContact}</div><div class="value" style="font-weight:700;color:#0f172a">${entry.assigned_contact}</div>` : ''}
+  ${entry.phone ? `<div class="label">${bilingual('phone')}</div><div class="value">${entry.phone}</div>` : ''}
+  ${entry.contact_person ? `<div class="label">${bilingual('contactPerson')}</div><div class="value">${entry.contact_person}</div>` : ''}
+  ${entry.reference_number ? `<div class="label">${bilingual('reference')}</div><div class="value">${entry.reference_number}</div>` : ''}
+  <div class="label">${bilingual('visitorType')}</div><div class="value">${visitorTypeLabel}</div>
+  <div class="label">${bilingual('language')}</div><div class="value">${flag} ${langName}</div>
+  <div class="label">${bilingual('briefing')}</div><div class="value">${entry.briefing_accepted ? `<span class="check">${t.accepted}</span>` : '—'}</div>
+  <div class="label">${bilingual('signature')}</div><div class="value">${entry.has_signature ? `<span class="check">${t.yes}</span>` : '—'}</div>
+  ${entry.assigned_contact ? `<div class="label">${bilingual('assignedContact')}</div><div class="value" style="font-weight:700;color:#0f172a">${entry.assigned_contact}</div>` : ''}
 </div>
-${note ? `<hr class="divider"/><div class="note-box"><div class="note-label">${t.noteLabel}</div><div class="note-text">${note}</div></div>` : ''}
+${note ? `<hr class="divider"/><div class="note-box"><div class="note-label">${bilingual('noteLabel')}</div><div class="note-text">${note}</div></div>` : ''}
 <div class="footer">${t.footer}</div>
+${companyPdfPage}
 </body>
 </html>`
 
@@ -140,15 +150,16 @@ ${note ? `<hr class="divider"/><div class="note-box"><div class="note-label">${t
   w.document.write(html)
   w.document.close()
   w.focus()
-  setTimeout(() => { w.print(); w.close() }, 400)
+  setTimeout(() => { w.print(); w.close() }, companyPdfUrl ? 1200 : 400)
 }
 
 // ─── Detail Modal ─────────────────────────────────────────────────────────────
 // ─── Detail Modal ─────────────────────────────────────────────────────────────
-function EntryModal({ entry, companyName, logoUrl, contactPersons, onClose, onNoteUpdated }: {
+function EntryModal({ entry, companyName, logoUrl, companyPdfUrl, contactPersons, onClose, onNoteUpdated }: {
   entry: Entry
   companyName: string
   logoUrl: string
+  companyPdfUrl: string
   contactPersons: string[]
   onClose: () => void
   onNoteUpdated: (id: string, note: string, translated: string, assignedContact: string | null) => void
@@ -220,7 +231,7 @@ function EntryModal({ entry, companyName, logoUrl, contactPersons, onClose, onNo
           <div className="flex items-center gap-2">
             <button onClick={() => {
               void fetch(`/api/admin/entries/${entry.id}/print`, { method: 'POST' })
-              printEntry({ ...entry, staff_note: note, staff_note_translated: translated, assigned_contact: assignedContact || null }, companyName, logoUrl)
+              printEntry({ ...entry, staff_note: note, staff_note_translated: translated, assigned_contact: assignedContact || null }, companyName, logoUrl, companyPdfUrl)
             }}
               className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-sm font-medium transition-colors">
               <Printer className="w-4 h-4" />
@@ -350,6 +361,7 @@ export function AdminEntriesClient() {
   const [companyName, setCompanyName] = useState('')
   const [logoUrl, setLogoUrl] = useState('')
   const [contactPersons, setContactPersons] = useState<string[]>([])
+  const [companyPdfUrl, setCompanyPdfUrl] = useState('')
 
   const loadEntries = useCallback((p: number) => {
     setLoading(true)
@@ -362,6 +374,7 @@ export function AdminEntriesClient() {
         setCompanyName(data.companyName ?? '')
         setLogoUrl(data.logoUrl ?? '')
         if (data.contactPersons) setContactPersons(data.contactPersons)
+        setCompanyPdfUrl(data.companyPdfUrl ?? '')
         setPage(p)
       })
       .catch(() => setError('Fehler beim Laden der Einträge.'))
@@ -494,6 +507,7 @@ export function AdminEntriesClient() {
           entry={selectedEntry}
           companyName={companyName}
           logoUrl={logoUrl}
+          companyPdfUrl={companyPdfUrl}
           contactPersons={contactPersons}
           onClose={() => setSelectedEntry(null)}
           onNoteUpdated={handleNoteUpdated}

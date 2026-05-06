@@ -36,19 +36,21 @@ export async function GET(req: NextRequest) {
     const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
     let logoUrl = ''
     let contactPersons: string[] = []
+    let companyPdfUrl = ''
     try {
       const settingsRes = await fetch(
-        `${supabaseUrl}/rest/v1/app_settings?company_id=eq.${ctx.company.id}&key=in.(logo_url,contact_persons)&select=key,value`,
+        `${supabaseUrl}/rest/v1/app_settings?company_id=eq.${ctx.company.id}&key=in.(logo_url,contact_persons,company_pdf_url)&select=key,value`,
         { headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}` }, cache: 'no-store' }
       )
       const settingsRows: { key: string; value: string }[] = await settingsRes.json()
       for (const row of settingsRows) {
         if (row.key === 'logo_url') logoUrl = row.value
         if (row.key === 'contact_persons') { try { contactPersons = JSON.parse(row.value) } catch { /* ignore */ } }
+        if (row.key === 'company_pdf_url') companyPdfUrl = row.value
       }
     } catch { /* ignore */ }
 
-    return NextResponse.json({ entries: data, total, page, limit, companyName: ctx.company.name, logoUrl, contactPersons })
+    return NextResponse.json({ entries: data, total, page, limit, companyName: ctx.company.name, logoUrl, contactPersons, companyPdfUrl })
   } catch (err) {
     return NextResponse.json({ error: 'Interner Fehler.' }, { status: 500 })
   }

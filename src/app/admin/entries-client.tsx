@@ -20,6 +20,7 @@ interface Entry {
   contact_person: string | null
   staff_note: string | null
   staff_note_translated: string | null
+  assigned_contact: string | null
 }
 
 const VISITOR_TYPE_LABELS: Record<string, { label: string; color: string }> = {
@@ -111,6 +112,7 @@ function printEntry(entry: Entry, companyName: string, logoUrl?: string) {
   <div class="label">Sprache</div><div class="value">${flag} ${langName}</div>
   <div class="label">Sicherheitsbelehrung</div><div class="value">${entry.briefing_accepted ? '<span class="check">✓ Akzeptiert</span>' : '—'}</div>
   <div class="label">Unterschrift</div><div class="value">${entry.has_signature ? '<span class="check">✓ Ja</span>' : '—'}</div>
+  ${entry.assigned_contact ? `<div class="label">Ansprechpartner</div><div class="value" style="font-weight:700;color:#0f172a">${entry.assigned_contact}</div>` : ''}
 </div>
 ${note ? `<hr class="divider"/><div class="note-box"><div class="note-label">Hinweis vom Unternehmen</div><div class="note-text">${note}</div></div>` : ''}
 <div class="footer">Erstellt mit GateSign · gatesign.de</div>
@@ -126,15 +128,18 @@ ${note ? `<hr class="divider"/><div class="note-box"><div class="note-label">Hin
 }
 
 // ─── Detail Modal ─────────────────────────────────────────────────────────────
-function EntryModal({ entry, companyName, logoUrl, onClose, onNoteUpdated }: {
+// ─── Detail Modal ─────────────────────────────────────────────────────────────
+function EntryModal({ entry, companyName, logoUrl, contactPersons, onClose, onNoteUpdated }: {
   entry: Entry
   companyName: string
   logoUrl: string
+  contactPersons: string[]
   onClose: () => void
-  onNoteUpdated: (id: string, note: string, translated: string) => void
+  onNoteUpdated: (id: string, note: string, translated: string, assignedContact: string | null) => void
 }) {
   const [note, setNote] = useState(entry.staff_note ?? '')
   const [translated, setTranslated] = useState(entry.staff_note_translated ?? '')
+  const [assignedContact, setAssignedContact] = useState(entry.assigned_contact ?? '')
   const [saving, setSaving] = useState(false)
   const [translating, setTranslating] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -147,10 +152,10 @@ function EntryModal({ entry, companyName, logoUrl, onClose, onNoteUpdated }: {
       const res = await fetch(`/api/admin/entries/${entry.id}/note`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ staff_note: note, staff_note_translated: translated }),
+        body: JSON.stringify({ staff_note: note, staff_note_translated: translated, assigned_contact: assignedContact || null }),
       })
       if (res.ok) {
-        onNoteUpdated(entry.id, note, translated)
+        onNoteUpdated(entry.id, note, translated, assignedContact || null)
         setSaved(true)
         setTimeout(() => setSaved(false), 3000)
       }
@@ -199,7 +204,7 @@ function EntryModal({ entry, companyName, logoUrl, onClose, onNoteUpdated }: {
           <div className="flex items-center gap-2">
             <button onClick={() => {
               void fetch(`/api/admin/entries/${entry.id}/print`, { method: 'POST' })
-              printEntry({ ...entry, staff_note: note, staff_note_translated: translated }, companyName, logoUrl)
+              printEntry({ ...entry, staff_note: note, staff_note_translated: translated, assigned_contact: assignedContact || null }, companyName, logoUrl)
             }}
               className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-sm font-medium transition-colors">
               <Printer className="w-4 h-4" />
@@ -253,6 +258,29 @@ function EntryModal({ entry, companyName, logoUrl, onClose, onNoteUpdated }: {
           </div>
         </div>
 
+        {/* Assigned Contact */}
+        {contactPersons.length > 0 && (
+          <div className="px-6 pt-5 pb-2">
+            <label className="text-sm font-semibold text-slate-700 block mb-2">Ansprechpartner (für PDF)</label>
+            <div className="flex flex-wrap gap-2">
+              {contactPersons.map(person => (
+                <button
+                  key={person}
+                  type="button"
+                  onClick={() => setAssignedContact(assignedContact === person ? '' : person)}
+                  className={`px-4 py-2 rounded-xl border-2 text-sm font-semibold transition-colors ${
+                    assignedContact === person
+                      ? 'bg-slate-900 border-slate-900 text-white'
+                      : 'bg-white border-slate-200 text-slate-600 hover:border-slate-400'
+                  }`}
+                >
+                  {person}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Staff Note */}
         <div className="px-6 py-5">
           <div className="flex items-center justify-between mb-2">
@@ -305,6 +333,7 @@ export function AdminEntriesClient() {
   const [selectedEntry, setSelectedEntry] = useState<Entry | null>(null)
   const [companyName, setCompanyName] = useState('')
   const [logoUrl, setLogoUrl] = useState('')
+  const [contactPersons, setContactPersons] = useState<string[]>([])
 
   const loadEntries = useCallback((p: number) => {
     setLoading(true)
@@ -316,6 +345,7 @@ export function AdminEntriesClient() {
         setTotal(data.total ?? 0)
         setCompanyName(data.companyName ?? '')
         setLogoUrl(data.logoUrl ?? '')
+        if (data.contactPersons) setContactPersons(data.contactPersons)
         setPage(p)
       })
       .catch(() => setError('Fehler beim Laden der Einträge.'))
@@ -325,9 +355,9 @@ export function AdminEntriesClient() {
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { loadEntries(1) }, [loadEntries])
 
-  function handleNoteUpdated(id: string, note: string, translated: string) {
-    setEntries(prev => prev.map(e => e.id === id ? { ...e, staff_note: note, staff_note_translated: translated } : e))
-    if (selectedEntry?.id === id) setSelectedEntry(e => e ? { ...e, staff_note: note, staff_note_translated: translated } : e)
+  function handleNoteUpdated(id: string, note: string, translated: string, assignedContact: string | null) {
+    setEntries(prev => prev.map(e => e.id === id ? { ...e, staff_note: note, staff_note_translated: translated, assigned_contact: assignedContact } : e))
+    if (selectedEntry?.id === id) setSelectedEntry(e => e ? { ...e, staff_note: note, staff_note_translated: translated, assigned_contact: assignedContact } : e)
   }
 
   const totalPages = Math.max(1, Math.ceil(total / 50))
@@ -448,6 +478,7 @@ export function AdminEntriesClient() {
           entry={selectedEntry}
           companyName={companyName}
           logoUrl={logoUrl}
+          contactPersons={contactPersons}
           onClose={() => setSelectedEntry(null)}
           onNoteUpdated={handleNoteUpdated}
         />

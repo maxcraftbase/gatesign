@@ -9,7 +9,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
     const { id } = await params
     const body = await req.json()
-    const { staff_note, staff_note_translated } = body
+    const { staff_note, staff_note_translated, assigned_contact } = body
 
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
     const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -32,7 +32,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
         'Content-Type': 'application/json',
         Prefer: 'return=minimal',
       },
-      body: JSON.stringify({ staff_note: staff_note ?? null, staff_note_translated: staff_note_translated ?? null }),
+      body: JSON.stringify({ staff_note: staff_note ?? null, staff_note_translated: staff_note_translated ?? null, assigned_contact: assigned_contact ?? null }),
     })
 
     if (!patchRes.ok) return NextResponse.json({ error: 'Fehler beim Speichern' }, { status: 500 })

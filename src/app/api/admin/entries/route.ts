@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
 
     const params = new URLSearchParams({
       company_id: `eq.${ctx.company.id}`,
-      select: 'id,created_at,driver_name,company_name,license_plate,trailer_plate,phone,language,visitor_type,briefing_accepted,briefing_accepted_at,has_signature,reference_number,contact_person,staff_note,staff_note_translated',
+      select: 'id,created_at,driver_name,company_name,license_plate,trailer_plate,phone,language,visitor_type,briefing_accepted,briefing_accepted_at,has_signature,reference_number,contact_person,staff_note,staff_note_translated,assigned_contact',
       order: 'created_at.desc',
       limit: String(limit),
       offset: String(offset),
@@ -35,16 +35,20 @@ export async function GET(req: NextRequest) {
     // Fetch logo URL from settings
     const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
     let logoUrl = ''
+    let contactPersons: string[] = []
     try {
-      const logoRes = await fetch(
-        `${supabaseUrl}/rest/v1/app_settings?company_id=eq.${ctx.company.id}&key=eq.logo_url&select=value`,
+      const settingsRes = await fetch(
+        `${supabaseUrl}/rest/v1/app_settings?company_id=eq.${ctx.company.id}&key=in.(logo_url,contact_persons)&select=key,value`,
         { headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}` }, cache: 'no-store' }
       )
-      const logoData = await logoRes.json()
-      logoUrl = logoData?.[0]?.value ?? ''
+      const settingsRows: { key: string; value: string }[] = await settingsRes.json()
+      for (const row of settingsRows) {
+        if (row.key === 'logo_url') logoUrl = row.value
+        if (row.key === 'contact_persons') { try { contactPersons = JSON.parse(row.value) } catch { /* ignore */ } }
+      }
     } catch { /* ignore */ }
 
-    return NextResponse.json({ entries: data, total, page, limit, companyName: ctx.company.name, logoUrl })
+    return NextResponse.json({ entries: data, total, page, limit, companyName: ctx.company.name, logoUrl, contactPersons })
   } catch (err) {
     return NextResponse.json({ error: 'Interner Fehler.' }, { status: 500 })
   }

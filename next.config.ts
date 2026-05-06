@@ -9,7 +9,7 @@ const securityHeaders = [
 ]
 
 const nextConfig: NextConfig = {
-  serverExternalPackages: ['pdfkit'],
+  serverExternalPackages: ['pdfkit', '@napi-rs/canvas', 'pdfjs-dist'],
   async headers() {
     return [
       {

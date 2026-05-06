@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { UserPlus, Trash2, ChevronDown } from 'lucide-react'
+import { UserPlus, Trash2, ChevronDown, MailCheck } from 'lucide-react'
 
 interface CompanyUser {
   id: string
@@ -28,6 +28,7 @@ export function UsersClient({ currentUserId }: { currentUserId: string }) {
   const [inviting, setInviting] = useState(false)
   const [inviteSuccess, setInviteSuccess] = useState(false)
   const [inviteError, setInviteError] = useState('')
+  const [resendingId, setResendingId] = useState<string | null>(null)
 
   async function loadUsers() {
     setLoading(true)
@@ -69,6 +70,17 @@ export function UsersClient({ currentUserId }: { currentUserId: string }) {
       body: JSON.stringify({ role }),
     })
     setUsers(prev => prev.map(u => u.id === id ? { ...u, role } : u))
+  }
+
+  async function handleResend(user: CompanyUser) {
+    setResendingId(user.id)
+    try {
+      await fetch('/api/admin/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: user.email, name: user.name ?? undefined, role: user.role }),
+      })
+    } finally { setResendingId(null) }
   }
 
   async function handleRemove(id: string) {
@@ -158,9 +170,18 @@ export function UsersClient({ currentUserId }: { currentUserId: string }) {
                     </select>
                     <ChevronDown className="w-3 h-3 text-slate-400 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
                   </div>
+                  {user.status === 'pending' && (
+                    <button
+                      onClick={() => handleResend(user)}
+                      disabled={resendingId === user.id}
+                      className="p-1.5 text-slate-300 hover:text-blue-500 transition-colors rounded-lg hover:bg-blue-50 disabled:opacity-40"
+                      aria-label="Einladung erneut senden">
+                      <MailCheck className="w-4 h-4" />
+                    </button>
+                  )}
                   <button onClick={() => handleRemove(user.id)}
                     className="p-1.5 text-slate-300 hover:text-red-500 transition-colors rounded-lg hover:bg-red-50"
-                    title="Entfernen">
+                    aria-label="Entfernen">
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>

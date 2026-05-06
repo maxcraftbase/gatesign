@@ -111,10 +111,13 @@ export async function getAdminContext(): Promise<AdminContext | null> {
   let role: 'admin' | 'member'
   let email: string
 
-  if (cuRows.length > 0) {
+  if (cuRows.length === 1) {
     companyId = cuRows[0].company_id
     role = cuRows[0].role as 'admin' | 'member'
     email = cuRows[0].email
+  } else if (cuRows.length > 1) {
+    // Multiple active company memberships for one user — data inconsistency, reject
+    return null
   } else {
     // Legacy fallback: check companies.owner_id
     const legacyRes = await fetch(

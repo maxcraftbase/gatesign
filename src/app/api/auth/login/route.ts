@@ -51,12 +51,13 @@ export async function POST(req: NextRequest) {
       // Activate pending company_users entry for invited users on first login
       if (userId) {
         const pendingRes = await fetch(
-          `${supabaseUrl}/rest/v1/company_users?email=eq.${encodeURIComponent(email)}&status=eq.pending&select=id`,
+          `${supabaseUrl}/rest/v1/company_users?email=eq.${encodeURIComponent(email)}&status=eq.pending&select=id&limit=1`,
           { headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}` }, cache: 'no-store' }
         )
         const pending: { id: string }[] = await pendingRes.json()
         if (pending.length > 0) {
-          await fetch(`${supabaseUrl}/rest/v1/company_users?email=eq.${encodeURIComponent(email)}&status=eq.pending`, {
+          // Activate only the single matching row by ID — never update by email across all companies
+          await fetch(`${supabaseUrl}/rest/v1/company_users?id=eq.${pending[0].id}`, {
             method: 'PATCH',
             headers: {
               apikey: serviceKey, Authorization: `Bearer ${serviceKey}`,

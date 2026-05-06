@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { UserPlus, Trash2, ChevronDown, MailCheck } from 'lucide-react'
+import { UserPlus, Trash2, ChevronDown, MailCheck, Plus, X } from 'lucide-react'
 
 interface CompanyUser {
   id: string
@@ -29,6 +29,9 @@ export function UsersClient({ currentUserId }: { currentUserId: string }) {
   const [inviteSuccess, setInviteSuccess] = useState(false)
   const [inviteError, setInviteError] = useState('')
   const [resendingId, setResendingId] = useState<string | null>(null)
+  const [contactPersons, setContactPersons] = useState<string[]>([])
+  const [newContactPerson, setNewContactPerson] = useState('')
+  const [savingContacts, setSavingContacts] = useState(false)
 
   async function loadUsers() {
     setLoading(true)
@@ -41,6 +44,17 @@ export function UsersClient({ currentUserId }: { currentUserId: string }) {
 
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { void loadUsers() }, [])
+
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => {
+    fetch('/api/admin/settings')
+      .then(r => r.json())
+      .then(data => {
+        if (data.settings?.contact_persons) {
+          try { setContactPersons(JSON.parse(data.settings.contact_persons)) } catch { /* ignore */ }
+        }
+      }).catch(() => {})
+  }, [])
 
   async function handleInvite(e: React.FormEvent) {
     e.preventDefault()
@@ -70,6 +84,31 @@ export function UsersClient({ currentUserId }: { currentUserId: string }) {
       body: JSON.stringify({ role }),
     })
     setUsers(prev => prev.map(u => u.id === id ? { ...u, role } : u))
+  }
+
+  async function saveContactPersons(persons: string[]) {
+    setSavingContacts(true)
+    await fetch('/api/admin/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ settings: { contact_persons: JSON.stringify(persons) } }),
+    }).catch(() => {})
+    setSavingContacts(false)
+  }
+
+  function addContactPerson() {
+    const trimmed = newContactPerson.trim()
+    if (!trimmed) return
+    const next = [...contactPersons, trimmed]
+    setContactPersons(next)
+    setNewContactPerson('')
+    void saveContactPersons(next)
+  }
+
+  function removeContactPerson(i: number) {
+    const next = contactPersons.filter((_, idx) => idx !== i)
+    setContactPersons(next)
+    void saveContactPersons(next)
   }
 
   async function handleResend(user: CompanyUser) {
@@ -189,6 +228,42 @@ export function UsersClient({ currentUserId }: { currentUserId: string }) {
             ))}
           </div>
         )}
+      </div>
+
+      {/* Ansprechpartner */}
+      <div className="bg-white rounded-2xl border border-slate-100 overflow-hidden mt-6">
+        <div className="px-6 py-4 border-b border-slate-100">
+          <h2 className="text-lg font-bold text-slate-900">Ansprechpartner</h2>
+          <p className="text-sm text-slate-500 mt-0.5">Werden beim Drucken eines Eintrags zur Auswahl angeboten — z.B. für welches Tor oder welche Abteilung.</p>
+        </div>
+        <div className="p-6">
+          <div className="flex flex-col gap-2 mb-4">
+            {contactPersons.length === 0 && (
+              <p className="text-sm text-slate-400 italic">Noch keine Ansprechpartner hinterlegt.</p>
+            )}
+            {contactPersons.map((person, i) => (
+              <div key={i} className="flex items-center justify-between px-4 py-3 bg-slate-50 rounded-xl border border-slate-200">
+                <span className="text-sm font-medium text-slate-800">{person}</span>
+                <button onClick={() => removeContactPerson(i)} className="text-slate-400 hover:text-red-500 transition-colors">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            ))}
+          </div>
+          <div className="flex gap-2">
+            <input
+              className="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 text-sm outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-100"
+              placeholder="Name oder Funktion eingeben…"
+              value={newContactPerson}
+              onChange={e => setNewContactPerson(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addContactPerson() } }}
+            />
+            <button onClick={addContactPerson} disabled={savingContacts || !newContactPerson.trim()}
+              className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-slate-900 text-white text-sm font-semibold hover:bg-slate-700 disabled:opacity-50 transition-colors">
+              <Plus className="w-4 h-4" /> Hinzufügen
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   )

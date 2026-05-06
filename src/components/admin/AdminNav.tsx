@@ -8,12 +8,12 @@ export function AdminNav({ slug, role }: { slug: string; role?: 'admin' | 'membe
   const pathname = usePathname()
   const base = `/${slug}/admin`
 
+  const isInSettings = pathname.startsWith(`${base}/settings`) || pathname.startsWith(`${base}/users`) || pathname.startsWith(`${base}/audit`)
+
   const navItems = [
-    { href: base, label: 'Einträge', exact: true },
+    { href: base, label: 'Einträge', active: pathname === base },
     ...(role === 'admin' ? [
-      { href: `${base}/settings`, label: 'Einstellungen', exact: false },
-      { href: `${base}/users`, label: 'Nutzer', exact: false },
-      { href: `${base}/audit`, label: 'Protokoll', exact: false },
+      { href: `${base}/settings`, label: 'Einstellungen', active: isInSettings },
     ] : []),
   ]
 
@@ -34,7 +34,7 @@ export function AdminNav({ slug, role }: { slug: string; role?: 'admin' | 'membe
                 href={item.href}
                 className={clsx(
                   'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
-                  (item.exact ? pathname === base : pathname.startsWith(item.href))
+                  item.active
                     ? 'bg-slate-900 text-white'
                     : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                 )}

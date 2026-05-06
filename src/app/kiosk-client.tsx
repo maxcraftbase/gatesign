@@ -627,10 +627,11 @@ export function KioskClient({ slug }: { slug: string }) {
         if (data.rule_visitor_types) {
           try { setRuleVisitorTypes(JSON.parse(data.rule_visitor_types)) } catch { /* ignore */ }
         }
-        if (data.hints_pdf_url) setHintsPdfUrl(data.hints_pdf_url)
+        const isValidUrl = (v: unknown) => typeof v === 'string' && v.startsWith('http')
+        if (isValidUrl(data.hints_pdf_url)) setHintsPdfUrl(data.hints_pdf_url)
         const urls: Record<string, string> = {}
         for (const key of ['truck', 'visitor', 'service']) {
-          if (data[`briefing_pdf_${key}`]) urls[key] = data[`briefing_pdf_${key}`]
+          if (isValidUrl(data[`briefing_pdf_${key}`])) urls[key] = data[`briefing_pdf_${key}`]
         }
         setPdfUrls(urls)
       })

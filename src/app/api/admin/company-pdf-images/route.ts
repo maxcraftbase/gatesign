@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server'
-import { resolve } from 'path'
 import { getAdminContext } from '@/lib/admin-auth'
 
 export async function GET() {
@@ -22,33 +21,47 @@ export async function GET() {
     if (!pdfRes.ok) return NextResponse.json({ images: [], debug: `fetch_failed_${pdfRes.status}` })
     const pdfBytes = new Uint8Array(await pdfRes.arrayBuffer())
 
+    const { createCanvas } = await import('@napi-rs/canvas')
     const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs')
-    // Point to the actual worker file so Node.js worker_threads can load it
-    const workerPath = resolve(process.cwd(), 'node_modules/pdfjs-dist/legacy/build/pdf.worker.min.mjs')
-    pdfjsLib.GlobalWorkerOptions.workerSrc = `file://${workerPath}`
+
+    // Provide a canvas factory so pdfjs uses @napi-rs/canvas internally
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const canvasFactory: any = {
+      create(width: number, height: number) {
+        const canvas = createCanvas(width, height)
+        return { canvas, context: canvas.getContext('2d') }
+      },
+      reset(canvasAndCtx: { canvas: ReturnType<typeof createCanvas> }, width: number, height: number) {
+        canvasAndCtx.canvas.width = width
+        canvasAndCtx.canvas.height = height
+      },
+      destroy(_: unknown) { /* no-op */ },
+    }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const pdfDoc = await (pdfjsLib.getDocument as any)({
       data: pdfBytes,
+      canvasFactory,
       useWorkerFetch: false,
       isEvalSupported: false,
       useSystemFonts: true,
     }).promise
 
-    const { createCanvas } = await import('@napi-rs/canvas')
     const images: string[] = []
     for (let i = 1; i <= pdfDoc.numPages; i++) {
       const page = await pdfDoc.getPage(i)
       const viewport = page.getViewport({ scale: 2.0 })
       const canvas = createCanvas(viewport.width, viewport.height)
       const ctx2d = canvas.getContext('2d')
+
+      // Do NOT pass `canvas` — pdfjs would access DOM-only properties on it.
+      // Only pass canvasContext + viewport; pdfjs will use ctx2d.canvas internally.
       await page.render({
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         canvasContext: ctx2d as any,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        canvas: canvas as any,
         viewport,
       }).promise
+
       images.push(canvas.toDataURL('image/jpeg', 0.92))
     }
 

@@ -49,15 +49,31 @@ function formatDate(iso: string) {
   } catch { return iso }
 }
 
+const PDF_LABELS: Record<string, Record<string, string>> = {
+  de: { title: 'Check-in Bestätigung', name: 'Name', company: 'Firma', plate: 'Kennzeichen', trailer: 'Anhänger', phone: 'Telefon', contactPerson: 'Ansprechpartner', assignedContact: 'Ihr Ansprechpartner', reference: 'Referenz', visitorType: 'Besuchertyp', language: 'Sprache', briefing: 'Sicherheitsbelehrung', accepted: '✓ Akzeptiert', signature: 'Unterschrift', yes: '✓ Ja', noteLabel: 'Hinweis vom Unternehmen', footer: 'Erstellt mit GateSign · gatesign.de', truck: 'LKW-Fahrer', visitor: 'Besucher', service: 'Dienstleister' },
+  en: { title: 'Check-in Confirmation', name: 'Name', company: 'Company', plate: 'License Plate', trailer: 'Trailer', phone: 'Phone', contactPerson: 'Contact Person', assignedContact: 'Your Contact', reference: 'Reference', visitorType: 'Visitor Type', language: 'Language', briefing: 'Safety Briefing', accepted: '✓ Accepted', signature: 'Signature', yes: '✓ Yes', noteLabel: 'Note from Company', footer: 'Created with GateSign · gatesign.de', truck: 'Truck Driver', visitor: 'Visitor', service: 'Service Provider' },
+  pl: { title: 'Potwierdzenie zameldowania', name: 'Imię i nazwisko', company: 'Firma', plate: 'Tablica rejestracyjna', trailer: 'Przyczepa', phone: 'Telefon', contactPerson: 'Osoba kontaktowa', assignedContact: 'Twój opiekun', reference: 'Numer referencyjny', visitorType: 'Typ gościa', language: 'Język', briefing: 'Instruktaż BHP', accepted: '✓ Zaakceptowano', signature: 'Podpis', yes: '✓ Tak', noteLabel: 'Uwaga od firmy', footer: 'Utworzono z GateSign · gatesign.de', truck: 'Kierowca ciężarówki', visitor: 'Gość', service: 'Usługodawca' },
+  ro: { title: 'Confirmare check-in', name: 'Nume', company: 'Companie', plate: 'Număr înmatriculare', trailer: 'Remorcă', phone: 'Telefon', contactPerson: 'Persoană de contact', assignedContact: 'Contactul dvs.', reference: 'Referință', visitorType: 'Tip vizitator', language: 'Limbă', briefing: 'Instruire securitate', accepted: '✓ Acceptat', signature: 'Semnătură', yes: '✓ Da', noteLabel: 'Notă de la companie', footer: 'Creat cu GateSign · gatesign.de', truck: 'Șofer camion', visitor: 'Vizitator', service: 'Prestator servicii' },
+  cs: { title: 'Potvrzení příjezdu', name: 'Jméno', company: 'Firma', plate: 'SPZ', trailer: 'Přívěs', phone: 'Telefon', contactPerson: 'Kontaktní osoba', assignedContact: 'Váš kontakt', reference: 'Referenční číslo', visitorType: 'Typ návštěvníka', language: 'Jazyk', briefing: 'Bezpečnostní školení', accepted: '✓ Přijato', signature: 'Podpis', yes: '✓ Ano', noteLabel: 'Poznámka od společnosti', footer: 'Vytvořeno s GateSign · gatesign.de', truck: 'Řidič kamionu', visitor: 'Návštěvník', service: 'Poskytovatel služeb' },
+  hu: { title: 'Bejelentkezés visszaigazolása', name: 'Név', company: 'Cég', plate: 'Rendszám', trailer: 'Pótkocsi', phone: 'Telefon', contactPerson: 'Kapcsolattartó', assignedContact: 'Az Ön kapcsolattartója', reference: 'Hivatkozási szám', visitorType: 'Látogatótípus', language: 'Nyelv', briefing: 'Biztonsági eligazítás', accepted: '✓ Elfogadva', signature: 'Aláírás', yes: '✓ Igen', noteLabel: 'Megjegyzés a cégtől', footer: 'Létrehozva GateSign-nal · gatesign.de', truck: 'Kamionos', visitor: 'Látogató', service: 'Szolgáltató' },
+  bg: { title: 'Потвърждение за регистрация', name: 'Име', company: 'Фирма', plate: 'Рег. номер', trailer: 'Ремарке', phone: 'Телефон', contactPerson: 'Лице за контакт', assignedContact: 'Вашият контакт', reference: 'Референция', visitorType: 'Тип посетител', language: 'Език', briefing: 'Инструктаж по безопасност', accepted: '✓ Прието', signature: 'Подпис', yes: '✓ Да', noteLabel: 'Бележка от компанията', footer: 'Създадено с GateSign · gatesign.de', truck: 'Шофьор на камион', visitor: 'Посетител', service: 'Доставчик на услуги' },
+  uk: { title: 'Підтвердження реєстрації', name: 'Ім\'я', company: 'Компанія', plate: 'Номерний знак', trailer: 'Причіп', phone: 'Телефон', contactPerson: 'Контактна особа', assignedContact: 'Ваш контакт', reference: 'Референс', visitorType: 'Тип відвідувача', language: 'Мова', briefing: 'Інструктаж з безпеки', accepted: '✓ Прийнято', signature: 'Підпис', yes: '✓ Так', noteLabel: 'Примітка від компанії', footer: 'Створено з GateSign · gatesign.de', truck: 'Водій вантажівки', visitor: 'Відвідувач', service: 'Постачальник послуг' },
+  ru: { title: 'Подтверждение регистрации', name: 'Имя', company: 'Компания', plate: 'Номерной знак', trailer: 'Прицеп', phone: 'Телефон', contactPerson: 'Контактное лицо', assignedContact: 'Ваш контакт', reference: 'Референс', visitorType: 'Тип посетителя', language: 'Язык', briefing: 'Инструктаж по безопасности', accepted: '✓ Принято', signature: 'Подпись', yes: '✓ Да', noteLabel: 'Примечание от компании', footer: 'Создано с GateSign · gatesign.de', truck: 'Водитель грузовика', visitor: 'Посетитель', service: 'Поставщик услуг' },
+  tr: { title: 'Giriş Onayı', name: 'Ad Soyad', company: 'Şirket', plate: 'Plaka', trailer: 'Römork', phone: 'Telefon', contactPerson: 'İrtibat kişisi', assignedContact: 'Sizin iletişim kişiniz', reference: 'Referans numarası', visitorType: 'Ziyaretçi türü', language: 'Dil', briefing: 'Güvenlik brifingfing', accepted: '✓ Kabul edildi', signature: 'İmza', yes: '✓ Evet', noteLabel: 'Şirket notu', footer: 'GateSign ile oluşturuldu · gatesign.de', truck: 'TIR sürücüsü', visitor: 'Ziyaretçi', service: 'Hizmet sağlayıcı' },
+}
+
 // ─── Print PDF ────────────────────────────────────────────────────────────────
 function printEntry(entry: Entry, companyName: string, logoUrl?: string) {
   const flag = LANG_FLAGS[entry.language] ?? ''
   const langName = LANG_NAMES[entry.language] ?? entry.language
   const date = formatDate(entry.created_at)
   const note = entry.staff_note_translated || entry.staff_note || ''
+  const t = PDF_LABELS[entry.language] ?? PDF_LABELS.de
+
+  const visitorTypeLabel = entry.visitor_type === 'truck' ? t.truck : entry.visitor_type === 'visitor' ? t.visitor : entry.visitor_type === 'service' ? t.service : entry.visitor_type ?? '—'
 
   const html = `<!DOCTYPE html>
-<html lang="de">
+<html lang="${entry.language}">
 <head>
 <meta charset="UTF-8"/>
 <title>Check-in — ${entry.driver_name}</title>
@@ -92,30 +108,30 @@ function printEntry(entry: Entry, companyName: string, logoUrl?: string) {
     <div class="company-name">${companyName}</div>
   </div>
   <div class="header-right">
-    <div class="doc-title">Check-in Bestätigung</div>
+    <div class="doc-title">${t.title}</div>
     <div class="doc-date">${date}</div>
   </div>
 </div>
 
 <div class="grid">
-  <div class="label">Name</div><div class="value">${entry.driver_name}</div>
-  <div class="label">Firma</div><div class="value">${entry.company_name}</div>
-  <div class="label">Kennzeichen</div>
+  <div class="label">${t.name}</div><div class="value">${entry.driver_name}</div>
+  <div class="label">${t.company}</div><div class="value">${entry.company_name}</div>
+  <div class="label">${t.plate}</div>
   <div class="value">
     <span class="plate">${entry.license_plate}</span>
-    ${entry.trailer_plate ? `<span class="plate-sep">·</span><span class="plate">${entry.trailer_plate}</span><span style="font-size:11px;color:#94a3b8;margin-left:4px">(Anhänger)</span>` : ''}
+    ${entry.trailer_plate ? `<span class="plate-sep">·</span><span class="plate">${entry.trailer_plate}</span><span style="font-size:11px;color:#94a3b8;margin-left:4px">(${t.trailer})</span>` : ''}
   </div>
-  ${entry.phone ? `<div class="label">Telefon</div><div class="value">${entry.phone}</div>` : ''}
-  ${entry.contact_person ? `<div class="label">Ansprechpartner</div><div class="value">${entry.contact_person}</div>` : ''}
-  ${entry.reference_number ? `<div class="label">Referenz</div><div class="value">${entry.reference_number}</div>` : ''}
-  <div class="label">Besuchertyp</div><div class="value">${VISITOR_TYPE_FULL[entry.visitor_type ?? ''] ?? entry.visitor_type ?? '—'}</div>
-  <div class="label">Sprache</div><div class="value">${flag} ${langName}</div>
-  <div class="label">Sicherheitsbelehrung</div><div class="value">${entry.briefing_accepted ? '<span class="check">✓ Akzeptiert</span>' : '—'}</div>
-  <div class="label">Unterschrift</div><div class="value">${entry.has_signature ? '<span class="check">✓ Ja</span>' : '—'}</div>
-  ${entry.assigned_contact ? `<div class="label">Ansprechpartner</div><div class="value" style="font-weight:700;color:#0f172a">${entry.assigned_contact}</div>` : ''}
+  ${entry.phone ? `<div class="label">${t.phone}</div><div class="value">${entry.phone}</div>` : ''}
+  ${entry.contact_person ? `<div class="label">${t.contactPerson}</div><div class="value">${entry.contact_person}</div>` : ''}
+  ${entry.reference_number ? `<div class="label">${t.reference}</div><div class="value">${entry.reference_number}</div>` : ''}
+  <div class="label">${t.visitorType}</div><div class="value">${visitorTypeLabel}</div>
+  <div class="label">${t.language}</div><div class="value">${flag} ${langName}</div>
+  <div class="label">${t.briefing}</div><div class="value">${entry.briefing_accepted ? `<span class="check">${t.accepted}</span>` : '—'}</div>
+  <div class="label">${t.signature}</div><div class="value">${entry.has_signature ? `<span class="check">${t.yes}</span>` : '—'}</div>
+  ${entry.assigned_contact ? `<div class="label">${t.assignedContact}</div><div class="value" style="font-weight:700;color:#0f172a">${entry.assigned_contact}</div>` : ''}
 </div>
-${note ? `<hr class="divider"/><div class="note-box"><div class="note-label">Hinweis vom Unternehmen</div><div class="note-text">${note}</div></div>` : ''}
-<div class="footer">Erstellt mit GateSign · gatesign.de</div>
+${note ? `<hr class="divider"/><div class="note-box"><div class="note-label">${t.noteLabel}</div><div class="note-text">${note}</div></div>` : ''}
+<div class="footer">${t.footer}</div>
 </body>
 </html>`
 

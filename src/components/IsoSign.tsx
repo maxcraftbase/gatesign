@@ -42,7 +42,7 @@ function EngineOffSign({ size }: { size: number }) {
   const cy = size / 2
   const r = size / 2 - 1
   const border = r * 0.28
-  const innerR = r - border
+  const innerR = r - border * 2  // actual usable radius inside the prohibition ring
 
   // Car body (facing right, exhaust on left)
   const carW = innerR * 1.05

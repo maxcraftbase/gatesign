@@ -83,17 +83,59 @@ export async function POST(req: NextRequest) {
     await sendEmail({
       to: email.toLowerCase().trim(),
       subject: `Einladung zu GateSign – ${ctx.company.name}`,
-      html: `
-        <p>Hallo${name ? ` ${name}` : ''},</p>
-        <p>Du wurdest von <strong>${ctx.company.name}</strong> zu GateSign eingeladen.</p>
-        <p>Klicke auf den folgenden Link, um deinen Account zu aktivieren und ein Passwort zu setzen:</p>
-        <p><a href="${inviteUrl}" style="background:#0f172a;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;display:inline-block;">Account aktivieren</a></p>
-        <p>Der Link ist 24 Stunden gültig.</p>
-        <p>GateSign</p>
-      `,
+      html: inviteHtml(name ?? null, ctx.company.name, inviteUrl),
     }).catch(() => { /* Brevo failure is non-fatal; user is already created */ })
   }
 
   await logAction(ctx, 'user_invited', { invited_email: email, role })
   return NextResponse.json({ success: true })
+}
+
+function inviteHtml(name: string | null, companyName: string, inviteUrl: string) {
+  const greeting = name ? `Hallo ${name}` : 'Hallo'
+  const roleLabel = inviteUrl ? 'Mitarbeiter' : 'Nutzer'
+  return `<!DOCTYPE html>
+<html lang="de">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#f8fafc;font-family:system-ui,-apple-system,sans-serif;color:#0f172a">
+  <div style="max-width:600px;margin:32px auto;background:#fff;border-radius:12px;border:1px solid #e2e8f0;overflow:hidden">
+
+    <div style="background:#0f172a;padding:28px 32px">
+      <h1 style="margin:0;color:#fff;font-size:22px;font-weight:700;letter-spacing:-0.3px">GateSign</h1>
+      <p style="margin:4px 0 0;color:#94a3b8;font-size:13px">Check-In Terminal</p>
+    </div>
+
+    <div style="padding:32px">
+      <h2 style="margin:0 0 6px;font-size:20px;font-weight:700;color:#0f172a">${greeting},</h2>
+      <p style="margin:0 0 24px;font-size:15px;color:#475569;line-height:1.6">
+        Du wurdest von <strong style="color:#0f172a">${companyName}</strong> zu GateSign eingeladen.<br>
+        Klicke auf den Button unten, um deinen Account zu aktivieren und ein Passwort festzulegen.
+      </p>
+
+      <a href="${inviteUrl}"
+         style="display:inline-block;background:#0f172a;color:#fff;text-decoration:none;padding:14px 28px;border-radius:8px;font-size:15px;font-weight:600;letter-spacing:-0.2px">
+        Account aktivieren →
+      </a>
+
+      <div style="margin-top:28px;padding:16px 20px;background:#f8fafc;border-radius:8px;border:1px solid #e2e8f0">
+        <p style="margin:0;font-size:12px;color:#64748b;line-height:1.6">
+          <strong style="color:#0f172a">Hinweis:</strong> Dieser Link ist 24 Stunden gültig.
+          Falls der Button nicht funktioniert, kopiere diesen Link in deinen Browser:<br>
+          <span style="color:#2563eb;word-break:break-all">${inviteUrl}</span>
+        </p>
+      </div>
+
+      <p style="margin:24px 0 0;font-size:13px;color:#94a3b8">
+        Falls du diese Einladung nicht erwartet hast, kannst du diese E-Mail ignorieren.
+      </p>
+    </div>
+
+    <div style="padding:16px 32px;background:#f8fafc;border-top:1px solid #e2e8f0">
+      <p style="margin:0;color:#94a3b8;font-size:11px">GateSign · Bei Fragen: info@alpha-consult.one</p>
+    </div>
+
+  </div>
+</body>
+</html>`
+  void roleLabel
 }

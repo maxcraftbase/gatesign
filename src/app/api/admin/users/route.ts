@@ -71,18 +71,22 @@ export async function POST(req: NextRequest) {
   }
 
   const cleanEmail = email.toLowerCase().trim()
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://gatesign.de'
+  // APP_URL (server-only) takes precedence; NEXT_PUBLIC_APP_URL is baked at build time and may be stale
+  const appUrl = (process.env.APP_URL ?? process.env.NEXT_PUBLIC_APP_URL ?? 'https://gatesign.de').replace(/\/$/, '')
+  const redirectTo = `${appUrl}/reset-password`
+  console.log('[invite] appUrl:', appUrl, 'redirect_to:', redirectTo)
 
   // Generate invite link via Supabase (does not send email)
   let inviteUrl: string | null = null
   const inviteRes = await fetch(`${supabaseUrl}/auth/v1/admin/generate_link`, {
     method: 'POST',
     headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ type: 'invite', email: cleanEmail, redirect_to: `${appUrl}/reset-password` }),
+    body: JSON.stringify({ type: 'invite', email: cleanEmail, redirect_to: redirectTo }),
   })
   if (inviteRes.ok) {
     const d = await inviteRes.json() as { action_link?: string }
     inviteUrl = d.action_link ?? null
+    console.log('[invite] action_link:', inviteUrl)
   } else {
     const inviteErr = await inviteRes.text()
     console.error('[invite] generate_link invite failed:', inviteErr)
@@ -90,11 +94,12 @@ export async function POST(req: NextRequest) {
     const recoveryRes = await fetch(`${supabaseUrl}/auth/v1/admin/generate_link`, {
       method: 'POST',
       headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type: 'recovery', email: cleanEmail, redirect_to: `${appUrl}/reset-password` }),
+      body: JSON.stringify({ type: 'recovery', email: cleanEmail, redirect_to: redirectTo }),
     })
     if (recoveryRes.ok) {
       const d = await recoveryRes.json() as { action_link?: string }
       inviteUrl = d.action_link ?? null
+      console.log('[invite] recovery action_link:', inviteUrl)
     } else {
       console.error('[invite] generate_link recovery failed:', await recoveryRes.text())
       return NextResponse.json({ error: 'Einladungsmail konnte nicht gesendet werden' }, { status: 500 })

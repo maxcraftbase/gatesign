@@ -158,6 +158,7 @@ function EntryModal({ entry, companyName, onClose, onNoteUpdated }: {
 
   // auto-translate when note changes (debounced)
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (!note.trim()) { setTranslated(''); return }
     if (note === entry.staff_note) return
     const t = setTimeout(() => { void handleTranslate() }, 1200)
@@ -298,6 +299,7 @@ export function AdminEntriesClient() {
       .finally(() => setLoading(false))
   }, [])
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { loadEntries(1) }, [loadEntries])
 
   function handleNoteUpdated(id: string, note: string, translated: string) {
@@ -394,7 +396,7 @@ export function AdminEntriesClient() {
 
                   <span className="flex items-center justify-center">
                     {entry.staff_note
-                      ? <FileText className="w-4 h-4 text-blue-400" title="Notiz vorhanden" />
+                      ? <FileText className="w-4 h-4 text-blue-400" aria-label="Notiz vorhanden" />
                       : null}
                   </span>
                 </div>

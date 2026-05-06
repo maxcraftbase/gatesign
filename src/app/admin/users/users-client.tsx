@@ -38,6 +38,7 @@ export function UsersClient({ currentUserId }: { currentUserId: string }) {
     } catch { setError('Fehler beim Laden') } finally { setLoading(false) }
   }
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { void loadUsers() }, [])
 
   async function handleInvite(e: React.FormEvent) {

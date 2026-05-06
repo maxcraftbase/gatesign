@@ -2,29 +2,34 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export async function POST(req: NextRequest) {
   try {
-    const { token_hash, password } = await req.json()
-    if (!token_hash || !password) {
+    const { token_hash, access_token: directToken, password } = await req.json()
+    if ((!token_hash && !directToken) || !password) {
       return NextResponse.json({ error: 'Token und Passwort erforderlich.' }, { status: 400 })
     }
 
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
     const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
-    // 1. Verify the recovery token → get session
-    const verifyRes = await fetch(`${supabaseUrl}/auth/v1/verify`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', apikey: anonKey },
-      body: JSON.stringify({ token_hash, type: 'recovery' }),
-    })
-    if (!verifyRes.ok) {
-      return NextResponse.json({ error: 'Ungültiger oder abgelaufener Link.' }, { status: 400 })
-    }
-    const { access_token } = await verifyRes.json()
+    let accessToken: string = directToken ?? ''
 
-    // 2. Update password
+    if (!directToken) {
+      // Forgot-password flow: verify token_hash → get access_token
+      const verifyRes = await fetch(`${supabaseUrl}/auth/v1/verify`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', apikey: anonKey },
+        body: JSON.stringify({ token_hash, type: 'recovery' }),
+      })
+      if (!verifyRes.ok) {
+        return NextResponse.json({ error: 'Ungültiger oder abgelaufener Link.' }, { status: 400 })
+      }
+      const data = await verifyRes.json()
+      accessToken = data.access_token
+    }
+
+    // Update password using the access token
     const updateRes = await fetch(`${supabaseUrl}/auth/v1/user`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json', apikey: anonKey, Authorization: `Bearer ${access_token}` },
+      headers: { 'Content-Type': 'application/json', apikey: anonKey, Authorization: `Bearer ${accessToken}` },
       body: JSON.stringify({ password }),
     })
     if (!updateRes.ok) {

@@ -13,11 +13,14 @@ function ResetForm() {
   const [loading, setLoading] = useState(false)
 
   // Read token from URL fragment or query param (only available client-side)
-  const getTokenHash = () => {
-    if (typeof window === 'undefined') return ''
+  // generate_link sends access_token directly; forgot-password sends token_hash
+  const getTokenInfo = (): { token_hash?: string; access_token?: string } => {
+    if (typeof window === 'undefined') return {}
     const hash = window.location.hash
     const params = new URLSearchParams(hash.slice(1))
-    return params.get('token_hash') ?? searchParams.get('token_hash') ?? ''
+    const access_token = params.get('access_token') ?? undefined
+    const token_hash = params.get('token_hash') ?? searchParams.get('token_hash') ?? undefined
+    return { access_token, token_hash }
   }
 
   function validatePassword(pw: string): string | null {
@@ -34,14 +37,14 @@ function ResetForm() {
     const pwError = validatePassword(password)
     if (pwError) { setError(pwError); return }
     if (password !== confirm) { setError('Passwörter stimmen nicht überein.'); return }
-    const tokenHash = getTokenHash()
-    if (!tokenHash) { setError('Ungültiger Reset-Link.'); return }
+    const { token_hash, access_token } = getTokenInfo()
+    if (!token_hash && !access_token) { setError('Ungültiger Reset-Link.'); return }
 
     setLoading(true)
     const res = await fetch('/api/auth/reset-password', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token_hash: tokenHash, password }),
+      body: JSON.stringify({ token_hash, access_token, password }),
     })
     const data = await res.json()
     setLoading(false)

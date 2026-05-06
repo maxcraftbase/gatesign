@@ -68,18 +68,18 @@ function printEntry(entry: Entry, companyName: string, logoUrl?: string) {
   .logo { max-height: 52px; max-width: 160px; object-fit: contain; }
   .company-name { font-size: 20px; font-weight: 700; color: #0f172a; }
   .header-right { text-align: right; }
-  .doc-title { font-size: 13px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.06em; }
-  .doc-date { font-size: 12px; color: #94a3b8; margin-top: 2px; }
+  .doc-title { font-size: 13px; font-weight: 700; color: #334155; text-transform: uppercase; letter-spacing: 0.06em; }
+  .doc-date { font-size: 12px; color: #475569; margin-top: 2px; }
   .grid { display: grid; grid-template-columns: 180px 1fr; gap: 10px 16px; margin-bottom: 24px; }
-  .label { color: #64748b; font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; padding-top: 2px; }
+  .label { color: #334155; font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; padding-top: 2px; }
   .value { font-size: 15px; font-weight: 500; }
-  .plate { display: inline-block; padding: 3px 12px; border-radius: 4px; font-size: 13px; font-weight: 700; background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; letter-spacing: 0.04em; font-family: monospace; }
-  .plate-sep { font-size: 11px; color: #94a3b8; margin: 0 4px; vertical-align: middle; }
-  .note-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px; margin-top: 8px; }
-  .note-label { font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; }
-  .note-text { font-size: 14px; color: #334155; line-height: 1.6; }
-  .divider { border: none; border-top: 1px solid #e2e8f0; margin: 24px 0; }
-  .footer { font-size: 10px; color: #cbd5e1; margin-top: 40px; text-align: center; }
+  .plate { display: inline-block; padding: 3px 12px; border-radius: 4px; font-size: 13px; font-weight: 700; background: #f1f5f9; color: #0f172a; border: 1px solid #94a3b8; letter-spacing: 0.04em; font-family: monospace; }
+  .plate-sep { font-size: 11px; color: #475569; margin: 0 6px; vertical-align: middle; }
+  .note-box { background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 10px; padding: 16px; margin-top: 8px; }
+  .note-label { font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; }
+  .note-text { font-size: 14px; color: #1e293b; line-height: 1.6; }
+  .divider { border: none; border-top: 1px solid #cbd5e1; margin: 24px 0; }
+  .footer { font-size: 10px; color: #94a3b8; margin-top: 40px; text-align: center; }
   .check { color: #10b981; font-weight: bold; }
 </style>
 </head>

@@ -575,9 +575,19 @@ export function KioskClient({ slug }: { slug: string }) {
     document.addEventListener('contextmenu', noCtx)
     const noNav = (e: BeforeUnloadEvent) => { e.preventDefault() }
     window.addEventListener('beforeunload', noNav)
+
+    // Block swipe-back: replace current history entry then push a dummy on top.
+    // When the user swipes back, popstate fires — we immediately push again,
+    // keeping them on this page. Only an explicit admin login can leave.
+    history.replaceState({ kiosk: true }, '')
+    history.pushState({ kiosk: true }, '')
+    const onPopState = () => history.pushState({ kiosk: true }, '')
+    window.addEventListener('popstate', onPopState)
+
     return () => {
       document.removeEventListener('contextmenu', noCtx)
       window.removeEventListener('beforeunload', noNav)
+      window.removeEventListener('popstate', onPopState)
     }
   }, [])
 

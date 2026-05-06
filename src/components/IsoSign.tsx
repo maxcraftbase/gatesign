@@ -38,62 +38,40 @@ function CctvSign({ size }: { size: number }) {
 }
 
 function EngineOffSign({ size }: { size: number }) {
-  const cx = size / 2
-  const cy = size / 2
-  const r = size / 2 - 1
-  const border = r * 0.28
-  const innerR = r - border * 2  // actual usable radius inside the prohibition ring
-
-  // Car body (facing right, exhaust on left)
-  const carW = innerR * 1.05
-  const carH = innerR * 0.42
-  const carX = cx - carW / 2 + innerR * 0.06
-  const carY = cy + innerR * 0.08
-
-  // Roof
-  const roofW = carW * 0.5
-  const roofH = carH * 0.5
-  const roofX = carX + carW * 0.24
-  const roofY = carY - roofH * 0.82
-
-  // Exhaust pipe
-  const exH = carH * 0.18
-  const exW = innerR * 0.18
-  const exX = carX - exW + 2
-  const exY = carY + carH - exH * 1.5
-
-  // Smoke puffs (3 circles)
-  const smokeX = exX - innerR * 0.04
-  const smokeY = exY + exH * 0.5
-  const sr = innerR * 0.1
-
   return (
-    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="shrink-0">
-      {/* White fill circle */}
-      <circle cx={cx} cy={cy} r={r} fill="white" />
+    <svg width={size} height={size} viewBox="0 0 100 100" className="shrink-0">
+      {/* White background */}
+      <circle cx="50" cy="50" r="48" fill="white"/>
+
+      {/* Smoke cloud (drawn before ring so ring covers outer parts naturally) */}
+      <circle cx="12" cy="59" r="4" fill="white" stroke="#aaa" strokeWidth="1.2"/>
+      <circle cx="8"  cy="52" r="5" fill="white" stroke="#aaa" strokeWidth="1.2"/>
+      <circle cx="5"  cy="45" r="5.5" fill="white" stroke="#aaa" strokeWidth="1.2"/>
 
       {/* Car body */}
-      <rect x={carX} y={carY} width={carW} height={carH} rx={carH * 0.15} fill="#1e1e1e" />
-      {/* Roof */}
-      <rect x={roofX} y={roofY} width={roofW} height={roofH + carH * 0.15} rx={roofH * 0.2} fill="#1e1e1e" />
-      {/* Windows (lighter cutouts) */}
-      <rect x={roofX + roofW * 0.08} y={roofY + roofH * 0.12} width={roofW * 0.37} height={roofH * 0.65} rx={roofH * 0.1} fill="white" opacity={0.35} />
-      <rect x={roofX + roofW * 0.54} y={roofY + roofH * 0.12} width={roofW * 0.35} height={roofH * 0.65} rx={roofH * 0.1} fill="white" opacity={0.35} />
-      {/* Exhaust pipe */}
-      <rect x={exX} y={exY} width={exW} height={exH} rx={exH * 0.3} fill="#1e1e1e" />
-      {/* Smoke puffs */}
-      <circle cx={smokeX - sr * 0.3} cy={smokeY - sr * 0.4} r={sr * 0.9} fill="none" stroke="#555" strokeWidth={size * 0.025} />
-      <circle cx={smokeX - sr * 1.5} cy={smokeY - sr * 1.1} r={sr * 1.1} fill="none" stroke="#555" strokeWidth={size * 0.022} />
-      <circle cx={smokeX - sr * 2.9} cy={smokeY - sr * 1.6} r={sr * 1.3} fill="none" stroke="#555" strokeWidth={size * 0.02} />
+      <rect x="18" y="55" width="60" height="14" rx="2.5" fill="#111"/>
 
-      {/* Red prohibition ring — circleR inset by half ringW so outer edge = r */}
-      <circle cx={cx} cy={cy} r={r - border} fill="none" stroke="#dc2626" strokeWidth={border * 2} />
-      {/* Red diagonal line */}
-      <line
-        x1={cx - r * 0.62} y1={cy - r * 0.62}
-        x2={cx + r * 0.62} y2={cy + r * 0.62}
-        stroke="#dc2626" strokeWidth={border * 1.6}
-      />
+      {/* Cabin (trapezoid, offset right — car faces right) */}
+      <path d="M 37,55 L 42,39 L 73,39 L 77,55 Z" fill="#111"/>
+
+      {/* Window cutouts */}
+      <rect x="45" y="42" width="11" height="10" rx="1.5" fill="#ccc"/>
+      <rect x="59" y="42" width="11" height="10" rx="1.5" fill="#ccc"/>
+
+      {/* Exhaust pipe (rear/left) */}
+      <rect x="13" y="62" width="7" height="3" rx="1" fill="#444"/>
+
+      {/* Wheels */}
+      <circle cx="29" cy="71" r="8" fill="#111"/>
+      <circle cx="29" cy="71" r="3.2" fill="#666"/>
+      <circle cx="69" cy="71" r="8" fill="#111"/>
+      <circle cx="69" cy="71" r="3.2" fill="#666"/>
+
+      {/* Red prohibition ring */}
+      <circle cx="50" cy="50" r="41" fill="none" stroke="#d50000" strokeWidth="14"/>
+
+      {/* Red diagonal slash (top-left → bottom-right) */}
+      <line x1="20" y1="20" x2="80" y2="80" stroke="#d50000" strokeWidth="11" strokeLinecap="round"/>
     </svg>
   )
 }

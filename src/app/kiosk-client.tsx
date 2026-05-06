@@ -412,17 +412,7 @@ function CombinedFormStep({
           ) : null
         })()}
 
-        {pdfUrl ? (
-          <div className="rounded-xl overflow-hidden border border-slate-200 mb-6">
-            <iframe src={pdfUrl} className="w-full block" style={{ aspectRatio: '210/297' }} title="Safety Briefing" />
-          </div>
-        ) : activeRules.length === 0 && !hintsPdfUrl && customHints.length === 0 ? (
-          <div className="rounded-xl border border-slate-200 bg-slate-50 mb-6 flex items-center justify-center" style={{ height: '20vh' }}>
-            <p className="text-slate-400 text-lg">Keine Belehrung hinterlegt.</p>
-          </div>
-        ) : null}
-
-        {(customHints.length > 0 || hintsPdfUrl) && (
+        {customHints.length > 0 && (
           <div className="flex flex-col gap-2 mb-6">
             {customHints.map((hint, i) => {
               const types = hintTypes[i] ?? ['all']
@@ -434,13 +424,18 @@ function CombinedFormStep({
                 </div>
               )
             })}
-            {hintsPdfUrl && (
-              <div className="rounded-xl overflow-hidden border border-slate-200">
-                <iframe src={hintsPdfUrl} className="w-full block" style={{ aspectRatio: '210/297' }} title="Weitere Hinweise" />
-              </div>
-            )}
           </div>
         )}
+
+        {pdfUrl ? (
+          <div className="rounded-xl overflow-hidden border border-slate-200 mb-6">
+            <iframe src={pdfUrl} className="w-full block" style={{ aspectRatio: '210/297' }} title="Safety Briefing" />
+          </div>
+        ) : activeRules.length === 0 && customHints.length === 0 ? (
+          <div className="rounded-xl border border-slate-200 bg-slate-50 mb-6 flex items-center justify-center" style={{ height: '20vh' }}>
+            <p className="text-slate-400 text-lg">Keine Belehrung hinterlegt.</p>
+          </div>
+        ) : null}
 
         <div className="mb-5">
           <div className="flex items-center justify-between mb-2">

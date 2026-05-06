@@ -49,7 +49,7 @@ function formatDate(iso: string) {
 }
 
 // ─── Print PDF ────────────────────────────────────────────────────────────────
-function printEntry(entry: Entry, companyName: string) {
+function printEntry(entry: Entry, companyName: string, logoUrl?: string) {
   const flag = LANG_FLAGS[entry.language] ?? ''
   const langName = LANG_NAMES[entry.language] ?? entry.language
   const date = formatDate(entry.created_at)
@@ -63,27 +63,47 @@ function printEntry(entry: Entry, companyName: string) {
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: Arial, sans-serif; padding: 40px; color: #1e293b; font-size: 14px; }
-  h1 { font-size: 22px; font-weight: bold; margin-bottom: 4px; }
-  .sub { color: #64748b; font-size: 13px; margin-bottom: 32px; }
+  .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; padding-bottom: 20px; border-bottom: 2px solid #e2e8f0; }
+  .header-left { display: flex; align-items: center; gap: 16px; }
+  .logo { max-height: 52px; max-width: 160px; object-fit: contain; }
+  .company-name { font-size: 20px; font-weight: 700; color: #0f172a; }
+  .header-right { text-align: right; }
+  .doc-title { font-size: 13px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.06em; }
+  .doc-date { font-size: 12px; color: #94a3b8; margin-top: 2px; }
   .grid { display: grid; grid-template-columns: 180px 1fr; gap: 10px 16px; margin-bottom: 24px; }
   .label { color: #64748b; font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.05em; padding-top: 2px; }
   .value { font-size: 15px; font-weight: 500; }
-  .badge { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; background: #f1f5f9; color: #475569; }
+  .plate { display: inline-block; padding: 3px 12px; border-radius: 4px; font-size: 13px; font-weight: 700; background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; letter-spacing: 0.04em; font-family: monospace; }
+  .plate-sep { font-size: 11px; color: #94a3b8; margin: 0 4px; vertical-align: middle; }
   .note-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px; margin-top: 8px; }
   .note-label { font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; }
   .note-text { font-size: 14px; color: #334155; line-height: 1.6; }
   .divider { border: none; border-top: 1px solid #e2e8f0; margin: 24px 0; }
-  .footer { font-size: 11px; color: #94a3b8; margin-top: 32px; }
+  .footer { font-size: 10px; color: #cbd5e1; margin-top: 40px; text-align: center; }
   .check { color: #10b981; font-weight: bold; }
 </style>
 </head>
 <body>
-<h1>Check-in Bestätigung</h1>
-<div class="sub">${companyName} · ${date}</div>
+
+<div class="header">
+  <div class="header-left">
+    ${logoUrl ? `<img src="${logoUrl}" class="logo" alt="${companyName}"/>` : ''}
+    <div class="company-name">${companyName}</div>
+  </div>
+  <div class="header-right">
+    <div class="doc-title">Check-in Bestätigung</div>
+    <div class="doc-date">${date}</div>
+  </div>
+</div>
+
 <div class="grid">
   <div class="label">Name</div><div class="value">${entry.driver_name}</div>
   <div class="label">Firma</div><div class="value">${entry.company_name}</div>
-  <div class="label">Kennzeichen</div><div class="value"><span class="badge">${entry.license_plate}</span>${entry.trailer_plate ? ` + <span class="badge">${entry.trailer_plate}</span>` : ''}</div>
+  <div class="label">Kennzeichen</div>
+  <div class="value">
+    <span class="plate">${entry.license_plate}</span>
+    ${entry.trailer_plate ? `<span class="plate-sep">·</span><span class="plate">${entry.trailer_plate}</span><span style="font-size:11px;color:#94a3b8;margin-left:4px">(Anhänger)</span>` : ''}
+  </div>
   ${entry.phone ? `<div class="label">Telefon</div><div class="value">${entry.phone}</div>` : ''}
   ${entry.contact_person ? `<div class="label">Ansprechpartner</div><div class="value">${entry.contact_person}</div>` : ''}
   ${entry.reference_number ? `<div class="label">Referenz</div><div class="value">${entry.reference_number}</div>` : ''}
@@ -106,9 +126,10 @@ ${note ? `<hr class="divider"/><div class="note-box"><div class="note-label">Hin
 }
 
 // ─── Detail Modal ─────────────────────────────────────────────────────────────
-function EntryModal({ entry, companyName, onClose, onNoteUpdated }: {
+function EntryModal({ entry, companyName, logoUrl, onClose, onNoteUpdated }: {
   entry: Entry
   companyName: string
+  logoUrl: string
   onClose: () => void
   onNoteUpdated: (id: string, note: string, translated: string) => void
 }) {
@@ -178,7 +199,7 @@ function EntryModal({ entry, companyName, onClose, onNoteUpdated }: {
           <div className="flex items-center gap-2">
             <button onClick={() => {
               void fetch(`/api/admin/entries/${entry.id}/print`, { method: 'POST' })
-              printEntry({ ...entry, staff_note: note, staff_note_translated: translated }, companyName)
+              printEntry({ ...entry, staff_note: note, staff_note_translated: translated }, companyName, logoUrl)
             }}
               className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-sm font-medium transition-colors">
               <Printer className="w-4 h-4" />
@@ -283,6 +304,7 @@ export function AdminEntriesClient() {
   const [error, setError] = useState('')
   const [selectedEntry, setSelectedEntry] = useState<Entry | null>(null)
   const [companyName, setCompanyName] = useState('')
+  const [logoUrl, setLogoUrl] = useState('')
 
   const loadEntries = useCallback((p: number) => {
     setLoading(true)
@@ -293,6 +315,7 @@ export function AdminEntriesClient() {
         setEntries(data.entries ?? [])
         setTotal(data.total ?? 0)
         setCompanyName(data.companyName ?? '')
+        setLogoUrl(data.logoUrl ?? '')
         setPage(p)
       })
       .catch(() => setError('Fehler beim Laden der Einträge.'))
@@ -424,6 +447,7 @@ export function AdminEntriesClient() {
         <EntryModal
           entry={selectedEntry}
           companyName={companyName}
+          logoUrl={logoUrl}
           onClose={() => setSelectedEntry(null)}
           onNoteUpdated={handleNoteUpdated}
         />

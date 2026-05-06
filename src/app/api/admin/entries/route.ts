@@ -31,7 +31,20 @@ export async function GET(req: NextRequest) {
 
     const data = await res.json()
     const total = parseInt(res.headers.get('content-range')?.split('/')[1] ?? '0')
-    return NextResponse.json({ entries: data, total, page, limit, companyName: ctx.company.name })
+
+    // Fetch logo URL from settings
+    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
+    let logoUrl = ''
+    try {
+      const logoRes = await fetch(
+        `${supabaseUrl}/rest/v1/app_settings?company_id=eq.${ctx.company.id}&key=eq.logo_url&select=value`,
+        { headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}` }, cache: 'no-store' }
+      )
+      const logoData = await logoRes.json()
+      logoUrl = logoData?.[0]?.value ?? ''
+    } catch { /* ignore */ }
+
+    return NextResponse.json({ entries: data, total, page, limit, companyName: ctx.company.name, logoUrl })
   } catch (err) {
     return NextResponse.json({ error: 'Interner Fehler.' }, { status: 500 })
   }

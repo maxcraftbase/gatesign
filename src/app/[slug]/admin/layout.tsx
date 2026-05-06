@@ -17,7 +17,7 @@ export default async function AdminLayout({
   return (
     <div className="min-h-screen bg-slate-50">
       <ExitFullscreen />
-      <AdminNav slug={slug} role={ctx.role} />
+      <AdminNav slug={slug} role={ctx.role} userName={ctx.name} companyName={ctx.company.name} />
       <main className="max-w-6xl mx-auto px-4 py-8">
         {children}
       </main>

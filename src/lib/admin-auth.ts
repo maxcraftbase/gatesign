@@ -20,6 +20,7 @@ export interface AdminContext {
   accessToken: string
   userId: string
   email: string
+  name: string | null
   role: 'admin' | 'member'
   company: { id: string; name: string; slug: string }
 }
@@ -111,10 +112,12 @@ export async function getAdminContext(): Promise<AdminContext | null> {
   let role: 'admin' | 'member'
   let email: string
 
+  let userName: string | null = null
   if (cuRows.length === 1) {
     companyId = cuRows[0].company_id
     role = cuRows[0].role as 'admin' | 'member'
     email = cuRows[0].email
+    userName = cuRows[0].name ?? null
   } else if (cuRows.length > 1) {
     // Multiple active company memberships for one user — data inconsistency, reject
     return null
@@ -153,5 +156,5 @@ export async function getAdminContext(): Promise<AdminContext | null> {
   const companies: { id: string; name: string; slug: string }[] = await companyRes.json()
   if (!companies.length) return null
 
-  return { accessToken, userId: userId!, email, role, company: companies[0] }
+  return { accessToken, userId: userId!, email, name: userName, role, company: companies[0] }
 }

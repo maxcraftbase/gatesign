@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { clsx } from 'clsx'
 
-export function AdminNav({ slug, role }: { slug: string; role?: 'admin' | 'member' }) {
+export function AdminNav({ slug, role, userName, companyName }: { slug: string; role?: 'admin' | 'member'; userName?: string | null; companyName?: string }) {
   const pathname = usePathname()
   const base = `/${slug}/admin`
 
@@ -45,6 +45,12 @@ export function AdminNav({ slug, role }: { slug: string; role?: 'admin' | 'membe
           </nav>
         </div>
         <div className="flex items-center gap-4">
+          {(userName || companyName) && (
+            <div className="text-right hidden sm:block">
+              {userName && <p className="text-sm font-semibold text-slate-900 leading-tight">{userName}</p>}
+              {companyName && <p className="text-xs text-slate-400 leading-tight">{companyName}</p>}
+            </div>
+          )}
           <Link href={`/${slug}`} className="text-sm font-medium text-slate-700 border border-slate-300 rounded-lg px-3 py-1.5 hover:bg-slate-50 hover:border-slate-400 transition-colors">
             ← Terminal starten
           </Link>

@@ -4,6 +4,24 @@ import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 
+// Read hash tokens immediately on first client render (before any effects strip the hash)
+function readHashTokens(): { accessToken?: string; tokenHash?: string } {
+  if (typeof window === 'undefined') return {}
+  const hash = window.location.hash
+  if (!hash) {
+    // Fallback: check sessionStorage (populated by inline script before hydration)
+    const saved = sessionStorage.getItem('gs_reset_hash')
+    if (saved) {
+      sessionStorage.removeItem('gs_reset_hash')
+      const p = new URLSearchParams(saved.replace(/^#/, ''))
+      return { accessToken: p.get('access_token') ?? undefined, tokenHash: p.get('token_hash') ?? undefined }
+    }
+    return {}
+  }
+  const p = new URLSearchParams(hash.slice(1))
+  return { accessToken: p.get('access_token') ?? undefined, tokenHash: p.get('token_hash') ?? undefined }
+}
+
 function ResetForm() {
   const searchParams = useSearchParams()
   const [password, setPassword] = useState('')
@@ -11,23 +29,19 @@ function ResetForm() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
   const [loading, setLoading] = useState(false)
-  // Capture tokens immediately on mount before Next.js can strip the hash
-  const [tokenHash, setTokenHash] = useState<string | undefined>()
-  const [accessToken, setAccessToken] = useState<string | undefined>()
+  // Lazy initializer runs during first client render — before any effect can strip the hash
+  const [accessToken] = useState<string | undefined>(() => readHashTokens().accessToken)
+  const [tokenHash] = useState<string | undefined>(() => {
+    const { tokenHash: th } = readHashTokens()
+    return th ?? searchParams.get('token_hash') ?? undefined
+  })
 
+  // Clean up the hash from the URL after capturing tokens
   useEffect(() => {
-    const hash = window.location.hash
-    const params = new URLSearchParams(hash.slice(1))
-    const at = params.get('access_token') ?? undefined
-    const th = params.get('token_hash') ?? searchParams.get('token_hash') ?? undefined
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setAccessToken(at)
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setTokenHash(th)
-    if (at || th) {
+    if (accessToken || tokenHash) {
       window.history.replaceState(null, '', window.location.pathname)
     }
-  }, [searchParams])
+  }, [accessToken, tokenHash])
 
   function validatePassword(pw: string): string | null {
     if (pw.length < 8) return 'Mindestens 8 Zeichen erforderlich.'
@@ -43,7 +57,7 @@ function ResetForm() {
     const pwError = validatePassword(password)
     if (pwError) { setError(pwError); return }
     if (password !== confirm) { setError('Passwörter stimmen nicht überein.'); return }
-    if (!tokenHash && !accessToken) { setError('Ungültiger Reset-Link.'); return }
+    if (!tokenHash && !accessToken) { setError('Ungültiger Reset-Link. Bitte fordere eine neue Einladung an.'); return }
 
     setLoading(true)
     const res = await fetch('/api/auth/reset-password', {
@@ -94,6 +108,15 @@ function ResetForm() {
 export default function ResetPasswordPage() {
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-8">
+      {/* Capture hash into sessionStorage before React hydration can strip it */}
+      <script dangerouslySetInnerHTML={{ __html: `
+        (function(){
+          var h = window.location.hash;
+          if (h && h.includes('access_token')) {
+            try { sessionStorage.setItem('gs_reset_hash', h); } catch(e) {}
+          }
+        })();
+      ` }} />
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           <Link href="/" className="text-2xl font-bold text-slate-900">GateSign</Link>

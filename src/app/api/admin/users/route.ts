@@ -70,35 +70,47 @@ export async function POST(req: NextRequest) {
     if (!insertRes.ok) return NextResponse.json({ error: 'Fehler beim Anlegen' }, { status: 500 })
   }
 
-  // Generate invite link via Supabase (does not send email)
-  const linkRes = await fetch(`${supabaseUrl}/auth/v1/admin/generate_link`, {
-    method: 'POST',
-    headers: {
-      apikey: serviceKey, Authorization: `Bearer ${serviceKey}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ type: 'invite', email: email.toLowerCase().trim() }),
-  })
+  const cleanEmail = email.toLowerCase().trim()
 
+  // Generate invite link via Supabase (does not send email)
   let inviteUrl: string | null = null
-  if (linkRes.ok) {
-    const linkData = await linkRes.json() as { action_link?: string }
-    inviteUrl = linkData.action_link ?? null
+  const inviteRes = await fetch(`${supabaseUrl}/auth/v1/admin/generate_link`, {
+    method: 'POST',
+    headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ type: 'invite', email: cleanEmail }),
+  })
+  if (inviteRes.ok) {
+    const d = await inviteRes.json() as { action_link?: string }
+    inviteUrl = d.action_link ?? null
   } else {
-    const errBody = await linkRes.text()
-    // User already exists in Supabase Auth — they can log in with their existing password
-    if (!errBody.includes('already registered')) {
+    const inviteErr = await inviteRes.text()
+    console.error('[invite] generate_link invite failed:', inviteErr)
+    // User already exists in Supabase Auth — fall back to password-reset link
+    const recoveryRes = await fetch(`${supabaseUrl}/auth/v1/admin/generate_link`, {
+      method: 'POST',
+      headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'recovery', email: cleanEmail }),
+    })
+    if (recoveryRes.ok) {
+      const d = await recoveryRes.json() as { action_link?: string }
+      inviteUrl = d.action_link ?? null
+    } else {
+      console.error('[invite] generate_link recovery failed:', await recoveryRes.text())
       return NextResponse.json({ error: 'Einladungsmail konnte nicht gesendet werden' }, { status: 500 })
     }
   }
 
   // Send invite email via Brevo
   if (inviteUrl) {
+    let emailOk = true
     await sendEmail({
-      to: email.toLowerCase().trim(),
+      to: cleanEmail,
       subject: `Einladung zu GateSign – ${ctx.company.name}`,
       html: inviteHtml(name ?? null, ctx.company.name, inviteUrl),
-    }).catch(() => { /* Brevo failure is non-fatal; user is already created */ })
+    }).catch((e: unknown) => { console.error('[invite] Brevo send failed:', e); emailOk = false })
+    if (!emailOk) {
+      return NextResponse.json({ error: 'Einladungsmail konnte nicht gesendet werden' }, { status: 500 })
+    }
   }
 
   await logAction(ctx, 'user_invited', { invited_email: email, role })

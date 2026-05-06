@@ -213,9 +213,9 @@ export function UsersClient({ currentUserId }: { currentUserId: string }) {
                     <button
                       onClick={() => handleResend(user)}
                       disabled={resendingId === user.id}
-                      className="p-1.5 text-slate-300 hover:text-blue-500 transition-colors rounded-lg hover:bg-blue-50 disabled:opacity-40"
-                      aria-label="Einladung erneut senden">
-                      <MailCheck className="w-4 h-4" />
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-blue-200 text-blue-600 bg-blue-50 hover:bg-blue-100 text-xs font-semibold transition-colors disabled:opacity-40">
+                      <MailCheck className="w-3.5 h-3.5" />
+                      {resendingId === user.id ? 'Sende…' : 'Erneut senden'}
                     </button>
                   )}
                   <button onClick={() => handleRemove(user.id)}

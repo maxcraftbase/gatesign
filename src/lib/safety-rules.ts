@@ -433,7 +433,7 @@ export const SAFETY_RULES: SafetyRule[] = [
   // ── Fahrzeug ─────────────────────────────────────────────────────────────────
   {
     id: 'engine_off',
-    isoCode: 'ENGINE_OFF',
+    isoCode: 'P028',
     signType: 'prohibition',
     category: 'vehicle',
     label: {

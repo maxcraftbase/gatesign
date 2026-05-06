@@ -428,8 +428,8 @@ function CombinedFormStep({
         )}
 
         {pdfUrl ? (
-          <div className="rounded-xl overflow-hidden border border-slate-200 mb-6">
-            <iframe src={pdfUrl} className="w-full block" style={{ aspectRatio: '210/297' }} title="Safety Briefing" />
+          <div className="mb-6">
+            <iframe src={pdfUrl} className="w-full block rounded-xl" style={{ height: '75vh', border: 'none' }} title="Safety Briefing" />
           </div>
         ) : activeRules.length === 0 && customHints.length === 0 ? (
           <div className="rounded-xl border border-slate-200 bg-slate-50 mb-6 flex items-center justify-center" style={{ height: '20vh' }}>

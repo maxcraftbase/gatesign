@@ -175,7 +175,10 @@ function EntryModal({ entry, companyName, onClose, onNoteUpdated }: {
             <p className="text-sm text-slate-500">{formatDate(entry.created_at)}</p>
           </div>
           <div className="flex items-center gap-2">
-            <button onClick={() => printEntry(entry.staff_note_translated ? { ...entry, staff_note_translated: translated } : { ...entry, staff_note: note, staff_note_translated: translated }, companyName)}
+            <button onClick={() => {
+              void fetch(`/api/admin/entries/${entry.id}/print`, { method: 'POST' })
+              printEntry({ ...entry, staff_note: note, staff_note_translated: translated }, companyName)
+            }}
               className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-sm font-medium transition-colors">
               <Printer className="w-4 h-4" />
               Drucken

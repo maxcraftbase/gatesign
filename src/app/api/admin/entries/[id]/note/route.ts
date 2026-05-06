@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAdminContext } from '@/lib/admin-auth'
+import { logAction } from '@/lib/audit'
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -35,6 +36,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     })
 
     if (!patchRes.ok) return NextResponse.json({ error: 'Fehler beim Speichern' }, { status: 500 })
+    await logAction(ctx, 'note_saved', { entry_id: id })
     return NextResponse.json({ success: true })
   } catch {
     return NextResponse.json({ error: 'Interner Fehler' }, { status: 500 })

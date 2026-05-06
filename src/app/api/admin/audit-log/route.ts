@@ -35,9 +35,23 @@ export async function GET(req: NextRequest) {
 
   const rows: { id: string; user_email: string; action: string; details: Record<string, unknown> | null; created_at: string }[] = await res.json()
 
+  // Fetch names for all unique emails in one request
+  const uniqueEmails = [...new Set(rows.map(r => r.user_email).filter(Boolean))]
+  let nameMap: Record<string, string> = {}
+  if (uniqueEmails.length > 0) {
+    const emailFilter = uniqueEmails.map(e => encodeURIComponent(e)).join(',')
+    const usersRes = await fetch(
+      `${supabaseUrl}/rest/v1/company_users?company_id=eq.${ctx.company.id}&email=in.(${emailFilter})&select=email,name`,
+      { headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}` }, cache: 'no-store' }
+    )
+    const userRows: { email: string; name: string | null }[] = await usersRes.json()
+    nameMap = Object.fromEntries(userRows.filter(u => u.name).map(u => [u.email, u.name!]))
+  }
+
   const entries = rows.map(r => ({
     ...r,
     action_label: ACTION_LABELS[r.action] ?? r.action,
+    user_name: nameMap[r.user_email] ?? null,
   }))
 
   return NextResponse.json({ entries })

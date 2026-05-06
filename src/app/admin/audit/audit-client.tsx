@@ -6,6 +6,7 @@ import { RefreshCw } from 'lucide-react'
 interface AuditEntry {
   id: string
   user_email: string
+  user_name: string | null
   action: string
   action_label: string
   details: Record<string, unknown> | null
@@ -79,7 +80,8 @@ export function AuditClient() {
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-slate-900">{entry.action_label}</p>
                   <p className="text-xs text-slate-500 truncate">
-                    {entry.user_email}
+                    {entry.user_name ? <span className="font-medium text-slate-700">{entry.user_name}</span> : entry.user_email}
+                    {entry.user_name ? <span className="text-slate-400"> · {entry.user_email}</span> : ''}
                     {detailText(entry.action, entry.details) ? ` · ${detailText(entry.action, entry.details)}` : ''}
                   </p>
                 </div>

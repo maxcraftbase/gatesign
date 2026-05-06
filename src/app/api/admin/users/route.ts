@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAdminContext } from '@/lib/admin-auth'
 import { logAction } from '@/lib/audit'
+import { sendEmail } from '@/lib/brevo'
 
 export async function GET() {
   const ctx = await getAdminContext()
@@ -55,21 +56,42 @@ export async function POST(req: NextRequest) {
   })
   if (!insertRes.ok) return NextResponse.json({ error: 'Fehler beim Anlegen' }, { status: 500 })
 
-  // Send invite via Supabase Auth
-  const inviteRes = await fetch(`${supabaseUrl}/auth/v1/invite`, {
+  // Generate invite link via Supabase (does not send email)
+  const linkRes = await fetch(`${supabaseUrl}/auth/v1/admin/generate_link`, {
     method: 'POST',
     headers: {
       apikey: serviceKey, Authorization: `Bearer ${serviceKey}`,
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ email: email.toLowerCase().trim() }),
+    body: JSON.stringify({ type: 'invite', email: email.toLowerCase().trim() }),
   })
-  if (!inviteRes.ok) {
-    const errBody = await inviteRes.text()
-    // If user already exists in Supabase Auth, that's OK — they'll just log in
+
+  let inviteUrl: string | null = null
+  if (linkRes.ok) {
+    const linkData = await linkRes.json() as { action_link?: string }
+    inviteUrl = linkData.action_link ?? null
+  } else {
+    const errBody = await linkRes.text()
+    // User already exists in Supabase Auth — they can log in with their existing password
     if (!errBody.includes('already registered')) {
       return NextResponse.json({ error: 'Einladungsmail konnte nicht gesendet werden' }, { status: 500 })
     }
+  }
+
+  // Send invite email via Brevo
+  if (inviteUrl) {
+    await sendEmail({
+      to: email.toLowerCase().trim(),
+      subject: `Einladung zu GateSign – ${ctx.company.name}`,
+      html: `
+        <p>Hallo${name ? ` ${name}` : ''},</p>
+        <p>Du wurdest von <strong>${ctx.company.name}</strong> zu GateSign eingeladen.</p>
+        <p>Klicke auf den folgenden Link, um deinen Account zu aktivieren und ein Passwort zu setzen:</p>
+        <p><a href="${inviteUrl}" style="background:#0f172a;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;display:inline-block;">Account aktivieren</a></p>
+        <p>Der Link ist 24 Stunden gültig.</p>
+        <p>GateSign</p>
+      `,
+    }).catch(() => { /* Brevo failure is non-fatal; user is already created */ })
   }
 
   await logAction(ctx, 'user_invited', { invited_email: email, role })

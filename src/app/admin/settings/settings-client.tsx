@@ -34,6 +34,9 @@ interface Settings {
   custom_hints: string
   custom_hints_types: string
   hints_pdf_url: string
+  briefing_pdf_truck: string
+  briefing_pdf_visitor: string
+  briefing_pdf_service: string
 }
 
 function DayRow({ label, closedKey, hoursKey, settings, setSettings }: {
@@ -85,12 +88,16 @@ export function AdminSettingsClient() {
     custom_hints: '[]',
     custom_hints_types: '[]',
     hints_pdf_url: '',
+    briefing_pdf_truck: '',
+    briefing_pdf_visitor: '',
+    briefing_pdf_service: '',
   })
   const [newHint, setNewHint] = useState('')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [uploadingLogo, setUploadingLogo] = useState(false)
   const [uploadingPdf, setUploadingPdf] = useState(false)
+  const [uploadingBriefing, setUploadingBriefing] = useState<Record<string, boolean>>({})
   const [translations, setTranslations] = useState<Record<string, string[]>>({})
   const [expandedHint, setExpandedHint] = useState<number | null>(null)
   const [translating, setTranslating] = useState(false)
@@ -206,6 +213,28 @@ export function AdminSettingsClient() {
   async function handleLogoDelete() {
     await fetch('/api/admin/upload-logo', { method: 'DELETE' })
     setSettings(s => ({ ...s, logo_url: '' }))
+  }
+
+  async function handleBriefingUpload(file: File, visitorType: string) {
+    setUploadingBriefing(s => ({ ...s, [visitorType]: true }))
+    const fd = new FormData()
+    fd.append('file', file)
+    fd.append('visitor_type', visitorType)
+    const res = await fetch('/api/admin/upload-briefing', { method: 'POST', body: fd })
+    if (res.ok) {
+      const data = await res.json() as { url: string }
+      setSettings(s => ({ ...s, [`briefing_pdf_${visitorType}`]: data.url }))
+    }
+    setUploadingBriefing(s => ({ ...s, [visitorType]: false }))
+  }
+
+  async function handleBriefingDelete(visitorType: string) {
+    await fetch('/api/admin/upload-briefing', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ visitorType }),
+    })
+    setSettings(s => ({ ...s, [`briefing_pdf_${visitorType}`]: '' }))
   }
 
   async function handlePdfUpload(file: File) {
@@ -503,6 +532,48 @@ export function AdminSettingsClient() {
             </div>
           )
         })}
+      </div>
+
+      {/* Belehrungsdokumente */}
+      <div className="bg-white rounded-2xl border border-slate-100 p-6 mb-6">
+        <h2 className="text-lg font-bold text-slate-900 mb-1">Belehrungsdokumente</h2>
+        <p className="text-sm text-slate-500 mb-5">
+          Je Besuchertyp ein PDF — wird im Terminal während der Belehrung angezeigt.
+        </p>
+        <div className="flex flex-col gap-4">
+          {([['truck', 'LKW'], ['visitor', 'Besucher'], ['service', 'Dienstleister']] as const).map(([type, label]) => {
+            const key = `briefing_pdf_${type}` as keyof Settings
+            const url = settings[key] as string
+            const uploading = uploadingBriefing[type] ?? false
+            const inputId = `briefing-input-${type}`
+            return (
+              <div key={type}>
+                <p className="text-sm font-semibold text-slate-700 mb-2">{label}</p>
+                {url ? (
+                  <div className="flex items-center gap-3 px-4 py-3 bg-blue-50 border border-blue-200 rounded-xl">
+                    <FileText className="w-5 h-5 text-blue-600 shrink-0" />
+                    <a href={url} target="_blank" rel="noreferrer"
+                      className="flex-1 text-sm text-blue-700 font-medium hover:underline truncate">
+                      briefing_{type}.pdf
+                    </a>
+                    <button type="button" onClick={() => void handleBriefingDelete(type)}
+                      className="text-slate-400 hover:text-red-500 transition-colors shrink-0">
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <label htmlFor={inputId}
+                    className="flex flex-col items-center justify-center gap-2 px-4 py-5 rounded-xl border-2 border-dashed border-slate-300 hover:border-blue-400 hover:bg-blue-50 cursor-pointer transition-colors">
+                    <FileText className="w-6 h-6 text-slate-400" />
+                    <span className="text-sm text-slate-500">{uploading ? 'Wird hochgeladen…' : 'PDF hochladen'}</span>
+                  </label>
+                )}
+                <input id={inputId} type="file" accept="application/pdf" className="hidden"
+                  onChange={e => { const f = e.target.files?.[0]; if (f) void handleBriefingUpload(f, type); e.target.value = '' }} />
+              </div>
+            )
+          })}
+        </div>
       </div>
 
       {/* Texthinweise */}

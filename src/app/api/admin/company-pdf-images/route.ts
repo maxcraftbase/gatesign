@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { resolve } from 'path'
 import { getAdminContext } from '@/lib/admin-auth'
 
 export async function GET() {
@@ -15,14 +16,16 @@ export async function GET() {
     )
     const rows: { value: string }[] = await settingsRes.json()
     const pdfUrl = rows[0]?.value
-    if (!pdfUrl) return NextResponse.json({ images: [] })
+    if (!pdfUrl) return NextResponse.json({ images: [], debug: 'no_pdf_url' })
 
     const pdfRes = await fetch(pdfUrl)
-    if (!pdfRes.ok) return NextResponse.json({ images: [] })
+    if (!pdfRes.ok) return NextResponse.json({ images: [], debug: `fetch_failed_${pdfRes.status}` })
     const pdfBytes = new Uint8Array(await pdfRes.arrayBuffer())
 
     const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs')
-    pdfjsLib.GlobalWorkerOptions.workerSrc = ''
+    // Point to the actual worker file so Node.js worker_threads can load it
+    const workerPath = resolve(process.cwd(), 'node_modules/pdfjs-dist/legacy/build/pdf.worker.min.mjs')
+    pdfjsLib.GlobalWorkerOptions.workerSrc = `file://${workerPath}`
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const pdfDoc = await (pdfjsLib.getDocument as any)({
@@ -32,17 +35,13 @@ export async function GET() {
       useSystemFonts: true,
     }).promise
 
+    const { createCanvas } = await import('@napi-rs/canvas')
     const images: string[] = []
     for (let i = 1; i <= pdfDoc.numPages; i++) {
       const page = await pdfDoc.getPage(i)
       const viewport = page.getViewport({ scale: 2.0 })
-
-      // NodeCanvasFactory is used automatically in Node.js by pdfjs-dist legacy
-      // when @napi-rs/canvas is installed
-      const { createCanvas } = await import('@napi-rs/canvas')
       const canvas = createCanvas(viewport.width, viewport.height)
       const ctx2d = canvas.getContext('2d')
-
       await page.render({
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         canvasContext: ctx2d as any,
@@ -50,11 +49,10 @@ export async function GET() {
         canvas: canvas as any,
         viewport,
       }).promise
-
       images.push(canvas.toDataURL('image/jpeg', 0.92))
     }
 
-    return NextResponse.json({ images })
+    return NextResponse.json({ images, debug: `ok_${images.length}_pages` })
   } catch (err) {
     console.error('PDF render error:', err)
     return NextResponse.json({ images: [], error: String(err) })

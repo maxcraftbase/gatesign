@@ -148,7 +148,8 @@ ${note ? `<hr class="divider"/><div class="note-box"><div class="note-label">${b
   if (companyPdfUrl) {
     try {
       const res = await fetch('/api/admin/company-pdf-images')
-      const data = await res.json() as { images?: string[]; error?: string }
+      const data = await res.json() as { images?: string[]; error?: string; debug?: string }
+      console.log('[company-pdf-images]', res.status, data.debug ?? data.error ?? 'no info', 'images:', data.images?.length ?? 0)
       if (data.images && data.images.length > 0) {
         companyPagesHtml = data.images
           .map(img => `<div style="page-break-before:always;margin:0;padding:0;"><img src="${img}" style="width:100%;display:block;" /></div>`)

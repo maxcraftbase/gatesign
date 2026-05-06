@@ -131,7 +131,9 @@ ${note ? `<hr class="divider"/><div class="note-box"><div class="note-label">${b
           canvas.height = viewport.height
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           await page.render({ canvasContext: canvas.getContext('2d') as any, viewport }).promise
-          images.push(canvas.toDataURL('image/jpeg', 0.92))
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.92)
+          // skip near-blank pages (a blank white A4 JPEG is < 8 KB base64)
+          if (dataUrl.length > 10000) images.push(dataUrl)
         }
         companyPagesHtml = images
           .map(img => `<div class="pdf-page"><img src="${img}"/></div>`)
@@ -150,8 +152,8 @@ ${note ? `<hr class="divider"/><div class="note-box"><div class="note-label">${b
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: Arial, sans-serif; color: #1e293b; font-size: 14px; }
-  .label-page { padding: 40px; }
-  @media print { .label-page { padding: 20px; } }
+  .label-page { padding: 40px 40px 0 40px; }
+  @media print { .label-page { padding: 20px 20px 0 20px; } }
   .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; padding-bottom: 20px; border-bottom: 2px solid #e2e8f0; }
   .header-left { display: flex; align-items: center; gap: 16px; }
   .logo { max-height: 52px; max-width: 160px; object-fit: contain; }
@@ -168,7 +170,7 @@ ${note ? `<hr class="divider"/><div class="note-box"><div class="note-label">${b
   .note-label { font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; }
   .note-text { font-size: 14px; color: #1e293b; line-height: 1.6; }
   .divider { border: none; border-top: 1px solid #cbd5e1; margin: 24px 0; }
-  .footer { font-size: 10px; color: #94a3b8; margin-top: 40px; text-align: center; }
+  .footer { font-size: 10px; color: #94a3b8; margin-top: 16px; padding-bottom: 16px; text-align: center; }
   .check { color: #10b981; font-weight: bold; }
   .pdf-page { page-break-before: always; line-height: 0; font-size: 0; }
   .pdf-page img { width: 100%; display: block; }

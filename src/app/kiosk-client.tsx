@@ -428,8 +428,10 @@ function CombinedFormStep({
         )}
 
         {pdfUrl ? (
-          <div className="mb-6">
-            <iframe src={pdfUrl} className="w-full block rounded-xl" style={{ height: '75vh', border: 'none' }} title="Safety Briefing" />
+          <div className="mb-6 relative rounded-xl overflow-hidden" style={{ height: '75vh' }}>
+            <iframe src={pdfUrl} className="w-full h-full block" style={{ border: 'none' }} title="Safety Briefing" />
+            {/* Overlay blocks pinch-zoom and free pan on iPad; touch-action pan-y lets the outer page scroll */}
+            <div className="absolute inset-0" style={{ touchAction: 'pan-y' }} />
           </div>
         ) : activeRules.length === 0 && customHints.length === 0 ? (
           <div className="rounded-xl border border-slate-200 bg-slate-50 mb-6 flex items-center justify-center" style={{ height: '20vh' }}>

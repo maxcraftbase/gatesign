@@ -139,6 +139,11 @@ ${note ? `<hr class="divider"/><div class="note-box"><div class="note-label">${b
 </body>
 </html>`
 
+  // Open window immediately (must be synchronous within user gesture, before any await)
+  const w = window.open('', '_blank', 'width=800,height=900')
+  if (!w) return
+  w.document.write('<html><body style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:Arial,sans-serif;color:#64748b;font-size:16px;">Dokument wird geladen…</body></html>')
+
   let companyPagesHtml = ''
   if (companyPdfUrl) {
     try {
@@ -151,7 +156,6 @@ ${note ? `<hr class="divider"/><div class="note-box"><div class="note-label">${b
       }
     } catch (err) {
       console.error('Company PDF images error:', err)
-      window.open(companyPdfUrl, '_blank')
     }
   }
 
@@ -159,8 +163,7 @@ ${note ? `<hr class="divider"/><div class="note-box"><div class="note-label">${b
     ? html.replace('</body>', `${companyPagesHtml}</body>`)
     : html
 
-  const w = window.open('', '_blank', 'width=800,height=900')
-  if (!w) return
+  w.document.open()
   w.document.write(fullHtml)
   w.document.close()
   w.focus()

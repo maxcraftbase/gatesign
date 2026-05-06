@@ -62,7 +62,15 @@ function DayRow({ label, closedKey, hoursKey, settings, setSettings }: {
       {!isClosed && (
         <input className={inputCls} value={settings[hoursKey] as string}
           onChange={e => setSettings(s => ({ ...s, [hoursKey]: e.target.value } as Settings))}
-          placeholder="z.B. 8:00 – 12:00 Uhr" />
+          onBlur={e => {
+            const formatted = e.target.value.trim().replace(
+              /^(\d{1,2})(?::(\d{0,2}))?[-–\s]+(\d{1,2})(?::(\d{0,2}))?$/,
+              (_, h1, m1 = '00', h2, m2 = '00') =>
+                `${h1.padStart(2, '0')}:${m1.padEnd(2, '0')} – ${h2.padStart(2, '0')}:${m2.padEnd(2, '0')}`
+            )
+            setSettings(s => ({ ...s, [hoursKey]: formatted } as Settings))
+          }}
+          placeholder="z.B. 08:00 – 17:00" />
       )}
     </div>
   )

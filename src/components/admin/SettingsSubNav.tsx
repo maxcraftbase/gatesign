@@ -9,9 +9,10 @@ export function SettingsSubNav({ slug }: { slug: string }) {
   const base = `/${slug}/admin`
 
   const tabs = [
-    { href: `${base}/settings`, label: 'Allgemein' },
-    { href: `${base}/users`,    label: 'Nutzer & Ansprechpartner' },
-    { href: `${base}/audit`,    label: 'Protokoll' },
+    { href: `${base}/settings`,   label: 'Allgemein' },
+    { href: `${base}/users`,      label: 'Nutzer & Ansprechpartner' },
+    { href: `${base}/documents`,  label: 'Dokumente' },
+    { href: `${base}/audit`,      label: 'Protokoll' },
   ]
 
   return (

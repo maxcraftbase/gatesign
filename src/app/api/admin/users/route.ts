@@ -71,13 +71,14 @@ export async function POST(req: NextRequest) {
   }
 
   const cleanEmail = email.toLowerCase().trim()
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://gatesign.de'
 
   // Generate invite link via Supabase (does not send email)
   let inviteUrl: string | null = null
   const inviteRes = await fetch(`${supabaseUrl}/auth/v1/admin/generate_link`, {
     method: 'POST',
     headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ type: 'invite', email: cleanEmail }),
+    body: JSON.stringify({ type: 'invite', email: cleanEmail, redirect_to: `${appUrl}/password` }),
   })
   if (inviteRes.ok) {
     const d = await inviteRes.json() as { action_link?: string }
@@ -89,7 +90,7 @@ export async function POST(req: NextRequest) {
     const recoveryRes = await fetch(`${supabaseUrl}/auth/v1/admin/generate_link`, {
       method: 'POST',
       headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type: 'recovery', email: cleanEmail }),
+      body: JSON.stringify({ type: 'recovery', email: cleanEmail, redirect_to: `${appUrl}/password` }),
     })
     if (recoveryRes.ok) {
       const d = await recoveryRes.json() as { action_link?: string }

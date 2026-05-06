@@ -147,16 +147,31 @@ ${note ? `<hr class="divider"/><div class="note-box"><div class="note-label">${b
   let companyPagesHtml = ''
   if (companyPdfUrl) {
     try {
-      const res = await fetch('/api/admin/company-pdf-images')
-      const data = await res.json() as { images?: string[]; error?: string; debug?: string }
-      console.log('[company-pdf-images]', res.status, data.debug ?? data.error ?? 'no info', 'images:', data.images?.length ?? 0)
-      if (data.images && data.images.length > 0) {
-        companyPagesHtml = data.images
+      const pdfRes = await fetch('/api/admin/proxy-company-pdf')
+      if (pdfRes.ok) {
+        const pdfBytes = new Uint8Array(await pdfRes.arrayBuffer())
+        const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs')
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ;(pdfjsLib as any).GlobalWorkerOptions.workerSrc = `${window.location.origin}/pdf.worker.min.mjs`
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const pdfDoc = await (pdfjsLib.getDocument as any)({ data: pdfBytes }).promise
+        const images: string[] = []
+        for (let i = 1; i <= pdfDoc.numPages; i++) {
+          const page = await pdfDoc.getPage(i)
+          const viewport = page.getViewport({ scale: 2.0 })
+          const canvas = document.createElement('canvas')
+          canvas.width = viewport.width
+          canvas.height = viewport.height
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          await page.render({ canvasContext: canvas.getContext('2d') as any, viewport }).promise
+          images.push(canvas.toDataURL('image/jpeg', 0.92))
+        }
+        companyPagesHtml = images
           .map(img => `<div style="page-break-before:always;margin:0;padding:0;"><img src="${img}" style="width:100%;display:block;" /></div>`)
           .join('')
       }
     } catch (err) {
-      console.error('Company PDF images error:', err)
+      console.error('Company PDF render error:', err)
     }
   }
 

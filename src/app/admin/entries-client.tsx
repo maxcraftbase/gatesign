@@ -131,8 +131,8 @@ ${note ? `<hr class="divider"/><div class="note-box"><div class="note-label">${b
           canvas.height = viewport.height
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           await page.render({ canvasContext: canvas.getContext('2d') as any, viewport }).promise
-          // skip blank pages: at quality 0.1 a pure-white A4 canvas is <3 KB
-          if (canvas.toDataURL('image/jpeg', 0.1).length < 4000) continue
+          // skip blank/near-blank pages: at quality 0.1 pure-white is ~2 KB, real content is >10 KB
+          if (canvas.toDataURL('image/jpeg', 0.1).length < 8000) continue
           const dataUrl = canvas.toDataURL('image/jpeg', 0.92)
           images.push(dataUrl)
         }

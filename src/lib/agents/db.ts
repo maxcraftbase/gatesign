@@ -66,7 +66,18 @@ export async function getSettings(companyId: string): Promise<Record<string, str
   return Object.fromEntries(rows.map(r => [r.key, r.value]))
 }
 
-export async function getCheckIns(companyId: string, since: string): Promise<Record<string, unknown>[]> {
+export interface CheckIn {
+  id: string
+  created_at: string
+  driver_name: string
+  company_name: string
+  license_plate: string
+  visitor_type: string | null
+  briefing_accepted: boolean
+  has_signature: boolean
+}
+
+export async function getCheckIns(companyId: string, since: string): Promise<CheckIn[]> {
   const params = new URLSearchParams({
     company_id: `eq.${companyId}`,
     created_at: `gte.${encodeURIComponent(since)}`,
@@ -78,5 +89,5 @@ export async function getCheckIns(companyId: string, since: string): Promise<Rec
     headers: headers(),
     cache: 'no-store',
   })
-  return res.ok ? (await res.json() as Record<string, unknown>[]) : []
+  return res.ok ? (await res.json() as CheckIn[]) : []
 }

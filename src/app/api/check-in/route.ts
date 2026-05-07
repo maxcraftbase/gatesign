@@ -52,7 +52,25 @@ export async function POST(req: NextRequest) {
 
     const company = slug ? await getCompanyBySlug(slug) : null
 
-    const payload: Record<string, unknown> = {
+    interface CheckInPayload {
+      visitor_type: string
+      driver_name: string
+      company_name: string
+      license_plate: string
+      language: string
+      briefing_accepted: boolean
+      briefing_version: string
+      has_signature: boolean
+      company_id?: string
+      briefing_accepted_at?: string
+      phone?: string
+      trailer_plate?: string
+      contact_person?: string
+      signature_data?: string
+      reference_number?: string
+    }
+
+    const payload: CheckInPayload = {
       visitor_type: visitor_type ?? 'truck',
       driver_name,
       company_name,

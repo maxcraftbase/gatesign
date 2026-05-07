@@ -34,7 +34,8 @@ export async function getAdminContext(): Promise<AdminContext | null> {
     ?? allCookies.find(c => c.name.startsWith('sb-') && c.name.endsWith('-auth-token'))
   if (!authCookie) return null
 
-  let session: Record<string, unknown> | null = null
+  interface SupabaseSession { access_token: string; refresh_token: string; [key: string]: unknown }
+  let session: SupabaseSession | null = null
   try {
     let val = authCookie.value
     if (!val) {

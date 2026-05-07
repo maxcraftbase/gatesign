@@ -245,7 +245,8 @@ async function printEntry(entry: Entry, companyName: string, logoUrl?: string, c
   // Same-origin popup can navigate to blob:https://gatesign.de/... without restriction.
   const w = window.open('/admin/print', '_blank', 'width=900,height=900')
   if (!w) return
-  // Keep parent window in focus — popup stays in background until print dialog opens
+  // Push popup to background — user stays on admin page until print dialog opens
+  w.blur()
   window.focus()
 
   let pdfBuf: ArrayBuffer | null = null

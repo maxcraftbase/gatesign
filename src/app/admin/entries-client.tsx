@@ -556,24 +556,22 @@ export function AdminEntriesClient() {
   }
 
   // Silent background refresh — updates entries without resetting UI state
-  const liveRefreshRef = useRef<() => void>(() => {})
-  liveRefreshRef.current = () => {
-    const qs = new URLSearchParams({ page: String(page), sort: sort.col, dir: sort.dir })
-    if (search.trim()) qs.set('search', search.trim())
-    if (typeFilter) qs.set('type', typeFilter)
-    fetch(`/api/admin/entries?${qs}`)
-      .then(res => res.ok ? res.json() : null)
-      .then(data => {
-        if (!data) return
-        setEntries(data.entries ?? [])
-        setTotal(data.total ?? 0)
-      })
-      .catch(() => {})
-  }
   useEffect(() => {
-    const id = setInterval(() => liveRefreshRef.current(), 30_000)
+    const id = setInterval(() => {
+      const qs = new URLSearchParams({ page: String(page), sort: sort.col, dir: sort.dir })
+      if (search.trim()) qs.set('search', search.trim())
+      if (typeFilter) qs.set('type', typeFilter)
+      fetch(`/api/admin/entries?${qs}`)
+        .then(res => res.ok ? res.json() : null)
+        .then(data => {
+          if (!data) return
+          setEntries(data.entries ?? [])
+          setTotal(data.total ?? 0)
+        })
+        .catch(() => {})
+    }, 30_000)
     return () => clearInterval(id)
-  }, [])
+  }, [search, typeFilter, sort, page])
 
   function handleNoteUpdated(id: string, note: string, translated: string, assignedContact: string | null) {
     setEntries(prev => prev.map(e => e.id === id ? { ...e, staff_note: note, staff_note_translated: translated, assigned_contact: assignedContact } : e))

@@ -249,19 +249,13 @@ async function printEntry(entry: Entry, companyName: string, logoUrl?: string, c
 
   try {
     const blob = await buildMergedPdf(entry, companyName, logoUrl, companyPdfUrl)
-    // Async base64 encode via FileReader — avoids blocking the UI thread
-    const b64 = await new Promise<string>((resolve, reject) => {
-      const reader = new FileReader()
-      reader.onload = () => resolve((reader.result as string).split(',')[1])
-      reader.onerror = reject
-      reader.readAsDataURL(blob)
-    })
-    localStorage.setItem(printKey, b64)
-    setTimeout(() => localStorage.removeItem(printKey), 300_000)
+    const blobUrl = URL.createObjectURL(blob)
+    // Store just the URL string — avoids the ~5MB localStorage quota limit
+    localStorage.setItem(printKey, blobUrl)
+    setTimeout(() => { localStorage.removeItem(printKey); URL.revokeObjectURL(blobUrl) }, 300_000)
 
-    // Popup polls localStorage, navigates to blob URL, then we trigger print
     const tryPrint = (attempts = 0) => {
-      if (w.closed || attempts > 8) return
+      if (w.closed || attempts > 10) return
       try {
         w.focus()
         w.print()
@@ -271,7 +265,9 @@ async function printEntry(entry: Entry, companyName: string, logoUrl?: string, c
     setTimeout(tryPrint, 3000)
   } catch (err) {
     console.error('Print error:', err)
-    localStorage.removeItem(printKey)
+    // Signal error to popup so it shows a message instead of spinning
+    try { localStorage.setItem(printKey, `error:${String(err)}`) } catch { /* ignore */ }
+    setTimeout(() => localStorage.removeItem(printKey), 30_000)
   }
 }
 

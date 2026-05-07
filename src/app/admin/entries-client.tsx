@@ -563,12 +563,16 @@ export function AdminEntriesClient() {
 
   // Lazy-load signature when modal opens
   useEffect(() => {
-    if (!selectedEntry) { setSignatureData(null); return }
-    if (!selectedEntry.has_signature) return
-    fetch(`/api/admin/entries/${selectedEntry.id}/signature`)
-      .then(r => r.ok ? r.json() : null)
-      .then(data => setSignatureData(data?.signature_data ?? null))
-      .catch(() => null)
+    let active = true
+    if (!selectedEntry?.has_signature || !selectedEntry?.id) {
+      Promise.resolve().then(() => { if (active) setSignatureData(null) })
+    } else {
+      fetch(`/api/admin/entries/${selectedEntry.id}/signature`)
+        .then(r => r.ok ? r.json() : null)
+        .then(data => { if (active) setSignatureData(data?.signature_data ?? null) })
+        .catch(() => { if (active) setSignatureData(null) })
+    }
+    return () => { active = false }
   }, [selectedEntry?.id])
 
   // Silent background refresh — updates entries without resetting UI state

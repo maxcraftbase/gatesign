@@ -85,17 +85,21 @@ export async function getAdminContext(): Promise<AdminContext | null> {
     } catch {
       return null
     }
-    // Update cookie
-    const updatedSession = { ...session, ...newSession }
-    const encoded = 'base64-' + Buffer.from(JSON.stringify(updatedSession)).toString('base64url')
-    const cookieOpts = { httpOnly: true, sameSite: 'lax' as const, path: '/', maxAge: 400 * 24 * 60 * 60 }
-    const CHUNK_SIZE = 3180
-    if (encoded.length > CHUNK_SIZE) {
-      for (let i = 0; i * CHUNK_SIZE < encoded.length; i++) {
-        cookieStore.set(`${cookieName}.${i}`, encoded.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE), cookieOpts)
+    // Update cookie — only possible in Route Handlers/Server Actions, not Server Components
+    try {
+      const updatedSession = { ...session, ...newSession }
+      const encoded = 'base64-' + Buffer.from(JSON.stringify(updatedSession)).toString('base64url')
+      const cookieOpts = { httpOnly: true, sameSite: 'lax' as const, path: '/', maxAge: 400 * 24 * 60 * 60 }
+      const CHUNK_SIZE = 3180
+      if (encoded.length > CHUNK_SIZE) {
+        for (let i = 0; i * CHUNK_SIZE < encoded.length; i++) {
+          cookieStore.set(`${cookieName}.${i}`, encoded.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE), cookieOpts)
+        }
+      } else {
+        cookieStore.set(cookieName, encoded, cookieOpts)
       }
-    } else {
-      cookieStore.set(cookieName, encoded, cookieOpts)
+    } catch {
+      // Cookie write not allowed in Server Component context — session refresh still valid for this request
     }
   }
 

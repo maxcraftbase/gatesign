@@ -534,12 +534,12 @@ export function AdminEntriesClient() {
       .finally(() => setLoading(false))
   }, [])
 
-  // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(() => { loadEntries(1, '', '', 'created_at', 'desc') }, [loadEntries])
-
   const searchRef = useRef(search)
+  const mountedRef = useRef(false)
   useEffect(() => {
-    const isSearchChange = search !== searchRef.current
+    const isMount = !mountedRef.current
+    mountedRef.current = true
+    const isSearchChange = !isMount && search !== searchRef.current
     searchRef.current = search
     const t = setTimeout(() => loadEntries(1, search, typeFilter, sort.col, sort.dir), isSearchChange ? 350 : 0)
     return () => clearTimeout(t)

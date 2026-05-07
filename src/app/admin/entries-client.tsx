@@ -243,7 +243,13 @@ async function buildMergedPdf(entry: Entry, companyName: string, logoUrl?: strin
 async function printEntry(entry: Entry, companyName: string, logoUrl?: string, companyPdfUrl?: string) {
   const blob = await buildMergedPdf(entry, companyName, logoUrl, companyPdfUrl)
   const blobUrl = URL.createObjectURL(blob)
-  window.open(blobUrl, '_blank')
+  const a = document.createElement('a')
+  a.href = blobUrl
+  a.target = '_blank'
+  a.rel = 'noopener'
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
   setTimeout(() => URL.revokeObjectURL(blobUrl), 300_000)
 }
 

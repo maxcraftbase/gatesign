@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  typecheck:
+    name: TypeScript
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      - run: npx tsc --noEmit
+
+  smoke-tests:
+    name: Smoke Tests
+    runs-on: ubuntu-latest
+    # Only run when secrets are configured
+    if: ${{ vars.PLAYWRIGHT_BASE_URL != '' || secrets.PLAYWRIGHT_SITE_PASSWORD != '' }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      - run: npx playwright install chromium --with-deps
+      - name: Run smoke tests
+        run: npm run test:e2e
+        env:
+          PLAYWRIGHT_BASE_URL: ${{ vars.PLAYWRIGHT_BASE_URL || 'https://www.gatesign.de' }}
+          PLAYWRIGHT_SITE_PASSWORD: ${{ secrets.PLAYWRIGHT_SITE_PASSWORD }}
+          PLAYWRIGHT_SLUG: ${{ vars.PLAYWRIGHT_SLUG }}
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7

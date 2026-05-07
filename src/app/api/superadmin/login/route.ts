@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { timingSafeEqual } from 'crypto'
 import { checkRateLimit } from '@/lib/rate-limit'
-import { hashSuperadminToken } from '@/lib/superadmin-auth'
+import { hashSuperadminToken, verifySuperadminPassword } from '@/lib/superadmin-auth'
 
 export async function POST(req: NextRequest) {
   try {
@@ -11,24 +10,16 @@ export async function POST(req: NextRequest) {
     }
 
     const { password } = await req.json()
-    const expected = process.env.SUPERADMIN_PASSWORD?.trim()
-    if (!expected) return NextResponse.json({ error: 'Serverkonfiguration fehlerhaft.' }, { status: 500 })
+    if (!process.env.SUPERADMIN_PASSWORD?.trim()) {
+      return NextResponse.json({ error: 'Serverkonfiguration fehlerhaft.' }, { status: 500 })
+    }
 
-    const valid = (() => {
-      if (!password) return false
-      try {
-        const a = Buffer.from(password.trim())
-        const b = Buffer.from(expected)
-        return a.length === b.length && timingSafeEqual(a, b)
-      } catch { return false }
-    })()
-
-    if (!valid) {
+    if (!verifySuperadminPassword(password)) {
       console.warn(`[superadmin] Fehlgeschlagener Login-Versuch von ${ip}`)
       return NextResponse.json({ error: 'Falsches Passwort.' }, { status: 401 })
     }
 
-    const token = hashSuperadminToken(expected)
+    const token = hashSuperadminToken(process.env.SUPERADMIN_PASSWORD!.trim())
     const res = NextResponse.json({ success: true })
     res.cookies.set('gs-superadmin', token, {
       httpOnly: true,

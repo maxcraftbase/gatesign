@@ -237,7 +237,7 @@ async function buildMergedPdf(entry: Entry, companyName: string, logoUrl?: strin
     }
   }
 
-  return new Blob([await pdfDoc.save()], { type: 'application/pdf' })
+  return new Blob([new Uint8Array(await pdfDoc.save())], { type: 'application/pdf' })
 }
 
 async function printEntry(entry: Entry, companyName: string, logoUrl?: string, companyPdfUrl?: string) {

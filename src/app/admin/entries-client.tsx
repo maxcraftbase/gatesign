@@ -295,16 +295,18 @@ async function printEntry(entry: Entry, companyName: string, logoUrl?: string, c
       }
     }
 
-    const pagesHtml = dataUrls.map((src, i) =>
-      `<div style="width:210mm;margin:0 auto;background:#fff${i < dataUrls.length - 1 ? ';page-break-after:always' : ''}"><img src="${src}" style="width:100%;display:block"></div>`
+    const pagesHtml = dataUrls.map((src) =>
+      `<div class="page"><img src="${src}"></div>`
     ).join('')
 
     // Write HTML directly into popup — avoids Safari PDF-viewer taking over the window
     // window.onload fires after all images are ready, then we self-print
     const html = `<!DOCTYPE html><html><head><title>GateSign</title><style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:#888;padding:20px}
-@media print{body{background:#fff;padding:0}@page{margin:0;size:A4 portrait}}
+body{background:#888}
+.page{width:210mm;height:297mm;overflow:hidden;background:#fff;display:block}
+.page img{width:210mm;height:297mm;display:block;object-fit:fill}
+@media print{body{background:#fff}@page{margin:0;size:A4 portrait}.page{page-break-after:always;page-break-inside:avoid}}
 </style></head><body>${pagesHtml}<script>
 (function(){
   var done=false;

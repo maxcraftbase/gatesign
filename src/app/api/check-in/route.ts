@@ -1,10 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
 import { getCompanyBySlug } from '@/lib/company'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { supabaseUrl, anonKey } from '@/lib/supabase-server'
 
-const VALID_VISITOR_TYPES = ['truck', 'visitor', 'service'] as const
-const VALID_LANGUAGES = ['de', 'en', 'pl', 'ro', 'cs', 'hu', 'bg', 'uk', 'ru', 'tr'] as const
+const checkInSchema = z.object({
+  slug: z.string().optional(),
+  visitor_type: z.enum(['truck', 'visitor', 'service']).optional(),
+  driver_name: z.string().min(1).max(100),
+  company_name: z.string().min(1).max(150),
+  license_plate: z.string().min(1).max(20),
+  trailer_plate: z.string().max(20).optional(),
+  phone: z.string().max(30).optional(),
+  contact_person: z.string().max(100).optional(),
+  language: z.enum(['de', 'en', 'pl', 'ro', 'cs', 'hu', 'bg', 'uk', 'ru', 'tr']),
+  briefing_accepted: z.boolean().optional(),
+  briefing_version: z.string().optional(),
+  has_signature: z.boolean().optional(),
+  signature_data: z.string().max(100_000).optional(),
+  reference_number: z.string().max(50).optional(),
+})
 
 export async function POST(req: NextRequest) {
   try {
@@ -13,7 +28,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Zu viele Anfragen. Bitte warten.' }, { status: 429 })
     }
 
-    const body = await req.json()
+    const parsed = checkInSchema.safeParse(await req.json())
+    if (!parsed.success) {
+      return NextResponse.json({ error: parsed.error.issues[0]?.message ?? 'Ungültige Eingabe' }, { status: 400 })
+    }
+
     const {
       slug,
       visitor_type,
@@ -29,34 +48,29 @@ export async function POST(req: NextRequest) {
       has_signature,
       signature_data,
       reference_number,
-    } = body
-
-    // Required fields
-    if (!driver_name || !company_name || !license_plate || !language) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
-    }
-
-    // Whitelist checks
-    if (visitor_type && !VALID_VISITOR_TYPES.includes(visitor_type)) {
-      return NextResponse.json({ error: 'Ungültiger Besuchertyp' }, { status: 400 })
-    }
-    if (!VALID_LANGUAGES.includes(language)) {
-      return NextResponse.json({ error: 'Ungültige Sprache' }, { status: 400 })
-    }
-
-    // Length limits
-    if (String(driver_name).length > 100) return NextResponse.json({ error: 'driver_name zu lang' }, { status: 400 })
-    if (String(company_name).length > 150) return NextResponse.json({ error: 'company_name zu lang' }, { status: 400 })
-    if (String(license_plate).length > 20) return NextResponse.json({ error: 'license_plate zu lang' }, { status: 400 })
-    if (trailer_plate && String(trailer_plate).length > 20) return NextResponse.json({ error: 'trailer_plate zu lang' }, { status: 400 })
-    if (phone && String(phone).length > 30) return NextResponse.json({ error: 'phone zu lang' }, { status: 400 })
-    if (contact_person && String(contact_person).length > 100) return NextResponse.json({ error: 'contact_person zu lang' }, { status: 400 })
-    if (reference_number && String(reference_number).length > 50) return NextResponse.json({ error: 'reference_number zu lang' }, { status: 400 })
-    if (signature_data && String(signature_data).length > 100_000) return NextResponse.json({ error: 'signature_data zu groß' }, { status: 400 })
+    } = parsed.data
 
     const company = slug ? await getCompanyBySlug(slug) : null
 
-    const payload: Record<string, unknown> = {
+    interface CheckInPayload {
+      visitor_type: string
+      driver_name: string
+      company_name: string
+      license_plate: string
+      language: string
+      briefing_accepted: boolean
+      briefing_version: string
+      has_signature: boolean
+      company_id?: string
+      briefing_accepted_at?: string
+      phone?: string
+      trailer_plate?: string
+      contact_person?: string
+      signature_data?: string
+      reference_number?: string
+    }
+
+    const payload: CheckInPayload = {
       visitor_type: visitor_type ?? 'truck',
       driver_name,
       company_name,

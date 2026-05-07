@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAdminContext } from '@/lib/admin-auth'
+import { checkAdminRateLimit } from '@/lib/rate-limit'
 import { supabaseUrl, anonKey } from '@/lib/supabase-server'
 
 export async function POST(req: NextRequest) {
   try {
     const ctx = await getAdminContext()
     if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (!checkAdminRateLimit(ctx.company.id, 'upload-logo', 10, 60_000)) {
+      return NextResponse.json({ error: 'Zu viele Anfragen. Bitte warten.' }, { status: 429 })
+    }
 
     const formData = await req.formData()
     const file = formData.get('file') as File | null

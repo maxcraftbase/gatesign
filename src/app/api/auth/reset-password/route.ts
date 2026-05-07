@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { supabaseUrl, anonKey } from '@/lib/supabase-server'
 
 export async function POST(req: NextRequest) {
   try {
@@ -6,10 +7,6 @@ export async function POST(req: NextRequest) {
     if ((!token_hash && !directToken) || !password) {
       return NextResponse.json({ error: 'Token und Passwort erforderlich.' }, { status: 400 })
     }
-
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-
     let accessToken: string = directToken ?? ''
 
     if (!directToken) {
@@ -38,6 +35,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true })
   } catch (err) {
+    console.error('[reset-password] error:', err)
     return NextResponse.json({ error: 'Interner Fehler.' }, { status: 500 })
   }
 }

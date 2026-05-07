@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getAdminContext } from '@/lib/admin-auth'
+import { supabaseUrl, anonKey } from '@/lib/supabase-server'
 
 const DEEPL_LANGS: Record<string, string> = {
   en: 'EN-GB', pl: 'PL', ro: 'RO', cs: 'CS',
@@ -13,9 +14,6 @@ export async function POST() {
 
     const apiKey = process.env.DEEPL_API_KEY
     if (!apiKey) return NextResponse.json({ error: 'DEEPL_API_KEY nicht konfiguriert' }, { status: 500 })
-
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     const deeplBase = apiKey.endsWith(':fx')
       ? 'https://api-free.deepl.com/v2/translate'
       : 'https://api.deepl.com/v2/translate'

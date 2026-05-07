@@ -107,21 +107,17 @@ export function AdminSettingsClient() {
     contact_persons: '[]',
   })
   const [newHint, setNewHint] = useState('')
-  const [newContactPerson, setNewContactPerson] = useState('')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [uploadingLogo, setUploadingLogo] = useState(false)
-  const [uploadingPdf, setUploadingPdf] = useState(false)
   const [uploadingBriefing, setUploadingBriefing] = useState<Record<string, boolean>>({})
   const [translations, setTranslations] = useState<Record<string, string[]>>({})
   const [expandedHint, setExpandedHint] = useState<number | null>(null)
-  const [translating, setTranslating] = useState(false)
   const [translateSuccess, setTranslateSuccess] = useState(false)
   const [translateError, setTranslateError] = useState('')
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
   const logoInputRef = useRef<HTMLInputElement>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     fetch('/api/admin/settings')
@@ -186,20 +182,6 @@ export function AdminSettingsClient() {
     setSettings(s => ({ ...s, custom_hints_types: JSON.stringify(newTypes) }))
   }
 
-  function getContactPersons(): string[] {
-    try { return JSON.parse(settings.contact_persons) as string[] } catch { return [] }
-  }
-
-  function addContactPerson() {
-    const trimmed = newContactPerson.trim()
-    if (!trimmed) return
-    setSettings(s => ({ ...s, contact_persons: JSON.stringify([...getContactPersons(), trimmed]) }))
-    setNewContactPerson('')
-  }
-
-  function removeContactPerson(index: number) {
-    setSettings(s => ({ ...s, contact_persons: JSON.stringify(getContactPersons().filter((_, i) => i !== index)) }))
-  }
 
   function getRuleVisitorTypes(): Record<string, string[]> {
     try { return JSON.parse(settings.rule_visitor_types) as Record<string, string[]> } catch { return {} }
@@ -267,25 +249,7 @@ export function AdminSettingsClient() {
     setSettings(s => ({ ...s, [`briefing_pdf_${visitorType}`]: '' }))
   }
 
-  async function handlePdfUpload(file: File) {
-    setUploadingPdf(true)
-    const fd = new FormData()
-    fd.append('file', file)
-    const res = await fetch('/api/admin/upload-hints-pdf', { method: 'POST', body: fd })
-    if (res.ok) {
-      const data = await res.json() as { url: string }
-      setSettings(s => ({ ...s, hints_pdf_url: data.url }))
-    }
-    setUploadingPdf(false)
-  }
-
-  async function handlePdfDelete() {
-    await fetch('/api/admin/upload-hints-pdf', { method: 'DELETE' })
-    setSettings(s => ({ ...s, hints_pdf_url: '' }))
-  }
-
   async function handleTranslate() {
-    setTranslating(true)
     setTranslateError('')
     setTranslateSuccess(false)
     const res = await fetch('/api/admin/translate-hints', { method: 'POST' })
@@ -298,7 +262,6 @@ export function AdminSettingsClient() {
       const data = await res.json() as { error?: string }
       setTranslateError(data.error ?? 'Fehler beim Übersetzen.')
     }
-    setTranslating(false)
   }
 
   async function handleSave() {
@@ -345,8 +308,6 @@ export function AdminSettingsClient() {
   function toggleAllRules() {
     setSettings(s => ({ ...s, active_safety_rules: allSelected ? '[]' : JSON.stringify(allRuleIds) }))
   }
-
-  const hintsPdfUrl = settings.hints_pdf_url
 
   return (
     <div className="max-w-3xl mx-auto">

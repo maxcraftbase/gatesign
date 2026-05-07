@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateSlug, createCompanyWithDefaults } from '@/lib/company'
 import { sendEmail } from '@/lib/brevo'
+import { supabaseUrl, anonKey } from '@/lib/supabase-server'
 
 export async function POST(req: NextRequest) {
   try {
@@ -8,9 +9,6 @@ export async function POST(req: NextRequest) {
     if (!email || !password || !companyName) {
       return NextResponse.json({ error: 'Alle Felder sind erforderlich.' }, { status: 400 })
     }
-
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
     // 1. Sign up user
     const signupRes = await fetch(`${supabaseUrl}/auth/v1/signup`, {
@@ -68,6 +66,7 @@ export async function POST(req: NextRequest) {
 
     return response
   } catch (err) {
+    console.error('[register] unexpected error:', err)
     return NextResponse.json({ error: 'Interner Fehler.' }, { status: 500 })
   }
 }

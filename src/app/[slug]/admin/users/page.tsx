@@ -11,7 +11,7 @@ export default async function UsersPage({ params }: { params: Promise<{ slug: st
   return (
     <>
       <SettingsSubNav slug={slug} />
-      <UsersClient currentUserId={ctx.userId} />
+      <UsersClient />
     </>
   )
 }

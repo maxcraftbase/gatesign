@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAdminContext } from '@/lib/admin-auth'
+import { supabaseUrl, anonKey } from '@/lib/supabase-server'
 
 export async function POST(req: NextRequest) {
   try {
@@ -18,9 +19,6 @@ export async function POST(req: NextRequest) {
     if (file.size > 2 * 1024 * 1024) {
       return NextResponse.json({ error: 'Datei zu groß (max. 2 MB).' }, { status: 400 })
     }
-
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     const fileName = `${ctx.company.slug}/logo.${ext}`
     const arrayBuffer = await file.arrayBuffer()
 
@@ -66,6 +64,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true, url: publicUrl })
   } catch (err) {
+    console.error('[upload-logo] error:', err)
     return NextResponse.json({ error: 'Interner Fehler.' }, { status: 500 })
   }
 }
@@ -74,10 +73,6 @@ export async function DELETE() {
   try {
     const ctx = await getAdminContext()
     if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-
     // Delete all common extensions
     for (const ext of ['png', 'jpg', 'jpeg', 'svg', 'webp']) {
       await fetch(`${supabaseUrl}/storage/v1/object/briefings/${ctx.company.slug}/logo.${ext}`, {
@@ -93,6 +88,7 @@ export async function DELETE() {
 
     return NextResponse.json({ success: true })
   } catch (err) {
+    console.error('[upload-logo] error:', err)
     return NextResponse.json({ error: 'Interner Fehler.' }, { status: 500 })
   }
 }

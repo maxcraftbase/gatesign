@@ -1,15 +1,14 @@
 import type { AdminContext } from './admin-auth'
+import { supabaseUrl, serviceKey } from '@/lib/supabase-server'
 
-const SUPABASE_URL = () => process.env.NEXT_PUBLIC_SUPABASE_URL!
-const SERVICE_KEY = () => process.env.SUPABASE_SERVICE_ROLE_KEY!
 
 async function insertAuditLog(payload: Record<string, unknown>) {
   try {
-    const res = await fetch(`${SUPABASE_URL()}/rest/v1/audit_log`, {
+    const res = await fetch(`${supabaseUrl}/rest/v1/audit_log`, {
       method: 'POST',
       headers: {
-        apikey: SERVICE_KEY(),
-        Authorization: `Bearer ${SERVICE_KEY()}`,
+        apikey: serviceKey,
+        Authorization: `Bearer ${serviceKey}`,
         'Content-Type': 'application/json',
         Prefer: 'return=minimal',
       },

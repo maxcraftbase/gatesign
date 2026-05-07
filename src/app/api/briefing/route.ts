@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCompanyBySlug } from '@/lib/company'
+import { supabaseUrl, anonKey } from '@/lib/supabase-server'
 
 async function fetchBriefing(supabaseUrl: string, anonKey: string, companyId: string, language: string, visitorType: string, version: string) {
   const params = new URLSearchParams({
@@ -29,10 +30,6 @@ export async function GET(req: NextRequest) {
 
     const company = await getCompanyBySlug(slug)
     if (!company) return NextResponse.json({ content: '', version: '1.0' })
-
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-
     let briefing = await fetchBriefing(supabaseUrl, anonKey, company.id, language, visitorType, version)
     if (!briefing) briefing = await fetchBriefing(supabaseUrl, anonKey, company.id, 'de', visitorType, version)
     if (!briefing) briefing = await fetchBriefing(supabaseUrl, anonKey, company.id, language, 'truck', version)
@@ -40,6 +37,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json(briefing ?? { content: '', version: '1.0', language: 'de', visitor_type: 'truck' })
   } catch (err) {
+    console.error('[briefing] error:', err)
     return NextResponse.json({ error: 'Interner Fehler.' }, { status: 500 })
   }
 }

@@ -1,14 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAdminContext } from '@/lib/admin-auth'
 import { logAction } from '@/lib/audit'
+import { supabaseUrl, anonKey } from '@/lib/supabase-server'
 
 export async function GET() {
   try {
     const ctx = await getAdminContext()
     if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
     const [settingsRes, briefingsRes] = await Promise.all([
       fetch(`${supabaseUrl}/rest/v1/app_settings?company_id=eq.${ctx.company.id}&select=key,value`, {
@@ -28,6 +26,7 @@ export async function GET() {
     const briefings = await briefingsRes.json()
     return NextResponse.json({ settings, briefings })
   } catch (err) {
+    console.error('[settings] GET error:', err)
     return NextResponse.json({ error: 'Interner Fehler.' }, { status: 500 })
   }
 }
@@ -39,9 +38,6 @@ export async function PUT(req: NextRequest) {
 
     const body = await req.json()
     const { settings, briefings } = body
-
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
     if (settings && typeof settings === 'object') {
       const allSettings = settings as Record<string, string>
@@ -59,13 +55,14 @@ export async function PUT(req: NextRequest) {
         })
       }
 
-      const { company_name: _cn, ...settingsWithoutName } = allSettings
-      const rows = Object.entries(settingsWithoutName).map(([key, value]) => ({
-        company_id: ctx.company.id,
-        key,
-        value: String(value),
-        updated_at: new Date().toISOString(),
-      }))
+      const rows = Object.entries(allSettings)
+        .filter(([key]) => key !== 'company_name')
+        .map(([key, value]) => ({
+          company_id: ctx.company.id,
+          key,
+          value: String(value),
+          updated_at: new Date().toISOString(),
+        }))
       const settingsWriteRes = await fetch(`${supabaseUrl}/rest/v1/app_settings`, {
         method: 'POST',
         headers: {
@@ -108,6 +105,7 @@ export async function PUT(req: NextRequest) {
     await logAction(ctx, 'settings_saved', {})
     return NextResponse.json({ success: true })
   } catch (err) {
+    console.error('[settings] PUT error:', err)
     return NextResponse.json({ error: 'Interner Fehler.' }, { status: 500 })
   }
 }

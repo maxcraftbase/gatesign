@@ -2,14 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getAdminContext } from '@/lib/admin-auth'
 import { logAction } from '@/lib/audit'
 import { sendEmail } from '@/lib/brevo'
+import { supabaseUrl, serviceKey } from '@/lib/supabase-server'
 
 export async function GET() {
   const ctx = await getAdminContext()
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   if (ctx.role !== 'admin') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
 
   const res = await fetch(
     `${supabaseUrl}/rest/v1/company_users?company_id=eq.${ctx.company.id}&order=created_at.asc&select=id,email,name,role,status,created_at,last_login_at`,
@@ -26,9 +24,7 @@ export async function POST(req: NextRequest) {
 
   const { email, name, role } = await req.json() as { email: string; name?: string; role: 'admin' | 'member' }
   if (!email || !role) return NextResponse.json({ error: 'E-Mail und Rolle erforderlich' }, { status: 400 })
-
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return NextResponse.json({ error: 'Ungültige E-Mail-Adresse' }, { status: 400 })
 
   // Check if user already exists in this company
   const existing = await fetch(

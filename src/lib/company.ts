@@ -1,5 +1,4 @@
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+import { supabaseUrl, anonKey } from '@/lib/supabase-server'
 
 export function generateSlug(name: string): string {
   const base = name
@@ -14,8 +13,8 @@ export function generateSlug(name: string): string {
 
 export async function getCompanyBySlug(slug: string): Promise<{ id: string; name: string } | null> {
   const res = await fetch(
-    `${SUPABASE_URL}/rest/v1/companies?slug=eq.${encodeURIComponent(slug)}&select=id,name&limit=1`,
-    { headers: { apikey: ANON_KEY, Authorization: `Bearer ${ANON_KEY}` }, cache: 'no-store' }
+    `${supabaseUrl}/rest/v1/companies?slug=eq.${encodeURIComponent(slug)}&select=id,name&limit=1`,
+    { headers: { apikey: anonKey, Authorization: `Bearer ${anonKey}` }, cache: 'no-store' }
   )
   if (!res.ok) return null
   const data = await res.json()
@@ -28,12 +27,12 @@ export async function getCompanyByOwner(accessToken: string): Promise<{ id: stri
   try {
     const payload = JSON.parse(Buffer.from(accessToken.split('.')[1], 'base64url').toString('utf-8'))
     ownerId = payload.sub ?? null
-  } catch { /* ignore */ }
+  } catch (e) { console.error('[company] JWT decode error (getCompanyByOwner):', e) }
   if (!ownerId) return null
 
   const res = await fetch(
-    `${SUPABASE_URL}/rest/v1/companies?owner_id=eq.${encodeURIComponent(ownerId)}&select=id,name,slug&limit=1`,
-    { headers: { apikey: ANON_KEY, Authorization: `Bearer ${accessToken}` }, cache: 'no-store' }
+    `${supabaseUrl}/rest/v1/companies?owner_id=eq.${encodeURIComponent(ownerId)}&select=id,name,slug&limit=1`,
+    { headers: { apikey: anonKey, Authorization: `Bearer ${accessToken}` }, cache: 'no-store' }
   )
   if (!res.ok) return null
   const data = await res.json()
@@ -51,13 +50,13 @@ export async function createCompanyWithDefaults(
   try {
     const payload = JSON.parse(Buffer.from(accessToken.split('.')[1], 'base64url').toString('utf-8'))
     ownerId = payload.sub ?? null
-  } catch { /* ignore */ }
+  } catch (e) { console.error('[company] JWT decode error (createCompanyWithDefaults):', e) }
 
   // Create company
-  const compRes = await fetch(`${SUPABASE_URL}/rest/v1/companies`, {
+  const compRes = await fetch(`${supabaseUrl}/rest/v1/companies`, {
     method: 'POST',
     headers: {
-      apikey: ANON_KEY,
+      apikey: anonKey,
       Authorization: `Bearer ${accessToken}`,
       'Content-Type': 'application/json',
       Prefer: 'return=representation',
@@ -76,10 +75,10 @@ export async function createCompanyWithDefaults(
     { company_id: company.id, key: 'site_info', value: '' },
   ]
 
-  await fetch(`${SUPABASE_URL}/rest/v1/app_settings`, {
+  await fetch(`${supabaseUrl}/rest/v1/app_settings`, {
     method: 'POST',
     headers: {
-      apikey: ANON_KEY,
+      apikey: anonKey,
       Authorization: `Bearer ${accessToken}`,
       'Content-Type': 'application/json',
       Prefer: 'return=minimal',

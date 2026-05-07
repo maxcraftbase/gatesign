@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCompanyBySlug } from '@/lib/company'
 import { checkRateLimit } from '@/lib/rate-limit'
+import { supabaseUrl, anonKey } from '@/lib/supabase-server'
 
 const VALID_VISITOR_TYPES = ['truck', 'visitor', 'service'] as const
 const VALID_LANGUAGES = ['de', 'en', 'pl', 'ro', 'cs', 'hu', 'bg', 'uk', 'ru', 'tr'] as const
@@ -51,12 +52,9 @@ export async function POST(req: NextRequest) {
     if (phone && String(phone).length > 30) return NextResponse.json({ error: 'phone zu lang' }, { status: 400 })
     if (contact_person && String(contact_person).length > 100) return NextResponse.json({ error: 'contact_person zu lang' }, { status: 400 })
     if (reference_number && String(reference_number).length > 50) return NextResponse.json({ error: 'reference_number zu lang' }, { status: 400 })
-    if (signature_data && String(signature_data).length > 500_000) return NextResponse.json({ error: 'signature_data zu groß' }, { status: 400 })
+    if (signature_data && String(signature_data).length > 100_000) return NextResponse.json({ error: 'signature_data zu groß' }, { status: 400 })
 
     const company = slug ? await getCompanyBySlug(slug) : null
-
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
     const payload: Record<string, unknown> = {
       visitor_type: visitor_type ?? 'truck',

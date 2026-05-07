@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAdminContext } from '@/lib/admin-auth'
+import { supabaseUrl, serviceKey } from '@/lib/supabase-server'
 
 const ACTION_LABELS: Record<string, string> = {
   settings_saved: 'Einstellungen gespeichert',
@@ -17,9 +18,6 @@ export async function GET(req: NextRequest) {
 
   const { searchParams } = new URL(req.url)
   const limit = parseInt(searchParams.get('limit') ?? '50')
-
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
 
   const params = new URLSearchParams({
     company_id: `eq.${ctx.company.id}`,

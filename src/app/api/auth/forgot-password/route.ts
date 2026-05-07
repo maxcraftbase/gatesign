@@ -1,12 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { supabaseUrl, anonKey } from '@/lib/supabase-server'
 
 export async function POST(req: NextRequest) {
   try {
     const { email } = await req.json()
     if (!email) return NextResponse.json({ error: 'E-Mail erforderlich.' }, { status: 400 })
-
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3001'
 
     await fetch(`${supabaseUrl}/auth/v1/recover`, {
@@ -18,6 +16,7 @@ export async function POST(req: NextRequest) {
     // Always return success to prevent email enumeration
     return NextResponse.json({ success: true })
   } catch (err) {
+    console.error('[forgot-password] error:', err)
     return NextResponse.json({ error: 'Interner Fehler.' }, { status: 500 })
   }
 }

@@ -286,7 +286,6 @@ function CombinedFormStep({
   ruleVisitorTypes,
   customHints,
   hintTypes,
-  hintsPdfUrl,
 
   onConfirm,
   onBack,
@@ -302,7 +301,6 @@ function CombinedFormStep({
   ruleVisitorTypes: Record<string, string[]>
   customHints: string[]
   hintTypes: string[][]
-  hintsPdfUrl: string
   onConfirm: (signatureData: string | null) => void
   onBack: () => void
 }) {
@@ -573,7 +571,6 @@ export function KioskClient({ slug }: { slug: string }) {
   const [customHintsTypes, setCustomHintsTypes] = useState<string[][]>([])
   const [activeSafetyRules, setActiveSafetyRules] = useState<string[]>([])
   const [ruleVisitorTypes, setRuleVisitorTypes] = useState<Record<string, string[]>>({})
-  const [hintsPdfUrl, setHintsPdfUrl] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [adminModalOpen, setAdminModalOpen] = useState(false)
@@ -649,7 +646,6 @@ export function KioskClient({ slug }: { slug: string }) {
           try { setRuleVisitorTypes(JSON.parse(data.rule_visitor_types)) } catch { /* ignore */ }
         }
         const isValidUrl = (v: unknown) => typeof v === 'string' && v.startsWith('http')
-        if (isValidUrl(data.hints_pdf_url)) setHintsPdfUrl(data.hints_pdf_url)
         const urls: Record<string, string> = {}
         for (const key of ['truck', 'visitor', 'service']) {
           if (isValidUrl(data[`briefing_pdf_${key}`])) urls[key] = data[`briefing_pdf_${key}`]
@@ -772,7 +768,7 @@ export function KioskClient({ slug }: { slug: string }) {
           onChange={setFormData} pdfUrl={briefingPdfUrl} signatureRequired={signatureRequired}
           referenceRequiredTypes={referenceRequiredTypes}
           activeRules={activeSafetyRules} ruleVisitorTypes={ruleVisitorTypes}
-          customHints={customHintsTranslations[lang] ?? customHints} hintTypes={customHintsTypes} hintsPdfUrl={hintsPdfUrl}
+          customHints={customHintsTranslations[lang] ?? customHints} hintTypes={customHintsTypes}
           onConfirm={handleBriefingConfirm} onBack={() => setStep(2)} />
       )}
       {step === 5 && <SuccessScreen lang={lang} onReset={handleReset} />}

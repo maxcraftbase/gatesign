@@ -1,5 +1,7 @@
+import { timingSafeEqual } from 'crypto'
 import { NextRequest, NextResponse } from 'next/server'
 import { getAdminContext } from '@/lib/admin-auth'
+import { supabaseUrl, anonKey } from '@/lib/supabase-server'
 
 export async function POST(req: NextRequest) {
   try {
@@ -7,9 +9,6 @@ export async function POST(req: NextRequest) {
     if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const { password } = await req.json() as { password: string }
-
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
     const res = await fetch(
       `${supabaseUrl}/rest/v1/app_settings?company_id=eq.${ctx.company.id}&key=eq.settings_password&select=value`,
@@ -19,16 +18,25 @@ export async function POST(req: NextRequest) {
     const stored = rows[0]?.value ?? ''
 
     if (!stored) {
-      // No password set yet — allow access (first time setup)
       return NextResponse.json({ ok: true, firstTime: true })
     }
 
-    if (password !== stored) {
+    let match = false
+    try {
+      const a = Buffer.from(String(password))
+      const b = Buffer.from(stored)
+      match = a.length === b.length && timingSafeEqual(a, b)
+    } catch {
+      match = false
+    }
+
+    if (!match) {
       return NextResponse.json({ error: 'Falsches Passwort' }, { status: 401 })
     }
 
     return NextResponse.json({ ok: true })
-  } catch {
+  } catch (err) {
+    console.error('[settings-password] error:', err)
     return NextResponse.json({ error: 'Interner Fehler' }, { status: 500 })
   }
 }

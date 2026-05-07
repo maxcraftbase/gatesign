@@ -18,7 +18,7 @@ function formatDate(iso: string | null) {
   try { return new Intl.DateTimeFormat('de-DE', { dateStyle: 'short', timeStyle: 'short' }).format(new Date(iso)) } catch { return iso }
 }
 
-export function UsersClient({ currentUserId }: { currentUserId: string }) {
+export function UsersClient() {
   const [users, setUsers] = useState<CompanyUser[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')

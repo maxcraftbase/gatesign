@@ -33,6 +33,7 @@ export async function POST(req: NextRequest) {
     const data = await runAgent(body.company_id, body.company_name, body.type as AgentType)
     return NextResponse.json(data)
   } catch (err) {
+    console.error('[agents] error:', err)
     return NextResponse.json({ error: 'Interner Fehler.' }, { status: 500 })
   }
 }

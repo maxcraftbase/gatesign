@@ -55,7 +55,7 @@ async function sendAgentEmail(
         html: weeklyEmailHtml(companyName, result as WeeklyResult),
       })
     }
-  } catch {
-    // Email failure is logged but never propagated
+  } catch (err) {
+    console.error('[agent] email delivery failed for company', companyId, err)
   }
 }

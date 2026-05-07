@@ -6,5 +6,5 @@ export default async function UsersPage() {
   const ctx = await getAdminContext()
   if (!ctx) redirect('/login')
   if (ctx.role !== 'admin') redirect('/admin')
-  return <UsersClient currentUserId={ctx.userId} />
+  return <UsersClient />
 }

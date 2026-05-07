@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAdminContext } from '@/lib/admin-auth'
+import { supabaseUrl, anonKey } from '@/lib/supabase-server'
 
 const ALLOWED_VISITOR_TYPES = new Set(['truck', 'visitor', 'service'])
 const MAX_SIZE_BYTES = 20 * 1024 * 1024 // 20 MB
@@ -17,10 +18,6 @@ export async function POST(req: NextRequest) {
     if (!ALLOWED_VISITOR_TYPES.has(visitorType)) return NextResponse.json({ error: 'Ungültiger Besuchertyp.' }, { status: 400 })
     if (file.type !== 'application/pdf') return NextResponse.json({ error: 'Nur PDF-Dateien erlaubt.' }, { status: 400 })
     if (file.size > MAX_SIZE_BYTES) return NextResponse.json({ error: 'Datei zu groß (max. 20 MB).' }, { status: 400 })
-
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-
     const fileName = `${ctx.company.slug}/briefing_${visitorType}.pdf`
     const arrayBuffer = await file.arrayBuffer()
 
@@ -79,9 +76,6 @@ export async function DELETE(req: NextRequest) {
     if (!visitorType || !ALLOWED_VISITOR_TYPES.has(visitorType)) {
       return NextResponse.json({ error: 'Ungültiger Besuchertyp.' }, { status: 400 })
     }
-
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     const fileName = `${ctx.company.slug}/briefing_${visitorType}.pdf`
 
     await fetch(`${supabaseUrl}/storage/v1/object/briefings/${fileName}`, {

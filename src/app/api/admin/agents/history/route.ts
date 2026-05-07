@@ -10,6 +10,7 @@ export async function GET() {
     const runs = await getHistory(ctx.company.id, 20)
     return NextResponse.json({ runs })
   } catch (err) {
+    console.error('[history] error:', err)
     return NextResponse.json({ error: 'Interner Fehler.' }, { status: 500 })
   }
 }

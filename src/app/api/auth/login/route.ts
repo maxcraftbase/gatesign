@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { logLoginEvent } from '@/lib/audit'
+import { supabaseUrl, anonKey, serviceKey } from '@/lib/supabase-server'
 
 export async function POST(req: NextRequest) {
   try {
@@ -10,9 +11,6 @@ export async function POST(req: NextRequest) {
     }
 
     const { email, password } = await req.json()
-
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
     const tokenRes = await fetch(`${supabaseUrl}/auth/v1/token?grant_type=password`, {
       method: 'POST',
@@ -41,7 +39,6 @@ export async function POST(req: NextRequest) {
       maxAge: 400 * 24 * 60 * 60,
     }
 
-    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
     const userId: string = (() => {
       try {
         return JSON.parse(Buffer.from(session.access_token.split('.')[1], 'base64url').toString()).sub as string
@@ -96,7 +93,7 @@ export async function POST(req: NextRequest) {
         const compData = await compRes.json()
         slug = compData?.[0]?.slug ?? ''
       }
-    } catch { /* ignore */ }
+    } catch (e) { console.error('[login] post-auth setup error:', e) }
 
     void logLoginEvent('login_success', email, { userId, companyId, ip })
 
@@ -112,7 +109,8 @@ export async function POST(req: NextRequest) {
     }
 
     return response
-  } catch {
+  } catch (err) {
+    console.error('[login] unexpected error:', err)
     return NextResponse.json({ error: 'Interner Fehler.' }, { status: 500 })
   }
 }

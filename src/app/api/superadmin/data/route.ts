@@ -1,11 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { isSuperadminAuthorized } from '@/lib/superadmin-auth'
+import { supabaseUrl, serviceKey } from '@/lib/supabase-server'
 
 export async function GET(req: NextRequest) {
   if (!isSuperadminAuthorized(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
   const headers = { apikey: serviceKey, Authorization: `Bearer ${serviceKey}` }
 
   const [companiesRes, checkInsRes] = await Promise.all([
@@ -67,9 +65,6 @@ export async function GET(req: NextRequest) {
 
 export async function PATCH(req: NextRequest) {
   if (!isSuperadminAuthorized(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
   const { companyId, subscription_status, trial_ends_at } = await req.json()
 
   const update: Record<string, unknown> = {}

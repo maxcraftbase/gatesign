@@ -1,8 +1,7 @@
 import { cookies } from 'next/headers'
+import { supabaseUrl, serviceKey, anonKey } from '@/lib/supabase-server'
 
 async function refreshSession(refreshToken: string): Promise<{ access_token: string; refresh_token: string } | null> {
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   try {
     const res = await fetch(`${supabaseUrl}/auth/v1/token?grant_type=refresh_token`, {
       method: 'POST',
@@ -28,9 +27,6 @@ export interface AdminContext {
 export async function getAdminContext(): Promise<AdminContext | null> {
   const cookieStore = await cookies()
   const allCookies = cookieStore.getAll()
-
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
   const projectRef = new URL(supabaseUrl).hostname.split('.')[0]
   const cookieName = `sb-${projectRef}-auth-token`
 

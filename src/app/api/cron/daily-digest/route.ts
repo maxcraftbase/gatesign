@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { sendEmail } from '@/lib/brevo'
+import { supabaseUrl, serviceKey } from '@/lib/supabase-server'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -201,9 +202,6 @@ export async function POST(req: NextRequest) {
   if (!secret || secret !== process.env.CRON_SECRET) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
-
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
   const headers = { apikey: serviceKey, Authorization: `Bearer ${serviceKey}` }
 
   // Yesterday: 00:00:00 – 23:59:59 UTC

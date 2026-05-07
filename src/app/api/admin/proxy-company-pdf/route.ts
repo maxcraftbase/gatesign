@@ -1,14 +1,11 @@
 import { NextResponse } from 'next/server'
 import { getAdminContext } from '@/lib/admin-auth'
+import { supabaseUrl, serviceKey } from '@/lib/supabase-server'
 
 export async function GET() {
   try {
     const ctx = await getAdminContext()
     if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
-
     const settingsRes = await fetch(
       `${supabaseUrl}/rest/v1/app_settings?company_id=eq.${ctx.company.id}&key=eq.company_pdf_url&select=value`,
       { headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}` }, cache: 'no-store' }

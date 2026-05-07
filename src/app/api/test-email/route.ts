@@ -17,6 +17,7 @@ export async function GET(req: NextRequest) {
     })
     return NextResponse.json({ ok: true, to })
   } catch (err) {
+    console.error('[test-email] error:', err)
     return NextResponse.json({ ok: false, error: 'Interner Fehler.' }, { status: 500 })
   }
 }

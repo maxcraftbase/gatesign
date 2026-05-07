@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAdminContext } from '@/lib/admin-auth'
+import { supabaseUrl, anonKey, serviceKey } from '@/lib/supabase-server'
 
 export async function GET(req: NextRequest) {
   try {
@@ -16,9 +17,6 @@ export async function GET(req: NextRequest) {
     const sortDir = searchParams.get('dir') === 'asc' ? 'asc' : 'desc'
     const limit = 50
     const offset = (page - 1) * limit
-
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
     const params = new URLSearchParams({
       company_id: `eq.${ctx.company.id}`,
@@ -46,7 +44,6 @@ export async function GET(req: NextRequest) {
     const total = parseInt(res.headers.get('content-range')?.split('/')[1] ?? '0')
 
     // Fetch logo URL from settings
-    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
     let logoUrl = ''
     let contactPersons: string[] = []
     let companyPdfUrl = ''
@@ -58,13 +55,14 @@ export async function GET(req: NextRequest) {
       const settingsRows: { key: string; value: string }[] = await settingsRes.json()
       for (const row of settingsRows) {
         if (row.key === 'logo_url') logoUrl = row.value
-        if (row.key === 'contact_persons') { try { contactPersons = JSON.parse(row.value) } catch { /* ignore */ } }
+        if (row.key === 'contact_persons') { try { contactPersons = JSON.parse(row.value) } catch (e) { console.error('[entries] contact_persons parse error:', e) } }
         if (row.key === 'company_pdf_url') companyPdfUrl = row.value
       }
-    } catch { /* ignore */ }
+    } catch (e) { console.error('[entries] settings fetch error:', e) }
 
     return NextResponse.json({ entries: data, total, page, limit, companyName: ctx.company.name, logoUrl, contactPersons, companyPdfUrl })
   } catch (err) {
+    console.error('[entries] unexpected error:', err)
     return NextResponse.json({ error: 'Interner Fehler.' }, { status: 500 })
   }
 }

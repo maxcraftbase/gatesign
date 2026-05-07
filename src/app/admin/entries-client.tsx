@@ -347,8 +347,7 @@ function EntryModal({ entry, companyName, logoUrl, companyPdfUrl, contactPersons
 
   // auto-translate when note changes (debounced)
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    if (!note.trim()) { setTranslated(''); return }
+    if (!note.trim()) { void Promise.resolve().then(() => setTranslated('')); return }
     if (note === entry.staff_note) return
     const t = setTimeout(() => { void handleTranslate() }, 1200)
     return () => clearTimeout(t)

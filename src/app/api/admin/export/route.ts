@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getAdminContext } from '@/lib/admin-auth'
+import { supabaseUrl, anonKey } from '@/lib/supabase-server'
 
 function escapeCSV(val: unknown): string {
   if (val === null || val === undefined) return ''
@@ -12,9 +13,6 @@ export async function GET() {
   try {
     const ctx = await getAdminContext()
     if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-    const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
     const params = new URLSearchParams({
       company_id: `eq.${ctx.company.id}`,
@@ -49,6 +47,7 @@ export async function GET() {
       },
     })
   } catch (err) {
+    console.error('[export] error:', err)
     return NextResponse.json({ error: 'Interner Fehler.' }, { status: 500 })
   }
 }

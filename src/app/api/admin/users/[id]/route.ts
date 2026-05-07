@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAdminContext } from '@/lib/admin-auth'
 import { logAction } from '@/lib/audit'
+import { supabaseUrl, serviceKey } from '@/lib/supabase-server'
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const ctx = await getAdminContext()
@@ -10,9 +11,6 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const { id } = await params
   const { role } = await req.json() as { role: 'admin' | 'member' }
   if (!role) return NextResponse.json({ error: 'Rolle erforderlich' }, { status: 400 })
-
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
 
   // Verify belongs to this company
   const check = await fetch(

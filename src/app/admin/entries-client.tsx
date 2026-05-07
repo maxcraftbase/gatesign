@@ -63,131 +63,199 @@ const PDF_LABELS: Record<string, Record<string, string>> = {
 }
 
 // ─── Print PDF ────────────────────────────────────────────────────────────────
-async function printEntry(entry: Entry, companyName: string, logoUrl?: string, companyPdfUrl?: string) {
-  const flag = LANG_FLAGS[entry.language] ?? ''
-  const langName = LANG_NAMES[entry.language] ?? entry.language
-  const date = formatDate(entry.created_at)
-  const note = entry.staff_note_translated || entry.staff_note || ''
+
+function wrapText(ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string[] {
+  const words = text.split(/\s+/)
+  const lines: string[] = []
+  let current = ''
+  for (const word of words) {
+    const test = current ? `${current} ${word}` : word
+    if (ctx.measureText(test).width > maxWidth && current) { lines.push(current); current = word }
+    else current = test
+  }
+  if (current) lines.push(current)
+  return lines.length ? lines : ['']
+}
+
+function drawRoundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) {
+  ctx.beginPath()
+  ctx.moveTo(x + r, y); ctx.lineTo(x + w - r, y); ctx.arcTo(x + w, y, x + w, y + r, r)
+  ctx.lineTo(x + w, y + h - r); ctx.arcTo(x + w, y + h, x + w - r, y + h, r)
+  ctx.lineTo(x + r, y + h); ctx.arcTo(x, y + h, x, y + h - r, r)
+  ctx.lineTo(x, y + r); ctx.arcTo(x, y, x + r, y, r)
+  ctx.closePath()
+}
+
+async function drawLabelCanvas(entry: Entry, companyName: string, logoUrl?: string): Promise<HTMLCanvasElement> {
+  const SCALE = 2
+  const W = 794, H = 1123
+  const canvas = document.createElement('canvas')
+  canvas.width = W * SCALE; canvas.height = H * SCALE
+  const ctx = canvas.getContext('2d')!
+  ctx.scale(SCALE, SCALE)
+
   const de = PDF_LABELS.de
   const t = PDF_LABELS[entry.language] ?? PDF_LABELS.de
-  const bilingual = (key: keyof typeof de) =>
-    entry.language !== 'de' ? `${de[key]} / ${t[key]}` : t[key]
+  const bil = (k: keyof typeof de) => entry.language !== 'de' ? `${de[k]} / ${t[k]}` : t[k]
 
-  const visitorTypeLabel = entry.visitor_type === 'truck' ? t.truck : entry.visitor_type === 'visitor' ? t.visitor : entry.visitor_type === 'service' ? t.service : entry.visitor_type ?? '—'
+  ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, W, H)
+  ctx.textBaseline = 'top'
 
-  const labelContent = `
-<div class="header">
-  <div class="header-left">
-    ${logoUrl ? `<img src="${logoUrl}" class="logo" alt="${companyName}"/>` : ''}
-    <div class="company-name">${companyName}</div>
-  </div>
-  <div class="header-right">
-    <div class="doc-title">${entry.language !== 'de' ? `${de.title} / ${t.title}` : t.title}</div>
-    <div class="doc-date">${date}</div>
-  </div>
-</div>
-<div class="grid">
-  <div class="label">${bilingual('name')}</div><div class="value">${entry.driver_name}</div>
-  <div class="label">${bilingual('company')}</div><div class="value">${entry.company_name}</div>
-  <div class="label">${bilingual('plate')}</div>
-  <div class="value">
-    <span class="plate">${entry.license_plate}</span>
-    ${entry.trailer_plate ? `<span class="plate-sep">·</span><span class="plate">${entry.trailer_plate}</span><span style="font-size:11px;color:#94a3b8;margin-left:4px">(${bilingual('trailer')})</span>` : ''}
-  </div>
-  ${entry.phone ? `<div class="label">${bilingual('phone')}</div><div class="value">${entry.phone}</div>` : ''}
-  ${entry.contact_person ? `<div class="label">${bilingual('contactPerson')}</div><div class="value">${entry.contact_person}</div>` : ''}
-  ${entry.reference_number ? `<div class="label">${bilingual('reference')}</div><div class="value">${entry.reference_number}</div>` : ''}
-  <div class="label">${bilingual('visitorType')}</div><div class="value">${visitorTypeLabel}</div>
-  <div class="label">${bilingual('language')}</div><div class="value">${flag} ${langName}</div>
-  <div class="label">${bilingual('briefing')}</div><div class="value">${entry.briefing_accepted ? `<span class="check">${t.accepted}</span>` : '—'}</div>
-  <div class="label">${bilingual('signature')}</div><div class="value">${entry.has_signature ? `<span class="check">${t.yes}</span>` : '—'}</div>
-  ${entry.assigned_contact ? `<div class="label">${bilingual('assignedContact')}</div><div class="value" style="font-weight:700;color:#0f172a">${entry.assigned_contact}</div>` : ''}
-</div>
-${note ? `<hr class="divider"/><div class="note-box"><div class="note-label">${bilingual('noteLabel')}</div><div class="note-text">${note}</div></div>` : ''}
-<div class="footer">${t.footer}</div>`
+  const PAD = 40, IW = W - PAD * 2
+  let y = PAD
 
-  // Open window immediately (must be synchronous within user gesture, before any await)
+  // ── Header ──
+  let headerBottom = y, leftX = PAD
+  if (logoUrl) {
+    try {
+      const res = await fetch(logoUrl)
+      const blobUrl = URL.createObjectURL(await res.blob())
+      const img = new Image()
+      await new Promise<void>(r => { img.onload = () => r(); img.onerror = () => r(); img.src = blobUrl })
+      const maxW = 160, maxH = 52
+      const ratio = Math.min(maxW / (img.naturalWidth || maxW), maxH / (img.naturalHeight || maxH))
+      const dw = (img.naturalWidth || maxW) * ratio, dh = (img.naturalHeight || maxH) * ratio
+      ctx.drawImage(img, PAD, y, dw, dh)
+      URL.revokeObjectURL(blobUrl)
+      leftX = PAD + dw + 12; headerBottom = Math.max(headerBottom, y + dh)
+    } catch { /* skip logo on error */ }
+  }
+  ctx.font = 'bold 20px Arial, sans-serif'; ctx.fillStyle = '#0f172a'
+  ctx.fillText(companyName, leftX, y + 6)
+  headerBottom = Math.max(headerBottom, y + 28)
+
+  ctx.textAlign = 'right'
+  ctx.font = 'bold 11px Arial, sans-serif'; ctx.fillStyle = '#334155'
+  ctx.fillText(bil('title').toUpperCase(), W - PAD, y)
+  ctx.font = '12px Arial, sans-serif'; ctx.fillStyle = '#475569'
+  ctx.fillText(formatDate(entry.created_at), W - PAD, y + 16)
+  ctx.textAlign = 'left'
+  y = headerBottom + 20
+
+  ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 2
+  ctx.beginPath(); ctx.moveTo(PAD, y); ctx.lineTo(W - PAD, y); ctx.stroke()
+  y += 16
+
+  // ── Grid ──
+  const COL1 = 220, ROW_H = 26
+  function row(label: string, value: string, highlight = false) {
+    const ll = wrapText(ctx, label, COL1 - 8)
+    ctx.font = 'bold 10px Arial, sans-serif'; ctx.fillStyle = '#64748b'
+    ll.forEach((l, i) => ctx.fillText(l.toUpperCase(), PAD, y + i * 13))
+    ctx.font = highlight ? 'bold 14px Arial, sans-serif' : '14px Arial, sans-serif'
+    ctx.fillStyle = highlight ? '#10b981' : '#1e293b'
+    ctx.fillText(value || '—', PAD + COL1, y)
+    y += Math.max(ROW_H, ll.length * 13 + 6)
+  }
+
+  const flag = LANG_FLAGS[entry.language] ?? ''
+  const langName = LANG_NAMES[entry.language] ?? entry.language
+  const vtLabel = entry.visitor_type === 'truck' ? t.truck : entry.visitor_type === 'visitor' ? t.visitor : entry.visitor_type === 'service' ? t.service : entry.visitor_type ?? '—'
+  let plateValue = entry.license_plate
+  if (entry.trailer_plate) plateValue += `  ·  ${entry.trailer_plate} (${bil('trailer')})`
+
+  row(bil('name'), entry.driver_name)
+  row(bil('company'), entry.company_name)
+  row(bil('plate'), plateValue)
+  if (entry.phone) row(bil('phone'), entry.phone)
+  if (entry.contact_person) row(bil('contactPerson'), entry.contact_person)
+  if (entry.reference_number) row(bil('reference'), entry.reference_number)
+  row(bil('visitorType'), vtLabel)
+  row(bil('language'), `${flag} ${langName}`)
+  row(bil('briefing'), entry.briefing_accepted ? t.accepted : '—', entry.briefing_accepted)
+  row(bil('signature'), entry.has_signature ? t.yes : '—', entry.has_signature)
+  if (entry.assigned_contact) row(bil('assignedContact'), entry.assigned_contact)
+
+  // ── Note box ──
+  const note = entry.staff_note_translated || entry.staff_note || ''
+  if (note) {
+    y += 8
+    const noteLines = wrapText(ctx, note, IW - 32)
+    const BOX_H = 48 + noteLines.length * 20
+    ctx.fillStyle = '#f8fafc'; drawRoundRect(ctx, PAD, y, IW, BOX_H, 8); ctx.fill()
+    ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 1; ctx.stroke()
+    ctx.font = 'bold 10px Arial, sans-serif'; ctx.fillStyle = '#64748b'
+    ctx.fillText(bil('noteLabel').toUpperCase(), PAD + 16, y + 12)
+    ctx.font = '13px Arial, sans-serif'; ctx.fillStyle = '#1e293b'
+    noteLines.forEach((l, i) => ctx.fillText(l, PAD + 16, y + 32 + i * 20))
+    y += BOX_H + 12
+  }
+
+  ctx.font = '10px Arial, sans-serif'; ctx.fillStyle = '#94a3b8'; ctx.textAlign = 'center'
+  ctx.fillText(t.footer, W / 2, H - 20)
+  ctx.textAlign = 'left'
+
+  return canvas
+}
+
+async function printEntry(entry: Entry, companyName: string, logoUrl?: string, companyPdfUrl?: string) {
   const w = window.open('', '_blank', 'width=800,height=900')
   if (!w) return
   w.document.write('<html><body style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:Arial,sans-serif;color:#64748b;font-size:16px;">Dokument wird geladen…</body></html>')
 
-  let companyPagesHtml = ''
-  if (companyPdfUrl) {
-    try {
-      const pdfRes = await fetch('/api/admin/proxy-company-pdf')
-      if (pdfRes.ok) {
-        const pdfBytes = new Uint8Array(await pdfRes.arrayBuffer())
-        const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs')
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        ;(pdfjsLib as any).GlobalWorkerOptions.workerSrc = `${window.location.origin}/pdf.worker.min.mjs`
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const pdfDoc = await (pdfjsLib.getDocument as any)({ data: pdfBytes }).promise
-        const images: string[] = []
-        for (let i = 1; i <= pdfDoc.numPages; i++) {
-          const page = await pdfDoc.getPage(i)
-          const viewport = page.getViewport({ scale: 2.0 })
-          const canvas = document.createElement('canvas')
-          canvas.width = viewport.width
-          canvas.height = viewport.height
+  try {
+    const labelCanvas = await drawLabelCanvas(entry, companyName, logoUrl)
+    const { PDFDocument } = await import('pdf-lib')
+    const pdfDoc = await PDFDocument.create()
+
+    // Label as page 1 (PNG embedded, A4 in points)
+    const pngBytes = Uint8Array.from(atob(labelCanvas.toDataURL('image/png').split(',')[1]), c => c.charCodeAt(0))
+    const labelImg = await pdfDoc.embedPng(pngBytes)
+    const labelPage = pdfDoc.addPage([595.28, 841.89])
+    labelPage.drawImage(labelImg, { x: 0, y: 0, width: 595.28, height: 841.89 })
+
+    // Append company PDF pages (copied as real vectors — no quality loss)
+    if (companyPdfUrl) {
+      try {
+        const pdfRes = await fetch('/api/admin/proxy-company-pdf')
+        if (pdfRes.ok) {
+          const companyBytes = new Uint8Array(await pdfRes.arrayBuffer())
+
+          // Detect non-blank pages: tiny 0.15x render (~124×175 px), pixel check
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          await page.render({ canvasContext: canvas.getContext('2d') as any, viewport }).promise
-          // skip blank/near-blank pages: at quality 0.1 pure-white is ~2 KB, real content is >10 KB
-          if (canvas.toDataURL('image/jpeg', 0.1).length < 8000) continue
-          const dataUrl = canvas.toDataURL('image/jpeg', 0.92)
-          images.push(dataUrl)
+          const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs') as any
+          pdfjsLib.GlobalWorkerOptions.workerSrc = `${window.location.origin}/pdf.worker.min.mjs`
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const pdfJsDoc = await (pdfjsLib.getDocument as any)({ data: companyBytes.slice() }).promise
+          const nonBlankIndices: number[] = []
+          for (let i = 1; i <= pdfJsDoc.numPages; i++) {
+            const pg = await pdfJsDoc.getPage(i)
+            const vp = pg.getViewport({ scale: 0.15 })
+            const chk = document.createElement('canvas')
+            chk.width = Math.ceil(vp.width); chk.height = Math.ceil(vp.height)
+            const chkCtx = chk.getContext('2d')!
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            await pg.render({ canvasContext: chkCtx as any, viewport: vp }).promise
+            let nonWhite = 0
+            try {
+              const imgData = chkCtx.getImageData(0, 0, chk.width, chk.height)
+              for (let px = 0; px < imgData.data.length; px += 4) {
+                if (imgData.data[px] < 240 || imgData.data[px + 1] < 240 || imgData.data[px + 2] < 240) nonWhite++
+              }
+            } catch { nonWhite = 999 } // tainted canvas → assume non-blank
+            if (nonWhite >= 5) nonBlankIndices.push(i - 1) // pdf-lib uses 0-based indices
+          }
+
+          if (nonBlankIndices.length > 0) {
+            const companyDoc = await PDFDocument.load(companyBytes)
+            const copied = await pdfDoc.copyPages(companyDoc, nonBlankIndices)
+            for (const p of copied) pdfDoc.addPage(p)
+          }
         }
-        companyPagesHtml = images
-          .map(img => `<div class="pdf-page"><img src="${img}"/></div>`)
-          .join('')
+      } catch (err) {
+        console.error('Company PDF error:', err)
       }
-    } catch (err) {
-      console.error('Company PDF render error:', err)
     }
+
+    const blob = new Blob([await pdfDoc.save()], { type: 'application/pdf' })
+    const blobUrl = URL.createObjectURL(blob)
+    w.location.href = blobUrl
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 300_000)
+
+  } catch (err) {
+    console.error('Print error:', err)
+    w.document.write('<html><body style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:Arial,sans-serif;color:#ef4444;font-size:16px;">Fehler beim Laden des Dokuments.</body></html>')
   }
-
-  const fullHtml = `<!DOCTYPE html>
-<html lang="${entry.language}">
-<head>
-<meta charset="UTF-8"/>
-<title>Check-in — ${entry.driver_name}</title>
-<style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: Arial, sans-serif; color: #1e293b; font-size: 14px; }
-  .label-page { padding: 40px 40px 0 40px; }
-  @media print { .label-page { padding: 20px 20px 0 20px; } }
-  .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; padding-bottom: 20px; border-bottom: 2px solid #e2e8f0; }
-  .header-left { display: flex; align-items: center; gap: 16px; }
-  .logo { max-height: 52px; max-width: 160px; object-fit: contain; }
-  .company-name { font-size: 20px; font-weight: 700; color: #0f172a; }
-  .header-right { text-align: right; }
-  .doc-title { font-size: 13px; font-weight: 700; color: #334155; text-transform: uppercase; letter-spacing: 0.06em; }
-  .doc-date { font-size: 12px; color: #475569; margin-top: 2px; }
-  .grid { display: grid; grid-template-columns: 220px 1fr; gap: 10px 16px; margin-bottom: 24px; }
-  .label { color: #334155; font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; padding-top: 2px; line-height: 1.35; }
-  .value { font-size: 15px; font-weight: 500; }
-  .plate { display: inline-block; padding: 3px 12px; border-radius: 4px; font-size: 13px; font-weight: 700; background: #f1f5f9; color: #0f172a; border: 1px solid #94a3b8; letter-spacing: 0.04em; font-family: monospace; }
-  .plate-sep { font-size: 11px; color: #475569; margin: 0 6px; vertical-align: middle; }
-  .note-box { background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 10px; padding: 16px; margin-top: 8px; }
-  .note-label { font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; }
-  .note-text { font-size: 14px; color: #1e293b; line-height: 1.6; }
-  .divider { border: none; border-top: 1px solid #cbd5e1; margin: 24px 0; }
-  .footer { font-size: 10px; color: #94a3b8; margin-top: 16px; padding-bottom: 16px; text-align: center; }
-  .check { color: #10b981; font-weight: bold; }
-  .pdf-page { page-break-before: always; line-height: 0; font-size: 0; }
-  .pdf-page img { width: 100%; display: block; }
-</style>
-</head>
-<body>
-<div class="label-page">${labelContent}</div>
-${companyPagesHtml}
-</body>
-</html>`
-
-  w.document.open()
-  w.document.write(fullHtml)
-  w.document.close()
-  w.focus()
-  setTimeout(() => { w.print(); w.close() }, 400)
 }
 
 // ─── Detail Modal ─────────────────────────────────────────────────────────────

@@ -241,22 +241,10 @@ async function buildMergedPdf(entry: Entry, companyName: string, logoUrl?: strin
 }
 
 async function printEntry(entry: Entry, companyName: string, logoUrl?: string, companyPdfUrl?: string) {
-  const w = window.open('about:blank', '_blank', 'width=900,height=900')
-  if (!w) return
-  w.document.write('<style>body{display:flex;align-items:center;justify-content:center;height:100vh;margin:0;font-family:Arial,sans-serif;color:#64748b;font-size:16px}</style><p>Dokument wird geladen…</p>')
-  try {
-    const blob = await buildMergedPdf(entry, companyName, logoUrl, companyPdfUrl)
-    const blobUrl = URL.createObjectURL(blob)
-    w.document.open()
-    w.document.write(`<!DOCTYPE html><html><head><title>GateSign</title><style>*{margin:0;padding:0;box-sizing:border-box}html,body{width:100%;height:100%;overflow:hidden}iframe{width:100%;height:100%;border:none}</style></head><body><iframe src="${blobUrl}"></iframe></body></html>`)
-    w.document.close()
-    setTimeout(() => URL.revokeObjectURL(blobUrl), 300_000)
-  } catch (err) {
-    console.error('Print error:', err)
-    w.document.open()
-    w.document.write('<style>body{display:flex;align-items:center;justify-content:center;height:100vh;margin:0;font-family:Arial,sans-serif;color:#ef4444;font-size:16px}</style><p>Fehler beim Laden des Dokuments.</p>')
-    w.document.close()
-  }
+  const blob = await buildMergedPdf(entry, companyName, logoUrl, companyPdfUrl)
+  const blobUrl = URL.createObjectURL(blob)
+  window.open(blobUrl, '_blank')
+  setTimeout(() => URL.revokeObjectURL(blobUrl), 300_000)
 }
 
 async function downloadPdf(entry: Entry, companyName: string, logoUrl?: string, companyPdfUrl?: string) {
@@ -287,6 +275,7 @@ function EntryModal({ entry, companyName, logoUrl, companyPdfUrl, contactPersons
   const [translating, setTranslating] = useState(false)
   const [saved, setSaved] = useState(false)
   const [downloading, setDownloading] = useState(false)
+  const [printing, setPrinting] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   async function handleSave() {
@@ -358,13 +347,18 @@ function EntryModal({ entry, companyName, logoUrl, companyPdfUrl, contactPersons
               <Download className="w-4 h-4" />
               {downloading ? 'Wird erstellt…' : 'PDF'}
             </button>
-            <button onClick={() => {
-              void fetch(`/api/admin/entries/${entry.id}/print`, { method: 'POST' })
-              void printEntry({ ...entry, staff_note: note, staff_note_translated: translated, assigned_contact: assignedContact || null }, companyName, logoUrl, companyPdfUrl)
-            }}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-sm font-medium transition-colors">
+            <button
+              disabled={printing}
+              onClick={async () => {
+                setPrinting(true)
+                try {
+                  void fetch(`/api/admin/entries/${entry.id}/print`, { method: 'POST' })
+                  await printEntry({ ...entry, staff_note: note, staff_note_translated: translated, assigned_contact: assignedContact || null }, companyName, logoUrl, companyPdfUrl)
+                } finally { setPrinting(false) }
+              }}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-sm font-medium transition-colors disabled:opacity-50">
               <Printer className="w-4 h-4" />
-              Drucken
+              {printing ? 'Wird erstellt…' : 'Drucken'}
             </button>
             <button onClick={onClose} className="p-2 rounded-xl text-slate-400 hover:bg-slate-100 transition-colors">
               <X className="w-5 h-5" />

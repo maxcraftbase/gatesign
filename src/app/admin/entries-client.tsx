@@ -273,13 +273,7 @@ async function printEntry(entry: Entry, companyName: string, logoUrl?: string, c
             canvas.width = vp.width; canvas.height = vp.height
             const ctx = canvas.getContext('2d')!
             await page.render({ canvasContext: ctx, viewport: vp }).promise
-            // Skip blank pages
-            const chk = ctx.getImageData(0, 0, Math.min(canvas.width, 200), Math.min(canvas.height, 200))
-            let nonWhite = 0
-            for (let px = 0; px < chk.data.length; px += 4) {
-              if (chk.data[px] < 240 || chk.data[px + 1] < 240 || chk.data[px + 2] < 240) nonWhite++
-            }
-            if (nonWhite >= 10) dataUrls.push(canvas.toDataURL('image/jpeg', 0.92))
+            dataUrls.push(canvas.toDataURL('image/jpeg', 0.92))
           }
         }
       } catch (err) {

@@ -241,17 +241,21 @@ async function buildMergedPdf(entry: Entry, companyName: string, logoUrl?: strin
 }
 
 async function printEntry(entry: Entry, companyName: string, logoUrl?: string, companyPdfUrl?: string) {
-  // Must open synchronously (before any await) to bypass popup blocker
+  // Open synchronously (before any await) to bypass popup blocker.
+  // The popup script receives the PDF via postMessage and navigates itself
+  // to a blob URL it created — no cross-origin restriction.
   const w = window.open('', '_blank', 'width=900,height=900')
   if (!w) return
-  w.document.write('<style>body{display:flex;align-items:center;justify-content:center;height:100vh;margin:0;font-family:Arial,sans-serif;color:#64748b;font-size:16px}</style><p>Dokument wird geladen…</p>')
+  w.document.write(`<!DOCTYPE html><html><head><title>GateSign</title>
+<style>body{display:flex;align-items:center;justify-content:center;height:100vh;margin:0;font-family:Arial,sans-serif;color:#64748b;font-size:16px}</style>
+</head><body><p>Dokument wird geladen…</p>
+<script>window.addEventListener('message',function(e){if(e.data&&e.data.type==='PDF'){var b=new Blob([e.data.buf],{type:'application/pdf'});window.location.href=URL.createObjectURL(b)}})<\/script>
+</body></html>`)
+  w.document.close()
   try {
     const blob = await buildMergedPdf(entry, companyName, logoUrl, companyPdfUrl)
-    const blobUrl = URL.createObjectURL(blob)
-    w.document.open()
-    w.document.write(`<!DOCTYPE html><html><head><title>GateSign</title><style>*{margin:0;padding:0;box-sizing:border-box}html,body,embed{width:100%;height:100%;display:block}</style></head><body><embed type="application/pdf" src="${blobUrl}"></body></html>`)
-    w.document.close()
-    setTimeout(() => URL.revokeObjectURL(blobUrl), 300_000)
+    const buf = await blob.arrayBuffer()
+    w.postMessage({ type: 'PDF', buf }, '*', [buf])
   } catch (err) {
     console.error('Print error:', err)
   }

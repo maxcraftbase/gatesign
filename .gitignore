@@ -40,3 +40,8 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 .claude/
+
+# Playwright
+/test-results/
+/playwright-report/
+tests/e2e/.auth.json

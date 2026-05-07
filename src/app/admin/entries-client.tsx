@@ -247,16 +247,31 @@ async function printEntry(entry: Entry, companyName: string, logoUrl?: string, c
   w.blur()
   window.focus()
 
+  // Wait for print page to signal it's about to navigate, then call w.print() after PDF loads
+  const onNav = (e: MessageEvent) => {
+    if (e.data?.type !== 'gs-print-nav' || e.data?.key !== printKey) return
+    window.removeEventListener('message', onNav)
+    const tryPrint = (attempts = 0) => {
+      if (w.closed || attempts > 5) return
+      try {
+        w.focus()
+        w.print()
+        try { w.addEventListener('afterprint', () => w.close()) } catch {}
+      } catch { setTimeout(() => tryPrint(attempts + 1), 2000) }
+    }
+    setTimeout(tryPrint, 4000)
+  }
+  window.addEventListener('message', onNav)
+  setTimeout(() => window.removeEventListener('message', onNav), 300_000)
+
   try {
     const blob = await buildMergedPdf(entry, companyName, logoUrl, companyPdfUrl)
     const blobUrl = URL.createObjectURL(blob)
-    // Store just the URL string — avoids the ~5MB localStorage quota limit
     localStorage.setItem(printKey, blobUrl)
-    // Print page polls, renders PDF in iframe, and calls window.print() itself
     setTimeout(() => { localStorage.removeItem(printKey); URL.revokeObjectURL(blobUrl) }, 300_000)
   } catch (err) {
+    window.removeEventListener('message', onNav)
     console.error('Print error:', err)
-    // Signal error to popup so it shows a message instead of spinning
     try { localStorage.setItem(printKey, `error:${String(err)}`) } catch { /* ignore */ }
     setTimeout(() => localStorage.removeItem(printKey), 30_000)
   }

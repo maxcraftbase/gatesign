@@ -2,7 +2,6 @@
 import { useEffect, useState } from 'react'
 
 export default function PrintPage() {
-  const [blobUrl, setBlobUrl] = useState('')
   const [error, setError] = useState('')
 
   useEffect(() => {
@@ -17,7 +16,9 @@ export default function PrintPage() {
         setError(item.slice(6))
         return true
       }
-      setBlobUrl(item)
+      // Tell parent we're about to navigate so it can time w.print() after hydration
+      try { window.opener?.postMessage({ type: 'gs-print-nav', key: printKey }, location.origin) } catch {}
+      window.location.href = item
       return true
     }
 
@@ -34,16 +35,6 @@ export default function PrintPage() {
         <span style={{ color: '#ef4444', fontSize: '16px' }}>Fehler beim Erstellen des Dokuments.</span>
         <span style={{ color: '#94a3b8', fontSize: '13px' }}>{error}</span>
       </div>
-    )
-  }
-
-  if (blobUrl) {
-    return (
-      <iframe
-        src={blobUrl}
-        style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }}
-        onLoad={() => { window.print() }}
-      />
     )
   }
 

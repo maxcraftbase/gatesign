@@ -286,16 +286,14 @@ async function printEntry(entry: Entry, companyName: string, logoUrl?: string, c
     }
   }
 
-  const pagesHtml = dataUrls.map((src) =>
-    `<div class="page"><img src="${src}"></div>`
+  const totalPages = dataUrls.length
+  const pagesHtml = dataUrls.map((src, i) =>
+    `<div style="position:absolute;top:${i * 297}mm;left:0;width:210mm;height:297mm;overflow:hidden"><img src="${src}" style="width:100%;height:100%;display:block;object-fit:fill"></div>`
   ).join('')
 
   const html = `<!DOCTYPE html><html><head><title>GateSign</title><style>
 *{margin:0;padding:0;box-sizing:border-box}
-html,body{margin:0;padding:0;width:210mm}
-.page{width:210mm;height:297mm;overflow:hidden;background:#fff;display:block;break-inside:avoid}
-.page:not(:last-child){break-after:page}
-.page img{width:100%;height:100%;display:block;object-fit:fill}
+html,body{margin:0;padding:0;width:210mm;height:${totalPages * 297}mm;position:relative}
 @media print{@page{margin:0;size:A4 portrait}}
 </style></head><body>${pagesHtml}</body></html>`
 

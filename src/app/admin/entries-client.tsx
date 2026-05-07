@@ -241,16 +241,22 @@ async function buildMergedPdf(entry: Entry, companyName: string, logoUrl?: strin
 }
 
 async function printEntry(entry: Entry, companyName: string, logoUrl?: string, companyPdfUrl?: string) {
-  const printKey = `gs-print-${Date.now()}`
-  const w = window.open(`/admin/print?k=${printKey}`, '_blank', 'width=900,height=900')
+  // Open blank popup synchronously (before any await) to bypass Safari popup blocker
+  const w = window.open('', '_blank', 'width=900,height=900')
   if (!w) return
+  w.document.write(`<!DOCTYPE html><html><head><title>GateSign</title><style>body{display:flex;align-items:center;justify-content:center;height:100vh;margin:0;font-family:Arial,sans-serif;color:#64748b;font-size:16px}</style></head><body>Dokument wird geladen…</body></html>`)
+  w.document.close()
   w.blur()
   window.focus()
 
-  // Wait for print page to signal it's about to navigate, then call w.print() after PDF loads
-  const onNav = (e: MessageEvent) => {
-    if (e.data?.type !== 'gs-print-nav' || e.data?.key !== printKey) return
-    window.removeEventListener('message', onNav)
+  try {
+    const blob = await buildMergedPdf(entry, companyName, logoUrl, companyPdfUrl)
+    const blobUrl = URL.createObjectURL(blob)
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 300_000)
+
+    // Navigate popup directly — no localStorage needed
+    w.location.href = blobUrl
+
     const tryPrint = (attempts = 0) => {
       if (w.closed || attempts > 5) return
       try {
@@ -259,21 +265,15 @@ async function printEntry(entry: Entry, companyName: string, logoUrl?: string, c
         try { w.addEventListener('afterprint', () => w.close()) } catch {}
       } catch { setTimeout(() => tryPrint(attempts + 1), 2000) }
     }
+    // Wait for PDF to load in popup before printing
     setTimeout(tryPrint, 4000)
-  }
-  window.addEventListener('message', onNav)
-  setTimeout(() => window.removeEventListener('message', onNav), 300_000)
-
-  try {
-    const blob = await buildMergedPdf(entry, companyName, logoUrl, companyPdfUrl)
-    const blobUrl = URL.createObjectURL(blob)
-    localStorage.setItem(printKey, blobUrl)
-    setTimeout(() => { localStorage.removeItem(printKey); URL.revokeObjectURL(blobUrl) }, 300_000)
   } catch (err) {
-    window.removeEventListener('message', onNav)
     console.error('Print error:', err)
-    try { localStorage.setItem(printKey, `error:${String(err)}`) } catch { /* ignore */ }
-    setTimeout(() => localStorage.removeItem(printKey), 30_000)
+    try {
+      w.document.open()
+      w.document.write(`<!DOCTYPE html><html><body style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;gap:8px"><span style="color:#ef4444;font-size:16px">Fehler beim Erstellen des Dokuments.</span><span style="color:#94a3b8;font-size:13px">${String(err)}</span></body></html>`)
+      w.document.close()
+    } catch {}
   }
 }
 

@@ -129,18 +129,10 @@ ${note ? `<hr class="divider"/><div class="note-box"><div class="note-label">${b
           const canvas = document.createElement('canvas')
           canvas.width = viewport.width
           canvas.height = viewport.height
-          const ctx2d = canvas.getContext('2d')
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          await page.render({ canvasContext: ctx2d as any, viewport }).promise
-          // skip blank pages: sample every 20th pixel, count non-white ones
-          if (ctx2d) {
-            const sample = ctx2d.getImageData(0, 0, canvas.width, canvas.height)
-            let nonWhite = 0
-            for (let px = 0; px < sample.data.length; px += 80) {
-              if (sample.data[px] < 245 || sample.data[px + 1] < 245 || sample.data[px + 2] < 245) nonWhite++
-            }
-            if (nonWhite < 50) continue
-          }
+          await page.render({ canvasContext: canvas.getContext('2d') as any, viewport }).promise
+          // skip blank pages: at quality 0.1 a pure-white A4 canvas is <3 KB
+          if (canvas.toDataURL('image/jpeg', 0.1).length < 4000) continue
           const dataUrl = canvas.toDataURL('image/jpeg', 0.92)
           images.push(dataUrl)
         }

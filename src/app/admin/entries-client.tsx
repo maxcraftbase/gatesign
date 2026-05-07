@@ -249,7 +249,7 @@ async function printEntry(entry: Entry, companyName: string, logoUrl?: string, c
   w.document.write(`<!DOCTYPE html><html><head><title>GateSign</title>
 <style>body{display:flex;align-items:center;justify-content:center;height:100vh;margin:0;font-family:Arial,sans-serif;color:#64748b;font-size:16px}</style>
 </head><body><p>Dokument wird geladen…</p>
-<script>window.addEventListener('message',function(e){if(e.data&&e.data.type==='PDF'){var b=new Blob([e.data.buf],{type:'application/pdf'});window.location.href=URL.createObjectURL(b)}})<\/script>
+<script>window.addEventListener('message',function(e){if(e.data&&e.data.type==='PDF'){var b=new Blob([e.data.buf],{type:'application/pdf'});var u=URL.createObjectURL(b);document.open();document.write('<!DOCTYPE html><html><head><style>*{margin:0;padding:0;box-sizing:border-box}html,body,embed{width:100%;height:100%;display:block}<\/style><\/head><body><embed type="application/pdf" src="'+u+'"><\/body><\/html>');document.close()}})<\/script>
 </body></html>`)
   w.document.close()
   try {

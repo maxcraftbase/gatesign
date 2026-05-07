@@ -252,17 +252,8 @@ async function printEntry(entry: Entry, companyName: string, logoUrl?: string, c
     const blobUrl = URL.createObjectURL(blob)
     // Store just the URL string — avoids the ~5MB localStorage quota limit
     localStorage.setItem(printKey, blobUrl)
+    // Print page polls, renders PDF in iframe, and calls window.print() itself
     setTimeout(() => { localStorage.removeItem(printKey); URL.revokeObjectURL(blobUrl) }, 300_000)
-
-    const tryPrint = (attempts = 0) => {
-      if (w.closed || attempts > 10) return
-      try {
-        w.focus()
-        w.print()
-        try { w.addEventListener('afterprint', () => w.close()) } catch {}
-      } catch { setTimeout(() => tryPrint(attempts + 1), 1000) }
-    }
-    setTimeout(tryPrint, 3000)
   } catch (err) {
     console.error('Print error:', err)
     // Signal error to popup so it shows a message instead of spinning

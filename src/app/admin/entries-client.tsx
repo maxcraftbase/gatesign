@@ -250,23 +250,65 @@ async function printEntry(entry: Entry, companyName: string, logoUrl?: string, c
   window.focus()
 
   try {
-    const blob = await buildMergedPdf(entry, companyName, logoUrl, companyPdfUrl)
-    const blobUrl = URL.createObjectURL(blob)
-    setTimeout(() => URL.revokeObjectURL(blobUrl), 300_000)
+    const dataUrls: string[] = []
 
-    // Navigate popup directly — no localStorage needed
-    w.location.href = blobUrl
+    // Page 1: label rendered to canvas
+    const labelCanvas = await drawLabelCanvas(entry, companyName, logoUrl)
+    dataUrls.push(labelCanvas.toDataURL('image/png'))
 
-    const tryPrint = (attempts = 0) => {
-      if (w.closed || attempts > 5) return
+    // Pages 2+: company PDF rendered page-by-page with pdf.js
+    if (companyPdfUrl) {
       try {
-        w.focus()
-        w.print()
-        try { w.addEventListener('afterprint', () => w.close()) } catch {}
-      } catch { setTimeout(() => tryPrint(attempts + 1), 2000) }
+        const res = await fetch('/api/admin/proxy-company-pdf')
+        if (res.ok) {
+          const bytes = new Uint8Array(await res.arrayBuffer())
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs') as any
+          pdfjsLib.GlobalWorkerOptions.workerSrc = `${window.location.origin}/pdf.worker.min.mjs`
+          const pdfDoc = await pdfjsLib.getDocument({ data: bytes }).promise
+          for (let i = 1; i <= pdfDoc.numPages; i++) {
+            const page = await pdfDoc.getPage(i)
+            const vp = page.getViewport({ scale: 2 })
+            const canvas = document.createElement('canvas')
+            canvas.width = vp.width; canvas.height = vp.height
+            const ctx = canvas.getContext('2d')!
+            await page.render({ canvasContext: ctx, viewport: vp }).promise
+            // Skip blank pages
+            const chk = ctx.getImageData(0, 0, Math.min(canvas.width, 200), Math.min(canvas.height, 200))
+            let nonWhite = 0
+            for (let px = 0; px < chk.data.length; px += 4) {
+              if (chk.data[px] < 240 || chk.data[px + 1] < 240 || chk.data[px + 2] < 240) nonWhite++
+            }
+            if (nonWhite >= 10) dataUrls.push(canvas.toDataURL('image/jpeg', 0.92))
+          }
+        }
+      } catch (err) {
+        console.error('Company PDF render error:', err)
+      }
     }
-    // Wait for PDF to load in popup before printing
-    setTimeout(tryPrint, 4000)
+
+    const pagesHtml = dataUrls.map((src, i) =>
+      `<div style="width:210mm;margin:0 auto;background:#fff${i < dataUrls.length - 1 ? ';page-break-after:always' : ''}"><img src="${src}" style="width:100%;display:block"></div>`
+    ).join('')
+
+    // Write HTML directly into popup — avoids Safari PDF-viewer taking over the window
+    // window.onload fires after all images are ready, then we self-print
+    const html = `<!DOCTYPE html><html><head><title>GateSign</title><style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#888;padding:20px}
+@media print{body{background:#fff;padding:0}@page{margin:0;size:A4 portrait}}
+</style></head><body>${pagesHtml}<script>
+(function(){
+  var done=false;
+  function doPrint(){if(done)return;done=true;window.print();window.addEventListener('afterprint',function(){window.close()})}
+  window.onload=function(){setTimeout(doPrint,600)};
+  setTimeout(doPrint,5000);
+})();
+<\/script></body></html>`
+
+    w.document.open()
+    w.document.write(html)
+    w.document.close()
   } catch (err) {
     console.error('Print error:', err)
     try {

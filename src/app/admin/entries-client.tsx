@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { Download, RefreshCw, Printer, X, Languages, FileText } from 'lucide-react'
+import { Download, RefreshCw, Printer, X, Languages, FileText, Search } from 'lucide-react'
 
 interface Entry {
   id: string
@@ -241,23 +241,24 @@ async function buildMergedPdf(entry: Entry, companyName: string, logoUrl?: strin
 }
 
 async function printEntry(entry: Entry, companyName: string, logoUrl?: string, companyPdfUrl?: string) {
-  // Open synchronously (before any await) to bypass popup blocker.
-  // The popup script receives the PDF via postMessage and navigates itself
-  // to a blob URL it created — no cross-origin restriction.
-  const w = window.open('', '_blank', 'width=900,height=900')
+  const printKey = `gs-print-${Date.now()}`
+  const w = window.open(`/admin/print?k=${printKey}`, '_blank', 'width=900,height=900')
   if (!w) return
-  w.document.write(`<!DOCTYPE html><html><head><title>GateSign</title>
-<style>body{display:flex;align-items:center;justify-content:center;height:100vh;margin:0;font-family:Arial,sans-serif;color:#64748b;font-size:16px}</style>
-</head><body><p>Dokument wird geladen…</p>
-<script>window.addEventListener('message',function(e){if(e.data&&e.data.type==='PDF'){var b=new Blob([e.data.buf],{type:'application/pdf'});var u=URL.createObjectURL(b);document.open();document.write('<!DOCTYPE html><html><head><style>*{margin:0;padding:0;box-sizing:border-box}html,body,embed{width:100%;height:100%;display:block}<\/style><\/head><body><embed type="application/pdf" src="'+u+'"><\/body><\/html>');document.close()}})<\/script>
-</body></html>`)
-  w.document.close()
+  w.blur()
+  window.focus()
+
   try {
     const blob = await buildMergedPdf(entry, companyName, logoUrl, companyPdfUrl)
-    const buf = await blob.arrayBuffer()
-    w.postMessage({ type: 'PDF', buf }, '*', [buf])
+    const blobUrl = URL.createObjectURL(blob)
+    // Store just the URL string — avoids the ~5MB localStorage quota limit
+    localStorage.setItem(printKey, blobUrl)
+    // Print page polls, renders PDF in iframe, and calls window.print() itself
+    setTimeout(() => { localStorage.removeItem(printKey); URL.revokeObjectURL(blobUrl) }, 300_000)
   } catch (err) {
     console.error('Print error:', err)
+    // Signal error to popup so it shows a message instead of spinning
+    try { localStorage.setItem(printKey, `error:${String(err)}`) } catch { /* ignore */ }
+    setTimeout(() => localStorage.removeItem(printKey), 30_000)
   }
 }
 
@@ -499,11 +500,17 @@ export function AdminEntriesClient() {
   const [logoUrl, setLogoUrl] = useState('')
   const [contactPersons, setContactPersons] = useState<string[]>([])
   const [companyPdfUrl, setCompanyPdfUrl] = useState('')
+  const [search, setSearch] = useState('')
+  const [typeFilter, setTypeFilter] = useState('')
+  const [sort, setSort] = useState<{ col: string; dir: 'asc' | 'desc' }>({ col: 'created_at', dir: 'desc' })
 
-  const loadEntries = useCallback((p: number) => {
+  const loadEntries = useCallback((p: number, q: string, type: string, sortCol: string, sortDir: 'asc' | 'desc') => {
     setLoading(true)
     setError('')
-    fetch(`/api/admin/entries?page=${p}`)
+    const qs = new URLSearchParams({ page: String(p), sort: sortCol, dir: sortDir })
+    if (q.trim()) qs.set('search', q.trim())
+    if (type) qs.set('type', type)
+    fetch(`/api/admin/entries?${qs}`)
       .then(res => { if (!res.ok) throw new Error('Failed'); return res.json() })
       .then(data => {
         setEntries(data.entries ?? [])
@@ -518,8 +525,21 @@ export function AdminEntriesClient() {
       .finally(() => setLoading(false))
   }, [])
 
-  // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(() => { loadEntries(1) }, [loadEntries])
+  const searchRef = useRef(search)
+  const mountedRef = useRef(false)
+  useEffect(() => {
+    const isMount = !mountedRef.current
+    mountedRef.current = true
+    const isSearchChange = !isMount && search !== searchRef.current
+    searchRef.current = search
+    const t = setTimeout(() => loadEntries(1, search, typeFilter, sort.col, sort.dir), isSearchChange ? 350 : 0)
+    return () => clearTimeout(t)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search, typeFilter, sort])
+
+  function toggleSort(col: string) {
+    setSort(prev => prev.col === col ? { col, dir: prev.dir === 'desc' ? 'asc' : 'desc' } : { col, dir: 'asc' })
+  }
 
   function handleNoteUpdated(id: string, note: string, translated: string, assignedContact: string | null) {
     setEntries(prev => prev.map(e => e.id === id ? { ...e, staff_note: note, staff_note_translated: translated, assigned_contact: assignedContact } : e))
@@ -530,13 +550,13 @@ export function AdminEntriesClient() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Check-in Einträge</h1>
-          <p className="text-slate-500 text-sm mt-1">{total} Einträge gesamt</p>
+          <p className="text-slate-500 text-sm mt-1">{total} Einträge{search ? ' gefunden' : ' gesamt'}</p>
         </div>
         <div className="flex gap-3">
-          <button onClick={() => loadEntries(page)}
+          <button onClick={() => loadEntries(page, search, typeFilter, sort.col, sort.dir)}
             className="flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors">
             <RefreshCw className="w-4 h-4" />
             Aktualisieren
@@ -546,6 +566,27 @@ export function AdminEntriesClient() {
             <Download className="w-4 h-4" />
             CSV Export
           </button>
+        </div>
+      </div>
+
+      <div className="flex gap-3 mb-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+          <input
+            type="search"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Suche nach Name, Referenz oder Firma…"
+            className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-sm outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-100 bg-white"
+          />
+        </div>
+        <div className="flex gap-1.5">
+          {([['', 'Alle'], ['truck', 'LKW'], ['visitor', 'Besucher'], ['service', 'Dienst']] as [string, string][]).map(([val, label]) => (
+            <button key={val} onClick={() => setTypeFilter(val)}
+              className={`px-3 py-2 rounded-xl border text-sm font-medium transition-colors whitespace-nowrap ${typeFilter === val ? 'bg-slate-900 border-slate-900 text-white' : 'bg-white border-slate-200 text-slate-600 hover:border-slate-400'}`}>
+              {label}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -565,10 +606,16 @@ export function AdminEntriesClient() {
             {/* Header */}
             <div className="grid grid-cols-[100px_140px_80px_1fr_1fr_110px_50px_70px_30px] gap-3 px-4 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">
               <span>Referenz</span>
-              <span>Zeit</span>
+              <button onClick={() => toggleSort('created_at')} className="flex items-center gap-0.5 hover:text-slate-700 transition-colors text-left">
+                Zeit<span className="ml-0.5">{sort.col === 'created_at' ? (sort.dir === 'desc' ? '↓' : '↑') : '↕'}</span>
+              </button>
               <span>Typ</span>
-              <span>Fahrer</span>
-              <span>Firma</span>
+              <button onClick={() => toggleSort('driver_name')} className="flex items-center gap-0.5 hover:text-slate-700 transition-colors text-left">
+                Fahrer<span className="ml-0.5">{sort.col === 'driver_name' ? (sort.dir === 'desc' ? '↓' : '↑') : '↕'}</span>
+              </button>
+              <button onClick={() => toggleSort('company_name')} className="flex items-center gap-0.5 hover:text-slate-700 transition-colors text-left">
+                Firma<span className="ml-0.5">{sort.col === 'company_name' ? (sort.dir === 'desc' ? '↓' : '↑') : '↕'}</span>
+              </button>
               <span>Kennzeichen</span>
               <span>Spr.</span>
               <span>Belehrung</span>
@@ -625,12 +672,12 @@ export function AdminEntriesClient() {
 
           {totalPages > 1 && (
             <div className="flex items-center justify-center gap-3 mt-6">
-              <button onClick={() => loadEntries(page - 1)} disabled={page <= 1}
+              <button onClick={() => loadEntries(page - 1, search, typeFilter, sort.col, sort.dir)} disabled={page <= 1}
                 className="px-4 py-2 rounded-xl border border-slate-200 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed">
                 ← Zurück
               </button>
               <span className="text-sm text-slate-500">Seite {page} von {totalPages}</span>
-              <button onClick={() => loadEntries(page + 1)} disabled={page >= totalPages}
+              <button onClick={() => loadEntries(page + 1, search, typeFilter, sort.col, sort.dir)} disabled={page >= totalPages}
                 className="px-4 py-2 rounded-xl border border-slate-200 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed">
                 Weiter →
               </button>

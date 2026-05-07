@@ -8,6 +8,12 @@ export async function GET(req: NextRequest) {
 
     const { searchParams } = new URL(req.url)
     const page = parseInt(searchParams.get('page') ?? '1')
+    const search = searchParams.get('search')?.trim() ?? ''
+    const type = searchParams.get('type') ?? ''
+    const SORTABLE = ['created_at', 'driver_name', 'company_name'] as const
+    const sortRaw = searchParams.get('sort') ?? 'created_at'
+    const sortCol = (SORTABLE as readonly string[]).includes(sortRaw) ? sortRaw : 'created_at'
+    const sortDir = searchParams.get('dir') === 'asc' ? 'asc' : 'desc'
     const limit = 50
     const offset = (page - 1) * limit
 
@@ -17,10 +23,17 @@ export async function GET(req: NextRequest) {
     const params = new URLSearchParams({
       company_id: `eq.${ctx.company.id}`,
       select: 'id,created_at,driver_name,company_name,license_plate,trailer_plate,phone,language,visitor_type,briefing_accepted,briefing_accepted_at,has_signature,reference_number,contact_person,staff_note,staff_note_translated,assigned_contact',
-      order: 'created_at.desc',
+      order: `${sortCol}.${sortDir}`,
       limit: String(limit),
       offset: String(offset),
     })
+    if (search) {
+      const term = `*${search}*`
+      params.set('or', `(driver_name.ilike.${term},reference_number.ilike.${term},company_name.ilike.${term})`)
+    }
+    if (type && ['truck', 'visitor', 'service'].includes(type)) {
+      params.set('visitor_type', `eq.${type}`)
+    }
 
     const res = await fetch(`${supabaseUrl}/rest/v1/check_ins?${params}`, {
       headers: { apikey: anonKey, Authorization: `Bearer ${ctx.accessToken}`, Prefer: 'count=exact' },

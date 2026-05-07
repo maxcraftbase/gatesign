@@ -255,6 +255,12 @@ async function printEntry(entry: Entry, companyName: string, logoUrl?: string, c
     delivered = true
     window.removeEventListener('message', onMessage)
     w.postMessage({ type: 'PDF', buf }, window.location.origin, [buf])
+    // Popup navigates to blob URL (native PDF viewer). Focus + print after load.
+    const tryPrint = (attempts = 0) => {
+      if (w.closed || attempts > 6) return
+      try { w.focus(); w.print() } catch { setTimeout(() => tryPrint(attempts + 1), 1000) }
+    }
+    setTimeout(tryPrint, 2500)
   }
 
   const onMessage = (e: MessageEvent) => {

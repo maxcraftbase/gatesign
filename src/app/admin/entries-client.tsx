@@ -241,16 +241,20 @@ async function buildMergedPdf(entry: Entry, companyName: string, logoUrl?: strin
 }
 
 async function printEntry(entry: Entry, companyName: string, logoUrl?: string, companyPdfUrl?: string) {
-  const blob = await buildMergedPdf(entry, companyName, logoUrl, companyPdfUrl)
-  const blobUrl = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = blobUrl
-  a.target = '_blank'
-  a.rel = 'noopener'
-  document.body.appendChild(a)
-  a.click()
-  document.body.removeChild(a)
-  setTimeout(() => URL.revokeObjectURL(blobUrl), 300_000)
+  // Must open synchronously (before any await) to bypass popup blocker
+  const w = window.open('', '_blank', 'width=900,height=900')
+  if (!w) return
+  w.document.write('<style>body{display:flex;align-items:center;justify-content:center;height:100vh;margin:0;font-family:Arial,sans-serif;color:#64748b;font-size:16px}</style><p>Dokument wird geladen…</p>')
+  try {
+    const blob = await buildMergedPdf(entry, companyName, logoUrl, companyPdfUrl)
+    const blobUrl = URL.createObjectURL(blob)
+    w.document.open()
+    w.document.write(`<!DOCTYPE html><html><head><title>GateSign</title><style>*{margin:0;padding:0;box-sizing:border-box}html,body,embed{width:100%;height:100%;display:block}</style></head><body><embed type="application/pdf" src="${blobUrl}"></body></html>`)
+    w.document.close()
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 300_000)
+  } catch (err) {
+    console.error('Print error:', err)
+  }
 }
 
 async function downloadPdf(entry: Entry, companyName: string, logoUrl?: string, companyPdfUrl?: string) {

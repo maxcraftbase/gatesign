@@ -1,20 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createHash } from 'crypto'
 import { runAgent } from '@/lib/agents/runner'
 import { getHistory } from '@/lib/agents/db'
 import type { AgentType } from '@/lib/agents/types'
+import { isSuperadminAuthorized } from '@/lib/superadmin-auth'
 
 const VALID: AgentType[] = ['compliance', 'weekly_analysis']
 
-function isAuthorized(req: NextRequest): boolean {
-  const expected = process.env.SUPERADMIN_PASSWORD?.trim()
-  if (!expected) return false
-  const token = req.cookies.get('gs-superadmin')?.value
-  return token === createHash('sha256').update(expected + 'gs-salt-2025').digest('hex')
-}
-
 export async function GET(req: NextRequest) {
-  if (!isAuthorized(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!isSuperadminAuthorized(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { searchParams } = new URL(req.url)
   const companyId = searchParams.get('company_id')
@@ -25,7 +18,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  if (!isAuthorized(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!isSuperadminAuthorized(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const body = await req.json() as { type?: string; company_id?: string; company_name?: string }
 

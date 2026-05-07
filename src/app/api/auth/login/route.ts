@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { checkRateLimit } from '@/lib/rate-limit'
+import { logLoginEvent } from '@/lib/audit'
 
 export async function POST(req: NextRequest) {
   try {
@@ -23,6 +24,7 @@ export async function POST(req: NextRequest) {
     })
 
     if (!tokenRes.ok) {
+      void logLoginEvent('login_failed', email ?? '', { ip })
       return NextResponse.json({ error: 'E-Mail oder Passwort falsch.' }, { status: 401 })
     }
 
@@ -47,6 +49,7 @@ export async function POST(req: NextRequest) {
     })()
 
     let slug = ''
+    let companyId = ''
     try {
       // Activate pending company_users entry for invited users on first login
       if (userId) {
@@ -85,14 +88,17 @@ export async function POST(req: NextRequest) {
       )
       const cuRows: { company_id: string }[] = await cuRes.json()
       if (cuRows.length > 0) {
+        companyId = cuRows[0].company_id
         const compRes = await fetch(
-          `${supabaseUrl}/rest/v1/companies?id=eq.${cuRows[0].company_id}&select=slug`,
+          `${supabaseUrl}/rest/v1/companies?id=eq.${companyId}&select=slug`,
           { headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}` }, cache: 'no-store' }
         )
         const compData = await compRes.json()
         slug = compData?.[0]?.slug ?? ''
       }
     } catch { /* ignore */ }
+
+    void logLoginEvent('login_success', email, { userId, companyId, ip })
 
     const response = NextResponse.json({ success: true, slug })
     const CHUNK_SIZE = 3180

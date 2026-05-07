@@ -1,5 +1,15 @@
 import { type NextRequest, NextResponse } from 'next/server'
 
+function timingSafeStringEqual(a: string, b: string): boolean {
+  const enc = new TextEncoder()
+  const bufA = enc.encode(a)
+  const bufB = enc.encode(b)
+  if (bufA.length !== bufB.length) return false
+  let diff = 0
+  for (let i = 0; i < bufA.length; i++) diff |= bufA[i] ^ bufB[i]
+  return diff === 0
+}
+
 function getTokenAndCookieName(request: NextRequest): { token: string | null; cookieName: string } {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''
   const projectRef = new URL(supabaseUrl).hostname.split('.')[0]
@@ -49,7 +59,7 @@ export function middleware(request: NextRequest) {
   const sitePassword = process.env.SITE_PASSWORD?.trim()
   if (sitePassword && pathname !== '/password') {
     const auth = request.cookies.get('site_auth')?.value
-    if (auth !== sitePassword) {
+    if (!auth || !timingSafeStringEqual(auth, sitePassword)) {
       const url = request.nextUrl.clone()
       url.pathname = '/password'
       url.search = ''

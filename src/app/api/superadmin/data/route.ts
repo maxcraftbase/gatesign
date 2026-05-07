@@ -1,19 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createHash } from 'crypto'
-
-function hashPassword(pw: string) {
-  return createHash('sha256').update(pw + 'gs-salt-2025').digest('hex')
-}
-
-function isAuthorized(req: NextRequest): boolean {
-  const expected = process.env.SUPERADMIN_PASSWORD?.trim()
-  if (!expected) return false
-  const token = req.cookies.get('gs-superadmin')?.value
-  return token === hashPassword(expected)
-}
+import { isSuperadminAuthorized } from '@/lib/superadmin-auth'
 
 export async function GET(req: NextRequest) {
-  if (!isAuthorized(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!isSuperadminAuthorized(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -77,7 +66,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function PATCH(req: NextRequest) {
-  if (!isAuthorized(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  if (!isSuperadminAuthorized(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!

@@ -1,8 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCompanyBySlug } from '@/lib/company'
+import { checkRateLimit } from '@/lib/rate-limit'
+
+const VALID_VISITOR_TYPES = ['truck', 'visitor', 'service'] as const
+const VALID_LANGUAGES = ['de', 'en', 'pl', 'ro', 'cs', 'hu', 'bg', 'uk', 'ru', 'tr'] as const
 
 export async function POST(req: NextRequest) {
   try {
+    const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() ?? 'unknown'
+    if (!checkRateLimit(`check-in:${ip}`, 20, 10 * 60 * 1000)) {
+      return NextResponse.json({ error: 'Zu viele Anfragen. Bitte warten.' }, { status: 429 })
+    }
+
     const body = await req.json()
     const {
       slug,
@@ -21,9 +30,28 @@ export async function POST(req: NextRequest) {
       reference_number,
     } = body
 
+    // Required fields
     if (!driver_name || !company_name || !license_plate || !language) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
+
+    // Whitelist checks
+    if (visitor_type && !VALID_VISITOR_TYPES.includes(visitor_type)) {
+      return NextResponse.json({ error: 'Ungültiger Besuchertyp' }, { status: 400 })
+    }
+    if (!VALID_LANGUAGES.includes(language)) {
+      return NextResponse.json({ error: 'Ungültige Sprache' }, { status: 400 })
+    }
+
+    // Length limits
+    if (String(driver_name).length > 100) return NextResponse.json({ error: 'driver_name zu lang' }, { status: 400 })
+    if (String(company_name).length > 150) return NextResponse.json({ error: 'company_name zu lang' }, { status: 400 })
+    if (String(license_plate).length > 20) return NextResponse.json({ error: 'license_plate zu lang' }, { status: 400 })
+    if (trailer_plate && String(trailer_plate).length > 20) return NextResponse.json({ error: 'trailer_plate zu lang' }, { status: 400 })
+    if (phone && String(phone).length > 30) return NextResponse.json({ error: 'phone zu lang' }, { status: 400 })
+    if (contact_person && String(contact_person).length > 100) return NextResponse.json({ error: 'contact_person zu lang' }, { status: 400 })
+    if (reference_number && String(reference_number).length > 50) return NextResponse.json({ error: 'reference_number zu lang' }, { status: 400 })
+    if (signature_data && String(signature_data).length > 500_000) return NextResponse.json({ error: 'signature_data zu groß' }, { status: 400 })
 
     const company = slug ? await getCompanyBySlug(slug) : null
 

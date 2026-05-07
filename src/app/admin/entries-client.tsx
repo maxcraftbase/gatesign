@@ -241,11 +241,11 @@ async function buildMergedPdf(entry: Entry, companyName: string, logoUrl?: strin
 }
 
 async function printEntry(entry: Entry, companyName: string, logoUrl?: string, companyPdfUrl?: string) {
-  // Open a real same-origin page synchronously (bypasses popup blocker).
-  // Same-origin popup can navigate to blob:https://gatesign.de/... without restriction.
-  const w = window.open('/admin/print', '_blank', 'width=900,height=900')
-  if (!w) return
-  // Push popup to background — user stays on admin page until print dialog opens
+  // BroadcastChannel — works reliably in Safari without window.opener
+  const channelName = `gs-print-${Date.now()}`
+  const bc = new BroadcastChannel(channelName)
+  const w = window.open(`/admin/print#${channelName}`, '_blank', 'width=900,height=900')
+  if (!w) { bc.close(); return }
   w.blur()
   window.focus()
 
@@ -256,28 +256,25 @@ async function printEntry(entry: Entry, companyName: string, logoUrl?: string, c
   const deliver = (buf: ArrayBuffer) => {
     if (delivered) return
     delivered = true
-    window.removeEventListener('message', onMessage)
-    w.postMessage({ type: 'PDF', buf }, window.location.origin, [buf])
-    // Popup navigates to blob URL (native PDF viewer). Focus + print after load.
+    bc.postMessage({ type: 'PDF', buf })
+    bc.close()
     const tryPrint = (attempts = 0) => {
       if (w.closed || attempts > 6) return
       try {
         w.focus()
         w.print()
-        // Auto-close popup after print dialog is dismissed
-        try { w.addEventListener('afterprint', () => w.close(), { once: true } as EventListenerOptions) } catch {}
+        try { w.addEventListener('afterprint', () => w.close()) } catch {}
       } catch { setTimeout(() => tryPrint(attempts + 1), 1000) }
     }
     setTimeout(tryPrint, 2500)
   }
 
-  const onMessage = (e: MessageEvent) => {
-    if (e.source === w && e.data?.type === 'PRINT_READY') {
+  bc.onmessage = (e) => {
+    if (e.data?.type === 'PRINT_READY') {
       popupReady = true
       if (pdfBuf) deliver(pdfBuf)
     }
   }
-  window.addEventListener('message', onMessage)
 
   try {
     const blob = await buildMergedPdf(entry, companyName, logoUrl, companyPdfUrl)
@@ -285,10 +282,10 @@ async function printEntry(entry: Entry, companyName: string, logoUrl?: string, c
     if (popupReady) deliver(pdfBuf)
   } catch (err) {
     console.error('Print error:', err)
-    window.removeEventListener('message', onMessage)
+    bc.close()
   }
 
-  setTimeout(() => window.removeEventListener('message', onMessage), 60_000)
+  setTimeout(() => bc.close(), 60_000)
 }
 
 async function downloadPdf(entry: Entry, companyName: string, logoUrl?: string, companyPdfUrl?: string) {

@@ -21,6 +21,7 @@ interface Settings {
   welcome_title: string
   welcome_subtitle: string
   signature_required: string
+  reference_required_types: string
   site_info: string
   hours_weekday: string
   hours_fri: string
@@ -85,6 +86,7 @@ export function AdminSettingsClient() {
     welcome_title: 'Willkommen / Welcome',
     welcome_subtitle: 'Bitte melden Sie sich hier an — Please register here',
     signature_required: 'false',
+    reference_required_types: '[]',
     site_info: '',
     hours_weekday: '',
     hours_fri: '',
@@ -458,6 +460,42 @@ export function AdminSettingsClient() {
             </div>
             <span className="text-sm font-medium text-slate-700">Unterschrift erforderlich</span>
           </label>
+
+          {/* Referenznummer verpflichtend */}
+          {(() => {
+            const types: string[] = (() => { try { return JSON.parse(settings.reference_required_types) } catch { return [] } })()
+            const isOn = types.length > 0
+            const ALL = ['truck', 'visitor', 'service']
+            const LABELS: Record<string, string> = { truck: 'LKW', visitor: 'Besucher', service: 'Dienstleister' }
+            function toggleMain() {
+              setSettings(s => ({ ...s, reference_required_types: isOn ? '[]' : JSON.stringify(ALL) }))
+            }
+            function toggleType(t: string) {
+              const next = types.includes(t) ? types.filter(x => x !== t) : [...types, t]
+              setSettings(s => ({ ...s, reference_required_types: JSON.stringify(next) }))
+            }
+            return (
+              <div className="flex flex-col gap-2">
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <div onClick={toggleMain}
+                    className={`w-12 h-6 rounded-full transition-colors cursor-pointer flex items-center px-1 ${isOn ? 'bg-blue-600' : 'bg-slate-300'}`}>
+                    <div className={`w-4 h-4 bg-white rounded-full shadow transition-transform ${isOn ? 'translate-x-6' : 'translate-x-0'}`} />
+                  </div>
+                  <span className="text-sm font-medium text-slate-700">Referenznummer erforderlich</span>
+                </label>
+                {isOn && (
+                  <div className="flex gap-2 pl-15 ml-15">
+                    {ALL.map(type => (
+                      <button key={type} type="button" onClick={() => toggleType(type)}
+                        className={`px-3 py-1 rounded-full text-xs font-semibold border transition-colors ${types.includes(type) ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-600 border-slate-300 hover:border-blue-400'}`}>
+                        {LABELS[type]}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )
+          })()}
         </div>
       </div>
 

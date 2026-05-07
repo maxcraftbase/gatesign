@@ -281,6 +281,7 @@ function CombinedFormStep({
   onChange,
   pdfUrl,
   signatureRequired,
+  referenceRequiredTypes,
   activeRules,
   ruleVisitorTypes,
   customHints,
@@ -296,6 +297,7 @@ function CombinedFormStep({
   onChange: (f: FormData) => void
   pdfUrl: string
   signatureRequired: boolean
+  referenceRequiredTypes: string[]
   activeRules: string[]
   ruleVisitorTypes: Record<string, string[]>
   customHints: string[]
@@ -311,8 +313,14 @@ function CombinedFormStep({
   const sigPadRef = useRef<SignaturePadHandle>(null)
   const handleSign = useCallback(() => setHasSigned(true), [])
 
+  const referenceRequired = referenceRequiredTypes.includes(visitorType)
+
   function handleConfirm() {
     if (!formData.name.trim() || !formData.company.trim() || !formData.plate.trim()) {
+      setError(t.required_fields)
+      return
+    }
+    if (referenceRequired && !formData.reference.trim()) {
       setError(t.required_fields)
       return
     }
@@ -369,9 +377,12 @@ function CombinedFormStep({
               value={formData.phone} onChange={e => onChange({ ...formData, phone: e.target.value })}
               type="tel" autoComplete="off" />
           </div>
-          {visitorType === 'truck' && (
+          {(visitorType === 'truck' || referenceRequired) && (
             <div>
-              <label className={labelCls}>{t.field_reference}</label>
+              <label className={labelCls}>
+                {t.field_reference}
+                {referenceRequired && <span className="text-red-500 ml-1">*</span>}
+              </label>
               <input className={inputCls} placeholder={t.field_reference_placeholder}
                 value={formData.reference} onChange={e => onChange({ ...formData, reference: e.target.value })}
                 autoComplete="off" />
@@ -544,6 +555,7 @@ export function KioskClient({ slug }: { slug: string }) {
   const [briefingPdfUrl, setBriefingPdfUrl] = useState('')
   const [briefingVersion, setBriefingVersion] = useState('1.0')
   const [signatureRequired, setSignatureRequired] = useState(false)
+  const [referenceRequiredTypes, setReferenceRequiredTypes] = useState<string[]>([])
   const [pdfUrls, setPdfUrls] = useState<Record<string, string>>({})
   const [welcomeTitle, setWelcomeTitle] = useState('Willkommen / Welcome')
   const [welcomeSubtitle, setWelcomeSubtitle] = useState('Bitte melden Sie sich hier an — Please register here')
@@ -611,6 +623,9 @@ export function KioskClient({ slug }: { slug: string }) {
         if (data.welcome_subtitle) setWelcomeSubtitle(data.welcome_subtitle)
         if (data.briefing_version) setBriefingVersion(data.briefing_version)
         if (data.signature_required) setSignatureRequired(data.signature_required === 'true')
+        if (data.reference_required_types) {
+          try { setReferenceRequiredTypes(JSON.parse(data.reference_required_types)) } catch { /* ignore */ }
+        }
         if (data.hours_weekday) setHoursWeekday(data.hours_weekday)
         if (data.hours_fri) setHoursFri(data.hours_fri)
         if (data.fri_closed !== undefined) setFriClosed(data.fri_closed !== 'false')
@@ -755,6 +770,7 @@ export function KioskClient({ slug }: { slug: string }) {
       {step === 3 && (
         <CombinedFormStep lang={lang} visitorType={visitorType} formData={formData}
           onChange={setFormData} pdfUrl={briefingPdfUrl} signatureRequired={signatureRequired}
+          referenceRequiredTypes={referenceRequiredTypes}
           activeRules={activeSafetyRules} ruleVisitorTypes={ruleVisitorTypes}
           customHints={customHintsTranslations[lang] ?? customHints} hintTypes={customHintsTypes} hintsPdfUrl={hintsPdfUrl}
           onConfirm={handleBriefingConfirm} onBack={() => setStep(2)} />

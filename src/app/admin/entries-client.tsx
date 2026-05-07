@@ -268,6 +268,19 @@ async function printEntry(entry: Entry, companyName: string, logoUrl?: string, c
           const pdfDoc = await pdfjsLib.getDocument({ data: bytes }).promise
           for (let i = 1; i <= pdfDoc.numPages; i++) {
             const page = await pdfDoc.getPage(i)
+            // Check for blank using a tiny thumbnail (full page at low scale)
+            const thumbVp = page.getViewport({ scale: 0.15 })
+            const thumb = document.createElement('canvas')
+            thumb.width = Math.ceil(thumbVp.width); thumb.height = Math.ceil(thumbVp.height)
+            const thumbCtx = thumb.getContext('2d')!
+            await page.render({ canvasContext: thumbCtx, viewport: thumbVp }).promise
+            const imgData = thumbCtx.getImageData(0, 0, thumb.width, thumb.height)
+            let nonWhite = 0
+            for (let px = 0; px < imgData.data.length; px += 4) {
+              if (imgData.data[px] < 240 || imgData.data[px + 1] < 240 || imgData.data[px + 2] < 240) nonWhite++
+            }
+            if (nonWhite < 5) continue
+            // Render full resolution for printing
             const vp = page.getViewport({ scale: 2 })
             const canvas = document.createElement('canvas')
             canvas.width = vp.width; canvas.height = vp.height

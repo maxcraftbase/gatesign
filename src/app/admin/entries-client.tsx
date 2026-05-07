@@ -167,17 +167,34 @@ async function drawLabelCanvas(entry: Entry, companyName: string, logoUrl?: stri
   if (entry.assigned_contact) row(bil('assignedContact'), entry.assigned_contact)
 
   // ── Note box ──
-  const note = entry.staff_note_translated || entry.staff_note || ''
-  if (note) {
+  const noteDE = entry.staff_note || ''
+  const noteLang = entry.language !== 'de' ? (entry.staff_note_translated || '') : ''
+  if (noteDE || noteLang) {
     y += 8
-    const noteLines = wrapText(ctx, note, IW - 32)
-    const BOX_H = 48 + noteLines.length * 20
+    const deLinesArr = noteDE ? wrapText(ctx, noteDE, IW - 32) : []
+    const langLinesArr = noteLang ? wrapText(ctx, noteLang, IW - 32) : []
+    const hasBoth = deLinesArr.length > 0 && langLinesArr.length > 0
+    const BOX_H = 12 + (deLinesArr.length > 0 ? 20 + deLinesArr.length * 20 : 0) + (hasBoth ? 14 : 0) + (langLinesArr.length > 0 ? 20 + langLinesArr.length * 20 : 0) + 12
     ctx.fillStyle = '#f8fafc'; drawRoundRect(ctx, PAD, y, IW, BOX_H, 8); ctx.fill()
     ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 1; ctx.stroke()
-    ctx.font = 'bold 10px Arial, sans-serif'; ctx.fillStyle = '#64748b'
-    ctx.fillText(bil('noteLabel').toUpperCase(), PAD + 16, y + 12)
-    ctx.font = '13px Arial, sans-serif'; ctx.fillStyle = '#1e293b'
-    noteLines.forEach((l, i) => ctx.fillText(l, PAD + 16, y + 32 + i * 20))
+    let ny = y + 12
+    if (deLinesArr.length > 0) {
+      ctx.font = 'bold 10px Arial, sans-serif'; ctx.fillStyle = '#64748b'
+      ctx.fillText(de.noteLabel.toUpperCase(), PAD + 16, ny); ny += 18
+      ctx.font = '13px Arial, sans-serif'; ctx.fillStyle = '#1e293b'
+      deLinesArr.forEach(l => { ctx.fillText(l, PAD + 16, ny); ny += 20 })
+    }
+    if (hasBoth) {
+      ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 1
+      ctx.beginPath(); ctx.moveTo(PAD + 16, ny + 4); ctx.lineTo(W - PAD - 16, ny + 4); ctx.stroke()
+      ny += 14
+    }
+    if (langLinesArr.length > 0) {
+      ctx.font = 'bold 10px Arial, sans-serif'; ctx.fillStyle = '#64748b'
+      ctx.fillText(t.noteLabel.toUpperCase(), PAD + 16, ny); ny += 18
+      ctx.font = '13px Arial, sans-serif'; ctx.fillStyle = '#1e293b'
+      langLinesArr.forEach(l => { ctx.fillText(l, PAD + 16, ny); ny += 20 })
+    }
     y += BOX_H + 12
   }
 

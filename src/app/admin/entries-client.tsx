@@ -241,92 +241,72 @@ async function buildMergedPdf(entry: Entry, companyName: string, logoUrl?: strin
 }
 
 async function printEntry(entry: Entry, companyName: string, logoUrl?: string, companyPdfUrl?: string) {
-  // Open blank popup synchronously (before any await) to bypass Safari popup blocker
-  const w = window.open('', '_blank', 'width=900,height=900')
-  if (!w) return
-  w.document.write(`<!DOCTYPE html><html><head><title>GateSign</title><style>body{display:flex;align-items:center;justify-content:center;height:100vh;margin:0;font-family:Arial,sans-serif;color:#64748b;font-size:16px}</style></head><body>Dokument wird geladen…</body></html>`)
-  w.document.close()
-  w.blur()
-  window.focus()
+  const dataUrls: string[] = []
 
-  try {
-    const dataUrls: string[] = []
+  // Page 1: label rendered to canvas
+  const labelCanvas = await drawLabelCanvas(entry, companyName, logoUrl)
+  dataUrls.push(labelCanvas.toDataURL('image/png'))
 
-    // Page 1: label rendered to canvas
-    const labelCanvas = await drawLabelCanvas(entry, companyName, logoUrl)
-    dataUrls.push(labelCanvas.toDataURL('image/png'))
-
-    // Pages 2+: company PDF rendered page-by-page with pdf.js
-    if (companyPdfUrl) {
-      try {
-        const res = await fetch('/api/admin/proxy-company-pdf')
-        if (res.ok) {
-          const bytes = new Uint8Array(await res.arrayBuffer())
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs') as any
-          pdfjsLib.GlobalWorkerOptions.workerSrc = `${window.location.origin}/pdf.worker.min.mjs`
-          const pdfDoc = await pdfjsLib.getDocument({ data: bytes }).promise
-          for (let i = 1; i <= pdfDoc.numPages; i++) {
-            const page = await pdfDoc.getPage(i)
-            // Check for blank using a tiny thumbnail (full page at low scale)
-            const thumbVp = page.getViewport({ scale: 0.15 })
-            const thumb = document.createElement('canvas')
-            thumb.width = Math.ceil(thumbVp.width); thumb.height = Math.ceil(thumbVp.height)
-            const thumbCtx = thumb.getContext('2d')!
-            await page.render({ canvasContext: thumbCtx, viewport: thumbVp }).promise
-            const imgData = thumbCtx.getImageData(0, 0, thumb.width, thumb.height)
-            let darkPixels = 0
-            for (let px = 0; px < imgData.data.length; px += 4) {
-              const avg = (imgData.data[px] + imgData.data[px + 1] + imgData.data[px + 2]) / 3
-              if (avg < 210) darkPixels++
-            }
-            if (darkPixels < 500) continue
-            // Render full resolution for printing
-            const vp = page.getViewport({ scale: 2 })
-            const canvas = document.createElement('canvas')
-            canvas.width = vp.width; canvas.height = vp.height
-            const ctx = canvas.getContext('2d')!
-            await page.render({ canvasContext: ctx, viewport: vp }).promise
-            dataUrls.push(canvas.toDataURL('image/jpeg', 0.92))
+  // Pages 2+: company PDF rendered page-by-page with pdf.js
+  if (companyPdfUrl) {
+    try {
+      const res = await fetch('/api/admin/proxy-company-pdf')
+      if (res.ok) {
+        const bytes = new Uint8Array(await res.arrayBuffer())
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs') as any
+        pdfjsLib.GlobalWorkerOptions.workerSrc = `${window.location.origin}/pdf.worker.min.mjs`
+        const pdfDoc = await pdfjsLib.getDocument({ data: bytes }).promise
+        for (let i = 1; i <= pdfDoc.numPages; i++) {
+          const page = await pdfDoc.getPage(i)
+          // Check for blank using a tiny thumbnail (full page at low scale)
+          const thumbVp = page.getViewport({ scale: 0.15 })
+          const thumb = document.createElement('canvas')
+          thumb.width = Math.ceil(thumbVp.width); thumb.height = Math.ceil(thumbVp.height)
+          const thumbCtx = thumb.getContext('2d')!
+          await page.render({ canvasContext: thumbCtx, viewport: thumbVp }).promise
+          const imgData = thumbCtx.getImageData(0, 0, thumb.width, thumb.height)
+          let darkPixels = 0
+          for (let px = 0; px < imgData.data.length; px += 4) {
+            const avg = (imgData.data[px] + imgData.data[px + 1] + imgData.data[px + 2]) / 3
+            if (avg < 210) darkPixels++
           }
+          if (darkPixels < 500) continue
+          // Render full resolution for printing
+          const vp = page.getViewport({ scale: 2 })
+          const canvas = document.createElement('canvas')
+          canvas.width = vp.width; canvas.height = vp.height
+          const ctx = canvas.getContext('2d')!
+          await page.render({ canvasContext: ctx, viewport: vp }).promise
+          dataUrls.push(canvas.toDataURL('image/jpeg', 0.92))
         }
-      } catch (err) {
-        console.error('Company PDF render error:', err)
       }
+    } catch (err) {
+      console.error('Company PDF render error:', err)
     }
+  }
 
-    const pagesHtml = dataUrls.map((src, i) =>
-      `<div class="page${i > 0 ? ' newpage' : ''}"><img src="${src}"></div>`
-    ).join('')
+  const pagesHtml = dataUrls.map((src, i) =>
+    `<div class="page${i > 0 ? ' newpage' : ''}"><img src="${src}"></div>`
+  ).join('')
 
-    // Write HTML directly into popup — avoids Safari PDF-viewer taking over the window
-    // window.onload fires after all images are ready, then we self-print
-    const html = `<!DOCTYPE html><html><head><title>GateSign</title><style>
+  const html = `<!DOCTYPE html><html><head><title>GateSign</title><style>
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:#888}
 .page{width:210mm;height:297mm;overflow:hidden;background:#fff;display:block}
 .page img{width:210mm;height:297mm;display:block;object-fit:fill}
-@media print{body{background:#fff}@page{margin:0;size:A4 portrait}.page{page-break-inside:avoid}.newpage{break-before:page}}
-</style></head><body>${pagesHtml}<script>
-(function(){
-  var done=false;
-  function doPrint(){if(done)return;done=true;window.print();window.addEventListener('afterprint',function(){window.close()})}
-  window.onload=function(){setTimeout(doPrint,600)};
-  setTimeout(doPrint,5000);
-})();
-<\/script></body></html>`
+@media print{@page{margin:0;size:A4 portrait}.page{page-break-inside:avoid}.newpage{break-before:page}}
+</style></head><body>${pagesHtml}</body></html>`
 
-    w.document.open()
-    w.document.write(html)
-    w.document.close()
-  } catch (err) {
-    console.error('Print error:', err)
-    try {
-      w.document.open()
-      w.document.write(`<!DOCTYPE html><html><body style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;gap:8px"><span style="color:#ef4444;font-size:16px">Fehler beim Erstellen des Dokuments.</span><span style="color:#94a3b8;font-size:13px">${String(err)}</span></body></html>`)
-      w.document.close()
-    } catch {}
-  }
+  // Print via hidden iframe — user stays on the current page, no tab switching
+  const iframe = document.createElement('iframe')
+  iframe.style.cssText = 'position:fixed;left:-9999px;top:0;width:210mm;height:297mm;border:none'
+  document.body.appendChild(iframe)
+  const iDoc = iframe.contentDocument!
+  iDoc.open(); iDoc.write(html); iDoc.close()
+  setTimeout(() => {
+    iframe.contentWindow!.print()
+    setTimeout(() => { try { document.body.removeChild(iframe) } catch {} }, 60_000)
+  }, 500)
 }
 
 async function downloadPdf(entry: Entry, companyName: string, logoUrl?: string, companyPdfUrl?: string) {

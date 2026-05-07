@@ -275,11 +275,12 @@ async function printEntry(entry: Entry, companyName: string, logoUrl?: string, c
             const thumbCtx = thumb.getContext('2d')!
             await page.render({ canvasContext: thumbCtx, viewport: thumbVp }).promise
             const imgData = thumbCtx.getImageData(0, 0, thumb.width, thumb.height)
-            let nonWhite = 0
+            let darkPixels = 0
             for (let px = 0; px < imgData.data.length; px += 4) {
-              if (imgData.data[px] < 240 || imgData.data[px + 1] < 240 || imgData.data[px + 2] < 240) nonWhite++
+              const avg = (imgData.data[px] + imgData.data[px + 1] + imgData.data[px + 2]) / 3
+              if (avg < 210) darkPixels++
             }
-            if (nonWhite < 5000) continue
+            if (darkPixels < 50) continue
             // Render full resolution for printing
             const vp = page.getViewport({ scale: 2 })
             const canvas = document.createElement('canvas')

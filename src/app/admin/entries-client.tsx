@@ -241,17 +241,21 @@ async function buildMergedPdf(entry: Entry, companyName: string, logoUrl?: strin
 }
 
 async function printEntry(entry: Entry, companyName: string, logoUrl?: string, companyPdfUrl?: string) {
-  const w = window.open('', '_blank', 'width=800,height=900')
+  const w = window.open('about:blank', '_blank', 'width=900,height=900')
   if (!w) return
-  w.document.write('<html><body style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:Arial,sans-serif;color:#64748b;font-size:16px;">Dokument wird geladen…</body></html>')
+  w.document.write('<style>body{display:flex;align-items:center;justify-content:center;height:100vh;margin:0;font-family:Arial,sans-serif;color:#64748b;font-size:16px}</style><p>Dokument wird geladen…</p>')
   try {
     const blob = await buildMergedPdf(entry, companyName, logoUrl, companyPdfUrl)
     const blobUrl = URL.createObjectURL(blob)
-    w.location.href = blobUrl
+    w.document.open()
+    w.document.write(`<!DOCTYPE html><html><head><title>GateSign</title><style>*{margin:0;padding:0;box-sizing:border-box}html,body{width:100%;height:100%;overflow:hidden}iframe{width:100%;height:100%;border:none}</style></head><body><iframe src="${blobUrl}"></iframe></body></html>`)
+    w.document.close()
     setTimeout(() => URL.revokeObjectURL(blobUrl), 300_000)
   } catch (err) {
     console.error('Print error:', err)
-    w.document.write('<html><body style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:Arial,sans-serif;color:#ef4444;font-size:16px;">Fehler beim Laden des Dokuments.</body></html>')
+    w.document.open()
+    w.document.write('<style>body{display:flex;align-items:center;justify-content:center;height:100vh;margin:0;font-family:Arial,sans-serif;color:#ef4444;font-size:16px}</style><p>Fehler beim Laden des Dokuments.</p>')
+    w.document.close()
   }
 }
 

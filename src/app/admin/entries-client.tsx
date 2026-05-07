@@ -288,12 +288,13 @@ async function downloadPdf(entry: Entry, companyName: string, logoUrl?: string, 
 
 // ─── Detail Modal ─────────────────────────────────────────────────────────────
 // ─── Detail Modal ─────────────────────────────────────────────────────────────
-function EntryModal({ entry, companyName, logoUrl, companyPdfUrl, contactPersons, onClose, onNoteUpdated }: {
+function EntryModal({ entry, companyName, logoUrl, companyPdfUrl, contactPersons, signatureData, onClose, onNoteUpdated }: {
   entry: Entry
   companyName: string
   logoUrl: string
   companyPdfUrl: string
   contactPersons: string[]
+  signatureData: string | null
   onClose: () => void
   onNoteUpdated: (id: string, note: string, translated: string, assignedContact: string | null) => void
 }) {
@@ -431,9 +432,13 @@ function EntryModal({ entry, companyName, logoUrl, companyPdfUrl, contactPersons
             <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-0.5">Belehrung</p>
             <p className="text-sm">{entry.briefing_accepted ? <span className="text-emerald-600 font-semibold">✓ Akzeptiert</span> : '—'}</p>
           </div>
-          <div>
+          <div className={entry.has_signature && signatureData ? 'col-span-2' : ''}>
             <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-0.5">Unterschrift</p>
-            <p className="text-sm">{entry.has_signature ? <span className="text-blue-600 font-semibold">✓ Ja</span> : '—'}</p>
+            {entry.has_signature ? (
+              signatureData
+                ? <img src={signatureData} alt="Unterschrift" className="mt-1 max-h-24 border border-slate-200 rounded bg-white p-1" />
+                : <span className="text-blue-600 font-semibold text-sm">✓ Ja</span>
+            ) : <span className="text-sm">—</span>}
           </div>
         </div>
 
@@ -510,6 +515,7 @@ export function AdminEntriesClient() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [selectedEntry, setSelectedEntry] = useState<Entry | null>(null)
+  const [signatureData, setSignatureData] = useState<string | null>(null)
   const [companyName, setCompanyName] = useState('')
   const [logoUrl, setLogoUrl] = useState('')
   const [contactPersons, setContactPersons] = useState<string[]>([])
@@ -554,6 +560,16 @@ export function AdminEntriesClient() {
   function toggleSort(col: string) {
     setSort(prev => prev.col === col ? { col, dir: prev.dir === 'desc' ? 'asc' : 'desc' } : { col, dir: 'asc' })
   }
+
+  // Lazy-load signature when modal opens
+  useEffect(() => {
+    if (!selectedEntry) { setSignatureData(null); return }
+    if (!selectedEntry.has_signature) return
+    fetch(`/api/admin/entries/${selectedEntry.id}/signature`)
+      .then(r => r.ok ? r.json() : null)
+      .then(data => setSignatureData(data?.signature_data ?? null))
+      .catch(() => null)
+  }, [selectedEntry?.id])
 
   // Silent background refresh — updates entries without resetting UI state
   useEffect(() => {
@@ -725,6 +741,7 @@ export function AdminEntriesClient() {
           logoUrl={logoUrl}
           companyPdfUrl={companyPdfUrl}
           contactPersons={contactPersons}
+          signatureData={signatureData}
           onClose={() => setSelectedEntry(null)}
           onNoteUpdated={handleNoteUpdated}
         />

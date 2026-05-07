@@ -279,7 +279,7 @@ async function printEntry(entry: Entry, companyName: string, logoUrl?: string, c
             for (let px = 0; px < imgData.data.length; px += 4) {
               if (imgData.data[px] < 240 || imgData.data[px + 1] < 240 || imgData.data[px + 2] < 240) nonWhite++
             }
-            if (nonWhite < 1500) continue
+            if (nonWhite < 5000) continue
             // Render full resolution for printing
             const vp = page.getViewport({ scale: 2 })
             const canvas = document.createElement('canvas')

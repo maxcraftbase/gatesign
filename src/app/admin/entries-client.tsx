@@ -241,24 +241,40 @@ async function buildMergedPdf(entry: Entry, companyName: string, logoUrl?: strin
 }
 
 async function printEntry(entry: Entry, companyName: string, logoUrl?: string, companyPdfUrl?: string) {
-  // Open synchronously (before any await) to bypass popup blocker.
-  // The popup script receives the PDF via postMessage and navigates itself
-  // to a blob URL it created — no cross-origin restriction.
-  const w = window.open('', '_blank', 'width=900,height=900')
+  // Open a real same-origin page synchronously (bypasses popup blocker).
+  // Same-origin popup can navigate to blob:https://gatesign.de/... without restriction.
+  const w = window.open('/admin/print', '_blank', 'width=900,height=900')
   if (!w) return
-  w.document.write(`<!DOCTYPE html><html><head><title>GateSign</title>
-<style>body{display:flex;align-items:center;justify-content:center;height:100vh;margin:0;font-family:Arial,sans-serif;color:#64748b;font-size:16px}</style>
-</head><body><p>Dokument wird geladen…</p>
-<script>window.addEventListener('message',function(e){if(e.data&&e.data.type==='PDF'){var b=new Blob([e.data.buf],{type:'application/pdf'});var u=URL.createObjectURL(b);document.open();document.write('<!DOCTYPE html><html><head><style>*{margin:0;padding:0;box-sizing:border-box}html,body,embed{width:100%;height:100%;display:block}<\/style><\/head><body><embed type="application/pdf" src="'+u+'"><\/body><\/html>');document.close()}})<\/script>
-</body></html>`)
-  w.document.close()
+
+  let pdfBuf: ArrayBuffer | null = null
+  let popupReady = false
+  let delivered = false
+
+  const deliver = (buf: ArrayBuffer) => {
+    if (delivered) return
+    delivered = true
+    window.removeEventListener('message', onMessage)
+    w.postMessage({ type: 'PDF', buf }, window.location.origin, [buf])
+  }
+
+  const onMessage = (e: MessageEvent) => {
+    if (e.source === w && e.data?.type === 'PRINT_READY') {
+      popupReady = true
+      if (pdfBuf) deliver(pdfBuf)
+    }
+  }
+  window.addEventListener('message', onMessage)
+
   try {
     const blob = await buildMergedPdf(entry, companyName, logoUrl, companyPdfUrl)
-    const buf = await blob.arrayBuffer()
-    w.postMessage({ type: 'PDF', buf }, '*', [buf])
+    pdfBuf = await blob.arrayBuffer()
+    if (popupReady) deliver(pdfBuf)
   } catch (err) {
     console.error('Print error:', err)
+    window.removeEventListener('message', onMessage)
   }
+
+  setTimeout(() => window.removeEventListener('message', onMessage), 60_000)
 }
 
 async function downloadPdf(entry: Entry, companyName: string, logoUrl?: string, companyPdfUrl?: string) {

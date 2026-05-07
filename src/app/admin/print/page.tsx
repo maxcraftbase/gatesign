@@ -3,21 +3,24 @@ import { useEffect } from 'react'
 
 export default function PrintPage() {
   useEffect(() => {
-    const channelName = window.location.hash.slice(1)
-    if (!channelName) return
+    const printKey = new URLSearchParams(window.location.search).get('k')
+    if (!printKey) return
 
-    const bc = new BroadcastChannel(channelName)
-    bc.postMessage({ type: 'PRINT_READY' })
-
-    bc.onmessage = (e) => {
-      if (e.data?.type === 'PDF' && e.data.buf instanceof ArrayBuffer) {
-        const blob = new Blob([e.data.buf], { type: 'application/pdf' })
-        window.location.href = URL.createObjectURL(blob)
-        bc.close()
-      }
+    const load = () => {
+      const b64 = localStorage.getItem(printKey)
+      if (!b64) return false
+      localStorage.removeItem(printKey)
+      const bytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0))
+      const blob = new Blob([bytes], { type: 'application/pdf' })
+      window.location.href = URL.createObjectURL(blob)
+      return true
     }
 
-    return () => bc.close()
+    if (!load()) {
+      const interval = setInterval(() => { if (load()) clearInterval(interval) }, 200)
+      setTimeout(() => clearInterval(interval), 30_000)
+      return () => clearInterval(interval)
+    }
   }, [])
 
   return (

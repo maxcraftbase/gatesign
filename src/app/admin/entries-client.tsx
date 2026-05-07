@@ -241,51 +241,38 @@ async function buildMergedPdf(entry: Entry, companyName: string, logoUrl?: strin
 }
 
 async function printEntry(entry: Entry, companyName: string, logoUrl?: string, companyPdfUrl?: string) {
-  // BroadcastChannel — works reliably in Safari without window.opener
-  const channelName = `gs-print-${Date.now()}`
-  const bc = new BroadcastChannel(channelName)
-  const w = window.open(`/admin/print#${channelName}`, '_blank', 'width=900,height=900')
-  if (!w) { bc.close(); return }
+  const printKey = `gs-print-${Date.now()}`
+  const w = window.open(`/admin/print?k=${printKey}`, '_blank', 'width=900,height=900')
+  if (!w) return
   w.blur()
   window.focus()
 
-  let pdfBuf: ArrayBuffer | null = null
-  let popupReady = false
-  let delivered = false
+  try {
+    const blob = await buildMergedPdf(entry, companyName, logoUrl, companyPdfUrl)
+    // Async base64 encode via FileReader — avoids blocking the UI thread
+    const b64 = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = () => resolve((reader.result as string).split(',')[1])
+      reader.onerror = reject
+      reader.readAsDataURL(blob)
+    })
+    localStorage.setItem(printKey, b64)
+    setTimeout(() => localStorage.removeItem(printKey), 300_000)
 
-  const deliver = (buf: ArrayBuffer) => {
-    if (delivered) return
-    delivered = true
-    bc.postMessage({ type: 'PDF', buf })
-    bc.close()
+    // Popup polls localStorage, navigates to blob URL, then we trigger print
     const tryPrint = (attempts = 0) => {
-      if (w.closed || attempts > 6) return
+      if (w.closed || attempts > 8) return
       try {
         w.focus()
         w.print()
         try { w.addEventListener('afterprint', () => w.close()) } catch {}
       } catch { setTimeout(() => tryPrint(attempts + 1), 1000) }
     }
-    setTimeout(tryPrint, 2500)
-  }
-
-  bc.onmessage = (e) => {
-    if (e.data?.type === 'PRINT_READY') {
-      popupReady = true
-      if (pdfBuf) deliver(pdfBuf)
-    }
-  }
-
-  try {
-    const blob = await buildMergedPdf(entry, companyName, logoUrl, companyPdfUrl)
-    pdfBuf = await blob.arrayBuffer()
-    if (popupReady) deliver(pdfBuf)
+    setTimeout(tryPrint, 3000)
   } catch (err) {
     console.error('Print error:', err)
-    bc.close()
+    localStorage.removeItem(printKey)
   }
-
-  setTimeout(() => bc.close(), 60_000)
 }
 
 async function downloadPdf(entry: Entry, companyName: string, logoUrl?: string, companyPdfUrl?: string) {

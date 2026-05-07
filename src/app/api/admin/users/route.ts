@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getAdminContext } from '@/lib/admin-auth'
 import { logAction } from '@/lib/audit'
 import { sendEmail } from '@/lib/brevo'
+import { checkAdminRateLimit } from '@/lib/rate-limit'
 import { supabaseUrl, serviceKey } from '@/lib/supabase-server'
 
 export async function GET() {
@@ -21,6 +22,9 @@ export async function POST(req: NextRequest) {
   const ctx = await getAdminContext()
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   if (ctx.role !== 'admin') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  if (!checkAdminRateLimit(ctx.company.id, 'users-invite', 10, 60_000)) {
+    return NextResponse.json({ error: 'Zu viele Anfragen. Bitte warten.' }, { status: 429 })
+  }
 
   const { email, name, role } = await req.json() as { email: string; name?: string; role: 'admin' | 'member' }
   if (!email || !role) return NextResponse.json({ error: 'E-Mail und Rolle erforderlich' }, { status: 400 })

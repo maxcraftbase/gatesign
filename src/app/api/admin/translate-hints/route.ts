@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getAdminContext } from '@/lib/admin-auth'
+import { checkAdminRateLimit } from '@/lib/rate-limit'
 import { supabaseUrl, anonKey } from '@/lib/supabase-server'
 
 const DEEPL_LANGS: Record<string, string> = {
@@ -11,6 +12,9 @@ export async function POST() {
   try {
     const ctx = await getAdminContext()
     if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (!checkAdminRateLimit(ctx.company.id, 'translate-hints', 3, 60_000)) {
+      return NextResponse.json({ error: 'Zu viele Anfragen. Bitte warten.' }, { status: 429 })
+    }
 
     const apiKey = process.env.DEEPL_API_KEY
     if (!apiKey) return NextResponse.json({ error: 'DEEPL_API_KEY nicht konfiguriert' }, { status: 500 })

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAdminContext } from '@/lib/admin-auth'
 import { logAction } from '@/lib/audit'
+import { checkAdminRateLimit } from '@/lib/rate-limit'
 import { supabaseUrl, anonKey } from '@/lib/supabase-server'
 
 export async function GET() {
@@ -35,6 +36,9 @@ export async function PUT(req: NextRequest) {
   try {
     const ctx = await getAdminContext()
     if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (!checkAdminRateLimit(ctx.company.id, 'settings-put', 30, 60_000)) {
+      return NextResponse.json({ error: 'Zu viele Anfragen. Bitte warten.' }, { status: 429 })
+    }
 
     const body = await req.json()
     const { settings, briefings } = body

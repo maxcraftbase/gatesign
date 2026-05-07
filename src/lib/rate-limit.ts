@@ -13,6 +13,15 @@ setInterval(() => {
   }
 }, 10 * 60 * 1000)
 
+export function checkAdminRateLimit(
+  companyId: string,
+  action: string,
+  maxAttempts = 60,
+  windowMs = 60 * 1000,
+): boolean {
+  return checkRateLimit(`admin:${companyId}:${action}`, maxAttempts, windowMs)
+}
+
 export function checkRateLimit(
   key: string,
   maxAttempts = 10,

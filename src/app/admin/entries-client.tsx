@@ -286,15 +286,16 @@ async function printEntry(entry: Entry, companyName: string, logoUrl?: string, c
     }
   }
 
-  const pagesHtml = dataUrls.map((src, i) =>
-    `<div class="page${i > 0 ? ' newpage' : ''}"><img src="${src}"></div>`
+  const pagesHtml = dataUrls.map((src) =>
+    `<div class="page"><img src="${src}"></div>`
   ).join('')
 
   const html = `<!DOCTYPE html><html><head><title>GateSign</title><style>
 *{margin:0;padding:0;box-sizing:border-box}
-.page{width:210mm;height:297mm;overflow:hidden;background:#fff;display:block}
+body{display:block;width:210mm}
+.page{width:210mm;height:297mm;overflow:hidden;background:#fff;display:block;page-break-inside:avoid}
 .page img{width:210mm;height:297mm;display:block;object-fit:fill}
-@media print{@page{margin:0;size:A4 portrait}.page{page-break-inside:avoid}.newpage{break-before:page}}
+@media print{@page{margin:0;size:A4 portrait}}
 </style></head><body>${pagesHtml}</body></html>`
 
   // Print via hidden iframe — user stays on the current page, no tab switching

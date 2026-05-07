@@ -188,74 +188,81 @@ async function drawLabelCanvas(entry: Entry, companyName: string, logoUrl?: stri
   return canvas
 }
 
+async function buildMergedPdf(entry: Entry, companyName: string, logoUrl?: string, companyPdfUrl?: string): Promise<Blob> {
+  const labelCanvas = await drawLabelCanvas(entry, companyName, logoUrl)
+  const { PDFDocument } = await import('pdf-lib')
+  const pdfDoc = await PDFDocument.create()
+
+  const pngBytes = Uint8Array.from(atob(labelCanvas.toDataURL('image/png').split(',')[1]), c => c.charCodeAt(0))
+  const labelImg = await pdfDoc.embedPng(pngBytes)
+  const labelPage = pdfDoc.addPage([595.28, 841.89])
+  labelPage.drawImage(labelImg, { x: 0, y: 0, width: 595.28, height: 841.89 })
+
+  if (companyPdfUrl) {
+    try {
+      const pdfRes = await fetch('/api/admin/proxy-company-pdf')
+      if (pdfRes.ok) {
+        const companyBytes = new Uint8Array(await pdfRes.arrayBuffer())
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs') as any
+        pdfjsLib.GlobalWorkerOptions.workerSrc = `${window.location.origin}/pdf.worker.min.mjs`
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const pdfJsDoc = await (pdfjsLib.getDocument as any)({ data: companyBytes.slice() }).promise
+        const nonBlankIndices: number[] = []
+        for (let i = 1; i <= pdfJsDoc.numPages; i++) {
+          const pg = await pdfJsDoc.getPage(i)
+          const vp = pg.getViewport({ scale: 0.15 })
+          const chk = document.createElement('canvas')
+          chk.width = Math.ceil(vp.width); chk.height = Math.ceil(vp.height)
+          const chkCtx = chk.getContext('2d')!
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          await pg.render({ canvasContext: chkCtx as any, viewport: vp }).promise
+          let nonWhite = 0
+          try {
+            const imgData = chkCtx.getImageData(0, 0, chk.width, chk.height)
+            for (let px = 0; px < imgData.data.length; px += 4) {
+              if (imgData.data[px] < 240 || imgData.data[px + 1] < 240 || imgData.data[px + 2] < 240) nonWhite++
+            }
+          } catch { nonWhite = 999 }
+          if (nonWhite >= 5) nonBlankIndices.push(i - 1)
+        }
+        if (nonBlankIndices.length > 0) {
+          const companyDoc = await PDFDocument.load(companyBytes)
+          const copied = await pdfDoc.copyPages(companyDoc, nonBlankIndices)
+          for (const p of copied) pdfDoc.addPage(p)
+        }
+      }
+    } catch (err) {
+      console.error('Company PDF error:', err)
+    }
+  }
+
+  return new Blob([await pdfDoc.save()], { type: 'application/pdf' })
+}
+
 async function printEntry(entry: Entry, companyName: string, logoUrl?: string, companyPdfUrl?: string) {
   const w = window.open('', '_blank', 'width=800,height=900')
   if (!w) return
   w.document.write('<html><body style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:Arial,sans-serif;color:#64748b;font-size:16px;">Dokument wird geladen…</body></html>')
-
   try {
-    const labelCanvas = await drawLabelCanvas(entry, companyName, logoUrl)
-    const { PDFDocument } = await import('pdf-lib')
-    const pdfDoc = await PDFDocument.create()
-
-    // Label as page 1 (PNG embedded, A4 in points)
-    const pngBytes = Uint8Array.from(atob(labelCanvas.toDataURL('image/png').split(',')[1]), c => c.charCodeAt(0))
-    const labelImg = await pdfDoc.embedPng(pngBytes)
-    const labelPage = pdfDoc.addPage([595.28, 841.89])
-    labelPage.drawImage(labelImg, { x: 0, y: 0, width: 595.28, height: 841.89 })
-
-    // Append company PDF pages (copied as real vectors — no quality loss)
-    if (companyPdfUrl) {
-      try {
-        const pdfRes = await fetch('/api/admin/proxy-company-pdf')
-        if (pdfRes.ok) {
-          const companyBytes = new Uint8Array(await pdfRes.arrayBuffer())
-
-          // Detect non-blank pages: tiny 0.15x render (~124×175 px), pixel check
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const pdfjsLib = await import('pdfjs-dist/legacy/build/pdf.mjs') as any
-          pdfjsLib.GlobalWorkerOptions.workerSrc = `${window.location.origin}/pdf.worker.min.mjs`
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const pdfJsDoc = await (pdfjsLib.getDocument as any)({ data: companyBytes.slice() }).promise
-          const nonBlankIndices: number[] = []
-          for (let i = 1; i <= pdfJsDoc.numPages; i++) {
-            const pg = await pdfJsDoc.getPage(i)
-            const vp = pg.getViewport({ scale: 0.15 })
-            const chk = document.createElement('canvas')
-            chk.width = Math.ceil(vp.width); chk.height = Math.ceil(vp.height)
-            const chkCtx = chk.getContext('2d')!
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            await pg.render({ canvasContext: chkCtx as any, viewport: vp }).promise
-            let nonWhite = 0
-            try {
-              const imgData = chkCtx.getImageData(0, 0, chk.width, chk.height)
-              for (let px = 0; px < imgData.data.length; px += 4) {
-                if (imgData.data[px] < 240 || imgData.data[px + 1] < 240 || imgData.data[px + 2] < 240) nonWhite++
-              }
-            } catch { nonWhite = 999 } // tainted canvas → assume non-blank
-            if (nonWhite >= 5) nonBlankIndices.push(i - 1) // pdf-lib uses 0-based indices
-          }
-
-          if (nonBlankIndices.length > 0) {
-            const companyDoc = await PDFDocument.load(companyBytes)
-            const copied = await pdfDoc.copyPages(companyDoc, nonBlankIndices)
-            for (const p of copied) pdfDoc.addPage(p)
-          }
-        }
-      } catch (err) {
-        console.error('Company PDF error:', err)
-      }
-    }
-
-    const blob = new Blob([await pdfDoc.save()], { type: 'application/pdf' })
+    const blob = await buildMergedPdf(entry, companyName, logoUrl, companyPdfUrl)
     const blobUrl = URL.createObjectURL(blob)
     w.location.href = blobUrl
     setTimeout(() => URL.revokeObjectURL(blobUrl), 300_000)
-
   } catch (err) {
     console.error('Print error:', err)
     w.document.write('<html><body style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:Arial,sans-serif;color:#ef4444;font-size:16px;">Fehler beim Laden des Dokuments.</body></html>')
   }
+}
+
+async function downloadPdf(entry: Entry, companyName: string, logoUrl?: string, companyPdfUrl?: string) {
+  const blob = await buildMergedPdf(entry, companyName, logoUrl, companyPdfUrl)
+  const blobUrl = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = blobUrl
+  a.download = `checkin-${entry.driver_name.replace(/\s+/g, '-')}-${entry.license_plate}.pdf`
+  a.click()
+  setTimeout(() => URL.revokeObjectURL(blobUrl), 60_000)
 }
 
 // ─── Detail Modal ─────────────────────────────────────────────────────────────
@@ -275,6 +282,7 @@ function EntryModal({ entry, companyName, logoUrl, companyPdfUrl, contactPersons
   const [saving, setSaving] = useState(false)
   const [translating, setTranslating] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [downloading, setDownloading] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   async function handleSave() {
@@ -334,6 +342,18 @@ function EntryModal({ entry, companyName, logoUrl, companyPdfUrl, contactPersons
             <p className="text-sm text-slate-500">{formatDate(entry.created_at)}</p>
           </div>
           <div className="flex items-center gap-2">
+            <button
+              disabled={downloading}
+              onClick={async () => {
+                setDownloading(true)
+                try {
+                  await downloadPdf({ ...entry, staff_note: note, staff_note_translated: translated, assigned_contact: assignedContact || null }, companyName, logoUrl, companyPdfUrl)
+                } finally { setDownloading(false) }
+              }}
+              className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-sm font-medium transition-colors disabled:opacity-50">
+              <Download className="w-4 h-4" />
+              {downloading ? 'Wird erstellt…' : 'PDF'}
+            </button>
             <button onClick={() => {
               void fetch(`/api/admin/entries/${entry.id}/print`, { method: 'POST' })
               void printEntry({ ...entry, staff_note: note, staff_note_translated: translated, assigned_contact: assignedContact || null }, companyName, logoUrl, companyPdfUrl)

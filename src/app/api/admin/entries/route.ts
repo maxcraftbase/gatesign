@@ -8,6 +8,7 @@ export async function GET(req: NextRequest) {
 
     const { searchParams } = new URL(req.url)
     const page = parseInt(searchParams.get('page') ?? '1')
+    const search = searchParams.get('search')?.trim() ?? ''
     const limit = 50
     const offset = (page - 1) * limit
 
@@ -21,6 +22,10 @@ export async function GET(req: NextRequest) {
       limit: String(limit),
       offset: String(offset),
     })
+    if (search) {
+      const term = `*${search}*`
+      params.set('or', `(driver_name.ilike.${term},reference_number.ilike.${term},company_name.ilike.${term})`)
+    }
 
     const res = await fetch(`${supabaseUrl}/rest/v1/check_ins?${params}`, {
       headers: { apikey: anonKey, Authorization: `Bearer ${ctx.accessToken}`, Prefer: 'count=exact' },

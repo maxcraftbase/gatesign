@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { Download, RefreshCw, Printer, X, Languages, FileText } from 'lucide-react'
+import { Download, RefreshCw, Printer, X, Languages, FileText, Search } from 'lucide-react'
 
 interface Entry {
   id: string
@@ -509,11 +509,14 @@ export function AdminEntriesClient() {
   const [logoUrl, setLogoUrl] = useState('')
   const [contactPersons, setContactPersons] = useState<string[]>([])
   const [companyPdfUrl, setCompanyPdfUrl] = useState('')
+  const [search, setSearch] = useState('')
 
-  const loadEntries = useCallback((p: number) => {
+  const loadEntries = useCallback((p: number, q = '') => {
     setLoading(true)
     setError('')
-    fetch(`/api/admin/entries?page=${p}`)
+    const qs = new URLSearchParams({ page: String(p) })
+    if (q.trim()) qs.set('search', q.trim())
+    fetch(`/api/admin/entries?${qs}`)
       .then(res => { if (!res.ok) throw new Error('Failed'); return res.json() })
       .then(data => {
         setEntries(data.entries ?? [])
@@ -531,6 +534,13 @@ export function AdminEntriesClient() {
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { loadEntries(1) }, [loadEntries])
 
+  // Debounced search
+  useEffect(() => {
+    const t = setTimeout(() => loadEntries(1, search), 350)
+    return () => clearTimeout(t)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search])
+
   function handleNoteUpdated(id: string, note: string, translated: string, assignedContact: string | null) {
     setEntries(prev => prev.map(e => e.id === id ? { ...e, staff_note: note, staff_note_translated: translated, assigned_contact: assignedContact } : e))
     if (selectedEntry?.id === id) setSelectedEntry(e => e ? { ...e, staff_note: note, staff_note_translated: translated, assigned_contact: assignedContact } : e)
@@ -540,13 +550,13 @@ export function AdminEntriesClient() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Check-in Einträge</h1>
-          <p className="text-slate-500 text-sm mt-1">{total} Einträge gesamt</p>
+          <p className="text-slate-500 text-sm mt-1">{total} Einträge{search ? ' gefunden' : ' gesamt'}</p>
         </div>
         <div className="flex gap-3">
-          <button onClick={() => loadEntries(page)}
+          <button onClick={() => loadEntries(page, search)}
             className="flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors">
             <RefreshCw className="w-4 h-4" />
             Aktualisieren
@@ -557,6 +567,17 @@ export function AdminEntriesClient() {
             CSV Export
           </button>
         </div>
+      </div>
+
+      <div className="relative mb-4">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+        <input
+          type="search"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          placeholder="Suche nach Name, Referenz oder Firma…"
+          className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-sm outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-100 bg-white"
+        />
       </div>
 
       {error && <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 mb-4 text-sm">{error}</div>}
@@ -635,12 +656,12 @@ export function AdminEntriesClient() {
 
           {totalPages > 1 && (
             <div className="flex items-center justify-center gap-3 mt-6">
-              <button onClick={() => loadEntries(page - 1)} disabled={page <= 1}
+              <button onClick={() => loadEntries(page - 1, search)} disabled={page <= 1}
                 className="px-4 py-2 rounded-xl border border-slate-200 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed">
                 ← Zurück
               </button>
               <span className="text-sm text-slate-500">Seite {page} von {totalPages}</span>
-              <button onClick={() => loadEntries(page + 1)} disabled={page >= totalPages}
+              <button onClick={() => loadEntries(page + 1, search)} disabled={page >= totalPages}
                 className="px-4 py-2 rounded-xl border border-slate-200 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed">
                 Weiter →
               </button>

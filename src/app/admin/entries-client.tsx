@@ -295,8 +295,8 @@ async function printEntry(entry: Entry, companyName: string, logoUrl?: string, c
       }
     }
 
-    const pagesHtml = dataUrls.map((src) =>
-      `<div class="page"><img src="${src}"></div>`
+    const pagesHtml = dataUrls.map((src, i) =>
+      `<div class="page${i > 0 ? ' newpage' : ''}"><img src="${src}"></div>`
     ).join('')
 
     // Write HTML directly into popup — avoids Safari PDF-viewer taking over the window
@@ -306,7 +306,7 @@ async function printEntry(entry: Entry, companyName: string, logoUrl?: string, c
 body{background:#888}
 .page{width:210mm;height:297mm;overflow:hidden;background:#fff;display:block}
 .page img{width:210mm;height:297mm;display:block;object-fit:fill}
-@media print{body{background:#fff}@page{margin:0;size:A4 portrait}.page{page-break-after:always;page-break-inside:avoid}}
+@media print{body{background:#fff}@page{margin:0;size:A4 portrait}.page{page-break-inside:avoid}.newpage{break-before:page}}
 </style></head><body>${pagesHtml}<script>
 (function(){
   var done=false;

@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
   const ctx = await getAdminContext()
   if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   if (ctx.role !== 'admin') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-  if (!checkAdminRateLimit(ctx.company.id, 'users-invite', 10, 60_000)) {
+  if (!await checkAdminRateLimit(ctx.company.id, 'users-invite', 10, 60_000)) {
     return NextResponse.json({ error: 'Zu viele Anfragen. Bitte warten.' }, { status: 429 })
   }
 

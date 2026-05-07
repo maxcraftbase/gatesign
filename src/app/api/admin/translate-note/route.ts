@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
   try {
     const ctx = await getAdminContext()
     if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    if (!checkAdminRateLimit(ctx.company.id, 'translate-note', 30, 60_000)) {
+    if (!await checkAdminRateLimit(ctx.company.id, 'translate-note', 30, 60_000)) {
       return NextResponse.json({ error: 'Zu viele Anfragen. Bitte warten.' }, { status: 429 })
     }
 

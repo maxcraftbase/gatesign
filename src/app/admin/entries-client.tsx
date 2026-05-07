@@ -280,7 +280,7 @@ async function printEntry(entry: Entry, companyName: string, logoUrl?: string, c
               const avg = (imgData.data[px] + imgData.data[px + 1] + imgData.data[px + 2]) / 3
               if (avg < 210) darkPixels++
             }
-            if (darkPixels < 50) continue
+            if (darkPixels < 500) continue
             // Render full resolution for printing
             const vp = page.getViewport({ scale: 2 })
             const canvas = document.createElement('canvas')

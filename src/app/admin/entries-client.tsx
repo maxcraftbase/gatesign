@@ -245,6 +245,8 @@ async function printEntry(entry: Entry, companyName: string, logoUrl?: string, c
   // Same-origin popup can navigate to blob:https://gatesign.de/... without restriction.
   const w = window.open('/admin/print', '_blank', 'width=900,height=900')
   if (!w) return
+  // Keep parent window in focus — popup stays in background until print dialog opens
+  window.focus()
 
   let pdfBuf: ArrayBuffer | null = null
   let popupReady = false
@@ -258,7 +260,12 @@ async function printEntry(entry: Entry, companyName: string, logoUrl?: string, c
     // Popup navigates to blob URL (native PDF viewer). Focus + print after load.
     const tryPrint = (attempts = 0) => {
       if (w.closed || attempts > 6) return
-      try { w.focus(); w.print() } catch { setTimeout(() => tryPrint(attempts + 1), 1000) }
+      try {
+        w.focus()
+        w.print()
+        // Auto-close popup after print dialog is dismissed
+        try { w.addEventListener('afterprint', () => w.close(), { once: true } as EventListenerOptions) } catch {}
+      } catch { setTimeout(() => tryPrint(attempts + 1), 1000) }
     }
     setTimeout(tryPrint, 2500)
   }

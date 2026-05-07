@@ -293,8 +293,8 @@ async function printEntry(entry: Entry, companyName: string, logoUrl?: string, c
   const html = `<!DOCTYPE html><html><head><title>GateSign</title><style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{display:block;width:210mm}
-.page{width:210mm;height:297mm;overflow:hidden;background:#fff;display:block;page-break-inside:avoid}
-.page img{width:210mm;height:297mm;display:block;object-fit:fill}
+.page{width:210mm;height:296mm;overflow:hidden;background:#fff;display:block;page-break-after:always;page-break-inside:avoid}
+.page img{width:210mm;height:296mm;display:block;object-fit:fill}
 @media print{@page{margin:0;size:A4 portrait}}
 </style></head><body>${pagesHtml}</body></html>`
 

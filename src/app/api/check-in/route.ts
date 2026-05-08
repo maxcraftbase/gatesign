@@ -5,20 +5,20 @@ import { checkRateLimit } from '@/lib/rate-limit'
 import { supabaseUrl, anonKey } from '@/lib/supabase-server'
 
 const checkInSchema = z.object({
-  slug: z.string().optional(),
-  visitor_type: z.enum(['truck', 'visitor', 'service']).optional(),
+  slug: z.string().nullish(),
+  visitor_type: z.enum(['truck', 'visitor', 'service']).nullish(),
   driver_name: z.string().min(1).max(100),
   company_name: z.string().min(1).max(150),
   license_plate: z.string().min(1).max(20),
-  trailer_plate: z.string().max(20).optional(),
-  phone: z.string().max(30).optional(),
-  contact_person: z.string().max(100).optional(),
+  trailer_plate: z.string().max(20).nullish(),
+  phone: z.string().max(30).nullish(),
+  contact_person: z.string().max(100).nullish(),
   language: z.enum(['de', 'en', 'pl', 'ro', 'cs', 'hu', 'bg', 'uk', 'ru', 'tr']),
-  briefing_accepted: z.boolean().optional(),
-  briefing_version: z.string().optional(),
-  has_signature: z.boolean().optional(),
-  signature_data: z.string().max(100_000).optional(),
-  reference_number: z.string().max(50).optional(),
+  briefing_accepted: z.boolean().nullish(),
+  briefing_version: z.string().nullish(),
+  has_signature: z.boolean().nullish(),
+  signature_data: z.string().max(100_000).nullish(),
+  reference_number: z.string().max(50).nullish(),
 })
 
 export async function POST(req: NextRequest) {
@@ -109,7 +109,7 @@ export async function POST(req: NextRequest) {
     const data = await res.json()
     return NextResponse.json({ success: true, id: data[0]?.id })
   } catch (err) {
-    console.error('Check-in route error:', err)
+    console.error('Check-in route error:', err instanceof Error ? err.message : String(err), err)
     return NextResponse.json({ error: 'Interner Fehler.' }, { status: 500 })
   }
 }

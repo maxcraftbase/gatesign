@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import * as Sentry from '@sentry/nextjs'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { logLoginEvent } from '@/lib/audit'
 import { supabaseUrl, anonKey, serviceKey } from '@/lib/supabase-server'
@@ -93,6 +94,11 @@ export async function POST(req: NextRequest) {
         )
         const compData = await compRes.json()
         slug = compData?.[0]?.slug ?? ''
+        if (!slug) {
+          Sentry.withScope(scope => { scope.setExtras({ userId, companyId, email }); Sentry.captureMessage('Login: company found but slug missing', 'warning') })
+        }
+      } else {
+        Sentry.withScope(scope => { scope.setExtras({ userId, email }); Sentry.captureMessage('Login: no active company_users entry after activation', 'warning') })
       }
     } catch (e) { console.error('[login] post-auth setup error:', e) }
 

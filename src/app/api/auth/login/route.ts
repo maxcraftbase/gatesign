@@ -10,7 +10,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Zu viele Versuche. Bitte 15 Minuten warten.' }, { status: 429 })
     }
 
-    const { email, password } = await req.json()
+    const { email: rawEmail, password } = await req.json()
+    const email = (rawEmail ?? '').toLowerCase().trim()
 
     const tokenRes = await fetch(`${supabaseUrl}/auth/v1/token?grant_type=password`, {
       method: 'POST',

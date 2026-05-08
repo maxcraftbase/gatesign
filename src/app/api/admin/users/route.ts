@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import * as Sentry from '@sentry/nextjs'
 import { getAdminContext } from '@/lib/admin-auth'
 import { logAction } from '@/lib/audit'
 import { sendEmail } from '@/lib/brevo'
@@ -113,7 +114,7 @@ export async function POST(req: NextRequest) {
       to: cleanEmail,
       subject: `Einladung zu GateSign – ${ctx.company.name}`,
       html: inviteHtml(name ?? null, ctx.company.name, inviteUrl),
-    }).catch((e: unknown) => { console.error('[invite] Brevo send failed:', e); emailOk = false })
+    }).catch((e: unknown) => { console.error('[invite] Brevo send failed:', e); Sentry.withScope(scope => { scope.setExtras({ email: cleanEmail, companyId: ctx.company.id }); Sentry.captureException(e) }); emailOk = false })
     if (!emailOk) {
       return NextResponse.json({ error: 'Einladungsmail konnte nicht gesendet werden' }, { status: 500 })
     }

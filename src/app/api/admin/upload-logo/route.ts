@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import * as Sentry from '@sentry/nextjs'
 import { getAdminContext } from '@/lib/admin-auth'
 import { checkAdminRateLimit } from '@/lib/rate-limit'
 import { supabaseUrl, anonKey } from '@/lib/supabase-server'
@@ -40,6 +41,7 @@ export async function POST(req: NextRequest) {
     if (!uploadRes.ok) {
       const err = await uploadRes.text()
       console.error('Logo upload error:', err)
+      Sentry.withScope(scope => { scope.setExtras({ companyId: ctx.company.id, fileName, status: uploadRes.status, err }); Sentry.captureMessage('Logo storage upload failed', 'error') })
       return NextResponse.json({ error: 'Fehler beim Hochladen.' }, { status: 500 })
     }
 
@@ -62,13 +64,16 @@ export async function POST(req: NextRequest) {
     })
 
     if (!settingsRes.ok) {
-      console.error('Logo settings save error:', await settingsRes.text())
+      const settingsErr = await settingsRes.text()
+      console.error('Logo settings save error:', settingsErr)
+      Sentry.withScope(scope => { scope.setExtras({ companyId: ctx.company.id, publicUrl, status: settingsRes.status, settingsErr }); Sentry.captureMessage('Logo uploaded but settings save failed', 'error') })
       return NextResponse.json({ error: 'Logo hochgeladen, aber Einstellung konnte nicht gespeichert werden.' }, { status: 500 })
     }
 
     return NextResponse.json({ success: true, url: publicUrl })
   } catch (err) {
     console.error('[upload-logo] error:', err)
+    Sentry.captureException(err)
     return NextResponse.json({ error: 'Interner Fehler.' }, { status: 500 })
   }
 }
@@ -93,6 +98,7 @@ export async function DELETE() {
     return NextResponse.json({ success: true })
   } catch (err) {
     console.error('[upload-logo] error:', err)
+    Sentry.captureException(err)
     return NextResponse.json({ error: 'Interner Fehler.' }, { status: 500 })
   }
 }

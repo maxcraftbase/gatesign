@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import * as Sentry from '@sentry/nextjs'
 import { getAdminContext } from '@/lib/admin-auth'
 import { checkAdminRateLimit } from '@/lib/rate-limit'
 import { supabaseUrl, anonKey } from '@/lib/supabase-server'
@@ -33,7 +34,9 @@ export async function POST(req: NextRequest) {
     })
 
     if (!uploadRes.ok) {
-      console.error('Storage upload error:', await uploadRes.text())
+      const uploadErr = await uploadRes.text()
+      console.error('Storage upload error:', uploadErr)
+      Sentry.withScope(scope => { scope.setExtras({ companyId: ctx.company.id, fileName, status: uploadRes.status, uploadErr }); Sentry.captureMessage('Hints PDF storage upload failed', 'error') })
       return NextResponse.json({ error: 'Fehler beim Hochladen.' }, { status: 500 })
     }
 
@@ -56,7 +59,8 @@ export async function POST(req: NextRequest) {
     })
 
     return NextResponse.json({ success: true, url: publicUrl })
-  } catch {
+  } catch (err) {
+    Sentry.captureException(err)
     return NextResponse.json({ error: 'Interner Fehler.' }, { status: 500 })
   }
 }
@@ -78,7 +82,8 @@ export async function DELETE() {
     })
 
     return NextResponse.json({ success: true })
-  } catch {
+  } catch (err) {
+    Sentry.captureException(err)
     return NextResponse.json({ error: 'Interner Fehler.' }, { status: 500 })
   }
 }

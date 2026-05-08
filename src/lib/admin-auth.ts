@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/nextjs'
 import { cookies } from 'next/headers'
 import { supabaseUrl, serviceKey, anonKey } from '@/lib/supabase-server'
 
@@ -121,6 +122,7 @@ export async function getAdminContext(): Promise<AdminContext | null> {
     userName = cuRows[0].name ?? null
   } else if (cuRows.length > 1) {
     // Multiple active company memberships for one user — data inconsistency, reject
+    Sentry.withScope(scope => { scope.setExtras({ userId: userId!, count: cuRows.length }); Sentry.captureMessage('getAdminContext: multiple active company_users for user', 'warning') })
     return null
   } else {
     // Legacy fallback: check companies.owner_id
@@ -155,7 +157,10 @@ export async function getAdminContext(): Promise<AdminContext | null> {
     { headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}` }, cache: 'no-store' }
   )
   const companies: { id: string; name: string; slug: string }[] = await companyRes.json()
-  if (!companies.length) return null
+  if (!companies.length) {
+    Sentry.withScope(scope => { scope.setExtras({ userId: userId!, companyId }); Sentry.captureMessage('getAdminContext: company not found for valid user', 'error') })
+    return null
+  }
 
   return { accessToken, userId: userId!, email, name: userName, role, company: companies[0] }
 }

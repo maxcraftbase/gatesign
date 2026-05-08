@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import * as Sentry from '@sentry/nextjs'
 import { getAdminContext } from '@/lib/admin-auth'
 import { checkAdminRateLimit } from '@/lib/rate-limit'
 import { supabaseUrl, anonKey } from '@/lib/supabase-server'
@@ -46,6 +47,7 @@ export async function POST() {
         const data = await res.json() as { translations: { text: string }[] }
         translations[lang] = data.translations.map(t => t.text)
       } else {
+        Sentry.withScope(scope => { scope.setExtras({ lang, deeplLang, status: res.status, companyId: ctx.company.id }); Sentry.captureMessage(`DeepL translate-hints failed for ${lang}`, 'warning') })
         translations[lang] = hints
       }
     }
@@ -69,6 +71,7 @@ export async function POST() {
     return NextResponse.json({ success: true, translations })
   } catch (err) {
     console.error('Translate hints error:', err)
+    Sentry.captureException(err)
     return NextResponse.json({ error: 'Interner Fehler.' }, { status: 500 })
   }
 }

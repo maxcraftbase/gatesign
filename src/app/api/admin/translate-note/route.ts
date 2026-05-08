@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import * as Sentry from '@sentry/nextjs'
 import { getAdminContext } from '@/lib/admin-auth'
 import { checkAdminRateLimit } from '@/lib/rate-limit'
 
@@ -30,10 +31,14 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({ text: [text], target_lang: deeplLang, source_lang: 'DE' }),
     })
 
-    if (!res.ok) return NextResponse.json({ error: 'Übersetzungsfehler' }, { status: 500 })
+    if (!res.ok) {
+      Sentry.withScope(scope => { scope.setExtras({ status: res.status, targetLanguage, deeplLang }); Sentry.captureMessage('DeepL translate-note request failed', 'warning') })
+      return NextResponse.json({ error: 'Übersetzungsfehler' }, { status: 500 })
+    }
     const data = await res.json() as { translations: { text: string }[] }
     return NextResponse.json({ translated: data.translations[0]?.text ?? text })
-  } catch {
+  } catch (err) {
+    Sentry.captureException(err)
     return NextResponse.json({ error: 'Interner Fehler' }, { status: 500 })
   }
 }

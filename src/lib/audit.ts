@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/nextjs'
 import type { AdminContext } from './admin-auth'
 import { supabaseUrl, serviceKey } from '@/lib/supabase-server'
 
@@ -14,9 +15,14 @@ async function insertAuditLog(payload: Record<string, unknown>) {
       },
       body: JSON.stringify(payload),
     })
-    if (!res.ok) console.error('[audit] insert failed:', await res.text())
+    if (!res.ok) {
+      const errText = await res.text()
+      console.error('[audit] insert failed:', errText)
+      Sentry.withScope(scope => { scope.setExtras({ payload, status: res.status, errText }); Sentry.captureMessage('Audit log insert failed', 'warning') })
+    }
   } catch (err) {
     console.error('[audit] insert error:', err)
+    Sentry.captureException(err)
   }
 }
 

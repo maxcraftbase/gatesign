@@ -115,6 +115,7 @@ export function AdminSettingsClient() {
   const [expandedHint, setExpandedHint] = useState<number | null>(null)
   const [translateSuccess, setTranslateSuccess] = useState(false)
   const [translateError, setTranslateError] = useState('')
+  const [translating, setTranslating] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState(false)
   const logoInputRef = useRef<HTMLInputElement>(null)
@@ -252,15 +253,20 @@ export function AdminSettingsClient() {
   async function handleTranslate() {
     setTranslateError('')
     setTranslateSuccess(false)
-    const res = await fetch('/api/admin/translate-hints', { method: 'POST' })
-    if (res.ok) {
-      const data = await res.json() as { translations: Record<string, string[]> }
-      setTranslations(data.translations)
-      setTranslateSuccess(true)
-      setTimeout(() => setTranslateSuccess(false), 4000)
-    } else {
-      const data = await res.json() as { error?: string }
-      setTranslateError(data.error ?? 'Fehler beim Übersetzen.')
+    setTranslating(true)
+    try {
+      const res = await fetch('/api/admin/translate-hints', { method: 'POST' })
+      if (res.ok) {
+        const data = await res.json() as { translations: Record<string, string[]> }
+        if (Object.keys(data.translations).length > 0) setTranslations(data.translations)
+        setTranslateSuccess(true)
+        setTimeout(() => setTranslateSuccess(false), 4000)
+      } else {
+        const data = await res.json() as { error?: string }
+        setTranslateError(data.error ?? 'Fehler beim Übersetzen.')
+      }
+    } finally {
+      setTranslating(false)
     }
   }
 
@@ -281,7 +287,7 @@ export function AdminSettingsClient() {
         setSuccess(true)
         setTimeout(() => setSuccess(false), 3000)
         if (getCustomHints().length > 0) {
-          void handleTranslate()
+          await handleTranslate()
         }
       }
     } catch {
@@ -641,6 +647,17 @@ export function AdminSettingsClient() {
             <p className="text-sm text-slate-400 italic">Noch keine Hinweise hinzugefügt.</p>
           )}
         </div>
+
+        {getCustomHints().length > 0 && (
+          <div className="mb-3 flex justify-end">
+            <button type="button" onClick={() => void handleTranslate()}
+              disabled={translating}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-medium text-slate-600 hover:border-blue-400 hover:text-blue-600 disabled:opacity-50 transition-colors">
+              <Languages className="w-3.5 h-3.5" />
+              {translating ? 'Übersetze…' : 'Jetzt übersetzen'}
+            </button>
+          </div>
+        )}
 
         <div className="flex gap-2">
           <input type="text" value={newHint} onChange={e => setNewHint(e.target.value)}

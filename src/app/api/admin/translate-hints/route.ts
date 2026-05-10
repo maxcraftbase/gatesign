@@ -30,7 +30,7 @@ export async function POST() {
     const rows = await settingsRes.json() as { value: string }[]
     const hints: string[] = rows[0]?.value ? JSON.parse(rows[0].value) as string[] : []
 
-    if (hints.length === 0) return NextResponse.json({ success: true, translations: { de: [] } })
+    if (hints.length === 0) return NextResponse.json({ success: true, translations: {} })
 
     const translations: Record<string, string[]> = { de: hints }
 

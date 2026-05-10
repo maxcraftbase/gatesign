@@ -446,55 +446,6 @@ export function AdminSettingsClient() {
           </div>
         </div>
 
-        {/* Verhalten — compact toggle group */}
-        {(() => {
-          const refTypes: string[] = (() => { try { return JSON.parse(settings.reference_required_types) } catch { return [] } })()
-          const refOn = refTypes.length > 0
-          const ALL = ['truck', 'visitor', 'service']
-          const LABELS: Record<string, string> = { truck: 'LKW', visitor: 'Besucher', service: 'Dienstleister' }
-          function toggleRefMain() {
-            setSettings(s => ({ ...s, reference_required_types: refOn ? '[]' : JSON.stringify(ALL) }))
-          }
-          function toggleRefType(t: string) {
-            const next = refTypes.includes(t) ? refTypes.filter(x => x !== t) : [...refTypes, t]
-            setSettings(s => ({ ...s, reference_required_types: JSON.stringify(next) }))
-          }
-          return (
-            <div className="bg-slate-50 rounded-xl border border-slate-200 overflow-hidden">
-              <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest px-4 pt-3 pb-2">Verhalten</p>
-              {/* Unterschrift */}
-              <div className="flex items-center gap-3 px-4 py-3 border-t border-slate-200">
-                <div
-                  onClick={() => setSettings(s => ({ ...s, signature_required: s.signature_required === 'true' ? 'false' : 'true' }))}
-                  className={`w-10 h-5 rounded-full transition-colors cursor-pointer flex items-center px-0.5 shrink-0 ${settings.signature_required === 'true' ? 'bg-blue-600' : 'bg-slate-300'}`}
-                >
-                  <div className={`w-4 h-4 bg-white rounded-full shadow transition-transform ${settings.signature_required === 'true' ? 'translate-x-5' : 'translate-x-0'}`} />
-                </div>
-                <span className="text-sm font-medium text-slate-700 flex-1">Unterschrift erforderlich</span>
-              </div>
-              {/* Referenznummer */}
-              <div className="border-t border-slate-200">
-                <div className="flex items-center gap-3 px-4 py-3">
-                  <div onClick={toggleRefMain}
-                    className={`w-10 h-5 rounded-full transition-colors cursor-pointer flex items-center px-0.5 shrink-0 ${refOn ? 'bg-blue-600' : 'bg-slate-300'}`}>
-                    <div className={`w-4 h-4 bg-white rounded-full shadow transition-transform ${refOn ? 'translate-x-5' : 'translate-x-0'}`} />
-                  </div>
-                  <span className="text-sm font-medium text-slate-700 flex-1">Referenznummer erforderlich</span>
-                  {refOn && (
-                    <div className="flex gap-1.5">
-                      {ALL.map(type => (
-                        <button key={type} type="button" onClick={() => toggleRefType(type)}
-                          className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border transition-colors ${refTypes.includes(type) ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-500 border-slate-300 hover:border-blue-400'}`}>
-                          {LABELS[type]}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          )
-        })()}
       </div>
 
       {/* Felder konfigurieren */}
@@ -582,6 +533,52 @@ export function AdminSettingsClient() {
               ))}
             </div>
             <p className="text-xs text-slate-400">Klick zykliert: Ausgeblendet → Optional → Pflichtfeld → Ausgeblendet</p>
+
+            {/* Verhalten */}
+            {(() => {
+              const refTypes: string[] = (() => { try { return JSON.parse(settings.reference_required_types) } catch { return [] } })()
+              const refOn = refTypes.length > 0
+              const VTYPES = ['truck', 'visitor', 'service']
+              const VLABELS: Record<string, string> = { truck: 'LKW', visitor: 'Besucher', service: 'Dienstleister' }
+              function toggleRefMain() {
+                setSettings(s => ({ ...s, reference_required_types: refOn ? '[]' : JSON.stringify(VTYPES) }))
+              }
+              function toggleRefType(t: string) {
+                const next = refTypes.includes(t) ? refTypes.filter(x => x !== t) : [...refTypes, t]
+                setSettings(s => ({ ...s, reference_required_types: JSON.stringify(next) }))
+              }
+              return (
+                <div className="mt-4 bg-slate-50 rounded-xl border border-slate-200 overflow-hidden">
+                  <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest px-4 pt-3 pb-2">Verhalten</p>
+                  <div className="flex items-center gap-3 px-4 py-3 border-t border-slate-200">
+                    <div
+                      onClick={() => setSettings(s => ({ ...s, signature_required: s.signature_required === 'true' ? 'false' : 'true' }))}
+                      className={`w-10 h-5 rounded-full transition-colors cursor-pointer flex items-center px-0.5 shrink-0 ${settings.signature_required === 'true' ? 'bg-blue-600' : 'bg-slate-300'}`}
+                    >
+                      <div className={`w-4 h-4 bg-white rounded-full shadow transition-transform ${settings.signature_required === 'true' ? 'translate-x-5' : 'translate-x-0'}`} />
+                    </div>
+                    <span className="text-sm font-medium text-slate-700 flex-1">Unterschrift erforderlich</span>
+                  </div>
+                  <div className="flex items-center gap-3 px-4 py-3 border-t border-slate-200">
+                    <div onClick={toggleRefMain}
+                      className={`w-10 h-5 rounded-full transition-colors cursor-pointer flex items-center px-0.5 shrink-0 ${refOn ? 'bg-blue-600' : 'bg-slate-300'}`}>
+                      <div className={`w-4 h-4 bg-white rounded-full shadow transition-transform ${refOn ? 'translate-x-5' : 'translate-x-0'}`} />
+                    </div>
+                    <span className="text-sm font-medium text-slate-700 flex-1">Referenznummer erforderlich</span>
+                    {refOn && (
+                      <div className="flex gap-1.5">
+                        {VTYPES.map(type => (
+                          <button key={type} type="button" onClick={() => toggleRefType(type)}
+                            className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border transition-colors ${refTypes.includes(type) ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-500 border-slate-300 hover:border-blue-400'}`}>
+                            {VLABELS[type]}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )
+            })()}
           </div>
         )
       })()}

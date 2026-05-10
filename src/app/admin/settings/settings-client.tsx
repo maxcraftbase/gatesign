@@ -20,7 +20,8 @@ interface Settings {
   logo_url: string
   welcome_title: string
   welcome_subtitle: string
-  signature_required: string
+  signature_required: string          // legacy – kept for backwards compat
+  signature_required_types: string    // per-type array, replaces boolean
   reference_required_types: string
   site_info: string
   hours_weekday: string
@@ -95,6 +96,7 @@ export function AdminSettingsClient() {
     welcome_title: 'Willkommen / Welcome',
     welcome_subtitle: 'Bitte melden Sie sich hier an — Please register here',
     signature_required: 'false',
+    signature_required_types: '[]',
     reference_required_types: '[]',
     site_info: '',
     hours_weekday: '',
@@ -142,6 +144,10 @@ export function AdminSettingsClient() {
       .then(r => r.json())
       .then(data => {
         if (data.settings) {
+          // Migrate legacy signature_required boolean → signature_required_types array
+          if (!data.settings.signature_required_types && data.settings.signature_required === 'true') {
+            data.settings.signature_required_types = '["truck","visitor","service"]'
+          }
           setSettings(prev => ({ ...prev, ...data.settings }))
           if (data.settings.custom_hints_translations) {
             try { setTranslations(JSON.parse(data.settings.custom_hints_translations)) } catch { /* ignore */ }
@@ -484,43 +490,58 @@ export function AdminSettingsClient() {
           setSettings(s => ({ ...s, [showKey]: JSON.stringify(newShow), [reqKey]: JSON.stringify(newReq) } as Settings))
         }
 
+        // Toggle helper for simple on/off arrays (Unterschrift, Referenznummer)
+        function toggleTypeInArray(key: keyof Settings, type: VType) {
+          const arr: VType[] = (() => { try { return JSON.parse(settings[key] as string) } catch { return [] } })()
+          const next = arr.includes(type) ? arr.filter(t => t !== type) : [...arr, type]
+          setSettings(s => ({ ...s, [key]: JSON.stringify(next) } as Settings))
+        }
+        function isTypeOn(key: keyof Settings, type: VType): boolean {
+          const arr: VType[] = (() => { try { return JSON.parse(settings[key] as string) } catch { return [] } })()
+          return arr.includes(type)
+        }
+
         const FIELD_ROWS: { label: string; showKey: keyof Settings; reqKey: keyof Settings }[] = [
-          { label: 'Kennzeichen', showKey: 'plate_show_types', reqKey: 'plate_required_types' },
-          { label: 'Firma',       showKey: 'company_show_types', reqKey: 'company_required_types' },
-          { label: 'Telefon',     showKey: 'phone_show_types', reqKey: 'phone_required_types' },
+          { label: 'Kennzeichen',     showKey: 'plate_show_types',          reqKey: 'plate_required_types' },
+          { label: 'Firma',           showKey: 'company_show_types',        reqKey: 'company_required_types' },
+          { label: 'Telefon',         showKey: 'phone_show_types',          reqKey: 'phone_required_types' },
           { label: 'Ansprechpartner', showKey: 'contact_person_show_types', reqKey: 'contact_person_required_types' },
+        ]
+
+        const TOGGLE_ROWS: { label: string; key: keyof Settings }[] = [
+          { label: 'Unterschrift',   key: 'signature_required_types' },
+          { label: 'Referenznummer', key: 'reference_required_types' },
         ]
 
         return (
           <div className="bg-white rounded-2xl border border-slate-100 p-6 mb-6">
             <h2 className="text-lg font-bold text-slate-900 mb-1">Felder konfigurieren</h2>
             <p className="text-sm text-slate-500 mb-5">Pro Besuchertyp festlegen, welche Felder angezeigt und welche Pflichtfelder sind.</p>
-            <div className="flex flex-col gap-1 mb-3">
-              <div className="grid grid-cols-[140px_1fr] gap-3 items-center px-1">
-                <span />
-                <div className="flex gap-2">
-                  {ALL.map(t => (
-                    <span key={t} className="flex-1 text-center text-xs font-semibold text-slate-400 uppercase tracking-wide">{TYPE_LABELS[t]}</span>
-                  ))}
-                </div>
+
+            {/* Header row */}
+            <div className="grid grid-cols-[160px_1fr] gap-3 items-center px-1 mb-1">
+              <span />
+              <div className="flex gap-2">
+                {ALL.map(t => (
+                  <span key={t} className="flex-1 text-center text-xs font-semibold text-slate-400 uppercase tracking-wide">{TYPE_LABELS[t]}</span>
+                ))}
               </div>
+            </div>
+
+            {/* Field rows (3-state) */}
+            <div className="flex flex-col gap-1 mb-1">
               {FIELD_ROWS.map(({ label, showKey, reqKey }) => (
-                <div key={showKey} className="grid grid-cols-[140px_1fr] gap-3 items-center bg-slate-50 rounded-xl px-3 py-2.5">
+                <div key={showKey} className="grid grid-cols-[160px_1fr] gap-3 items-center bg-slate-50 rounded-xl px-3 py-2.5">
                   <span className="text-sm font-semibold text-slate-700">{label}</span>
                   <div className="flex gap-2">
                     {ALL.map(type => {
                       const state = getState(showKey, reqKey, type)
                       return (
-                        <button
-                          key={type}
-                          type="button"
-                          onClick={() => cycleState(showKey, reqKey, type)}
+                        <button key={type} type="button" onClick={() => cycleState(showKey, reqKey, type)}
                           className={`flex-1 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
-                            state === 'required'
-                              ? 'bg-blue-600 border-blue-600 text-white'
-                              : state === 'optional'
-                              ? 'bg-white border-blue-400 text-blue-600'
-                              : 'bg-white border-slate-200 text-slate-400'
+                            state === 'required' ? 'bg-blue-600 border-blue-600 text-white'
+                            : state === 'optional' ? 'bg-white border-blue-400 text-blue-600'
+                            : 'bg-white border-slate-200 text-slate-400'
                           }`}
                           title={state === 'required' ? 'Pflichtfeld' : state === 'optional' ? 'Optional' : 'Ausgeblendet'}
                         >
@@ -532,53 +553,34 @@ export function AdminSettingsClient() {
                 </div>
               ))}
             </div>
-            <p className="text-xs text-slate-400">Klick zykliert: Ausgeblendet → Optional → Pflichtfeld → Ausgeblendet</p>
 
-            {/* Verhalten */}
-            {(() => {
-              const refTypes: string[] = (() => { try { return JSON.parse(settings.reference_required_types) } catch { return [] } })()
-              const refOn = refTypes.length > 0
-              const VTYPES = ['truck', 'visitor', 'service']
-              const VLABELS: Record<string, string> = { truck: 'LKW', visitor: 'Besucher', service: 'Dienstleister' }
-              function toggleRefMain() {
-                setSettings(s => ({ ...s, reference_required_types: refOn ? '[]' : JSON.stringify(VTYPES) }))
-              }
-              function toggleRefType(t: string) {
-                const next = refTypes.includes(t) ? refTypes.filter(x => x !== t) : [...refTypes, t]
-                setSettings(s => ({ ...s, reference_required_types: JSON.stringify(next) }))
-              }
-              return (
-                <div className="mt-4 bg-slate-50 rounded-xl border border-slate-200 overflow-hidden">
-                  <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest px-4 pt-3 pb-2">Verhalten</p>
-                  <div className="flex items-center gap-3 px-4 py-3 border-t border-slate-200">
-                    <div
-                      onClick={() => setSettings(s => ({ ...s, signature_required: s.signature_required === 'true' ? 'false' : 'true' }))}
-                      className={`w-10 h-5 rounded-full transition-colors cursor-pointer flex items-center px-0.5 shrink-0 ${settings.signature_required === 'true' ? 'bg-blue-600' : 'bg-slate-300'}`}
-                    >
-                      <div className={`w-4 h-4 bg-white rounded-full shadow transition-transform ${settings.signature_required === 'true' ? 'translate-x-5' : 'translate-x-0'}`} />
-                    </div>
-                    <span className="text-sm font-medium text-slate-700 flex-1">Unterschrift erforderlich</span>
-                  </div>
-                  <div className="flex items-center gap-3 px-4 py-3 border-t border-slate-200">
-                    <div onClick={toggleRefMain}
-                      className={`w-10 h-5 rounded-full transition-colors cursor-pointer flex items-center px-0.5 shrink-0 ${refOn ? 'bg-blue-600' : 'bg-slate-300'}`}>
-                      <div className={`w-4 h-4 bg-white rounded-full shadow transition-transform ${refOn ? 'translate-x-5' : 'translate-x-0'}`} />
-                    </div>
-                    <span className="text-sm font-medium text-slate-700 flex-1">Referenznummer erforderlich</span>
-                    {refOn && (
-                      <div className="flex gap-1.5">
-                        {VTYPES.map(type => (
-                          <button key={type} type="button" onClick={() => toggleRefType(type)}
-                            className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border transition-colors ${refTypes.includes(type) ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-500 border-slate-300 hover:border-blue-400'}`}>
-                            {VLABELS[type]}
-                          </button>
-                        ))}
-                      </div>
-                    )}
+            {/* Divider */}
+            <div className="border-t border-slate-100 my-3" />
+
+            {/* Behaviour rows (2-state: An/Aus) */}
+            <div className="flex flex-col gap-1 mb-3">
+              {TOGGLE_ROWS.map(({ label, key }) => (
+                <div key={key} className="grid grid-cols-[160px_1fr] gap-3 items-center bg-slate-50 rounded-xl px-3 py-2.5">
+                  <span className="text-sm font-semibold text-slate-700">{label}</span>
+                  <div className="flex gap-2">
+                    {ALL.map(type => {
+                      const on = isTypeOn(key, type)
+                      return (
+                        <button key={type} type="button" onClick={() => toggleTypeInArray(key, type)}
+                          className={`flex-1 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
+                            on ? 'bg-blue-600 border-blue-600 text-white' : 'bg-white border-slate-200 text-slate-400'
+                          }`}
+                        >
+                          {on ? '● An' : '○ Aus'}
+                        </button>
+                      )
+                    })}
                   </div>
                 </div>
-              )
-            })()}
+              ))}
+            </div>
+
+            <p className="text-xs text-slate-400">Felder: Ausgeblendet → Optional → Pflichtfeld → Ausgeblendet &nbsp;·&nbsp; Verhalten: An/Aus</p>
           </div>
         )
       })()}

@@ -24,7 +24,7 @@ export function KioskClient({ slug, terminalSlug, terminalName: initialTerminalN
   const [formData, setFormData] = useState<CheckInFormData>(EMPTY_FORM)
   const [briefingPdfUrl, setBriefingPdfUrl] = useState('')
   const [briefingVersion, setBriefingVersion] = useState('1.0')
-  const [signatureRequired, setSignatureRequired] = useState(false)
+  const [signatureRequiredTypes, setSignatureRequiredTypes] = useState<string[]>([])
   const [referenceRequiredTypes, setReferenceRequiredTypes] = useState<string[]>([])
   const [pdfUrls, setPdfUrls] = useState<Record<string, string>>({})
   const [welcomeTitle, setWelcomeTitle] = useState('Willkommen / Welcome')
@@ -100,7 +100,12 @@ export function KioskClient({ slug, terminalSlug, terminalName: initialTerminalN
         if (data.welcome_title) setWelcomeTitle(data.welcome_title)
         if (data.welcome_subtitle) setWelcomeSubtitle(data.welcome_subtitle)
         if (data.briefing_version) setBriefingVersion(data.briefing_version)
-        if (data.signature_required) setSignatureRequired(data.signature_required === 'true')
+        if (data.signature_required_types) {
+          try { setSignatureRequiredTypes(JSON.parse(data.signature_required_types)) } catch { /* ignore */ }
+        } else if (data.signature_required === 'true') {
+          // legacy fallback
+          setSignatureRequiredTypes(['truck', 'visitor', 'service'])
+        }
         if (data.reference_required_types) {
           try { setReferenceRequiredTypes(JSON.parse(data.reference_required_types)) } catch { /* ignore */ }
         }
@@ -271,7 +276,7 @@ export function KioskClient({ slug, terminalSlug, terminalName: initialTerminalN
       )}
       {step === 3 && (
         <CombinedFormStep lang={lang} visitorType={visitorType} formData={formData}
-          onChange={setFormData} pdfUrl={briefingPdfUrl} signatureRequired={signatureRequired}
+          onChange={setFormData} pdfUrl={briefingPdfUrl} signatureRequired={signatureRequiredTypes.includes(visitorType)}
           referenceRequiredTypes={referenceRequiredTypes}
           activeRules={activeSafetyRules} ruleVisitorTypes={ruleVisitorTypes}
           customHints={customHintsTranslations[lang] ?? customHints} hintTypes={customHintsTypes}

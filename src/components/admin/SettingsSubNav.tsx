@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { clsx } from 'clsx'
-import { SlidersHorizontal, MonitorCheck, FileText, Users, ScrollText, UserCircle } from 'lucide-react'
+import { SlidersHorizontal, MonitorCheck, FileText, Users, ScrollText, CircleUser } from 'lucide-react'
 
 interface TabItem {
   href: string
@@ -39,7 +39,7 @@ export function SettingsSubNav({ slug }: { slug: string }) {
     {
       label: 'Konto',
       items: [
-        { href: `${base}/account`, label: 'Profil',    icon: <UserCircle className="w-3.5 h-3.5" /> },
+        { href: `${base}/account`, label: 'Profil',    icon: <CircleUser className="w-3.5 h-3.5" /> },
         { href: `${base}/audit`,   label: 'Protokoll', icon: <ScrollText className="w-3.5 h-3.5" /> },
       ],
     },

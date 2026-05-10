@@ -78,16 +78,6 @@ export function AdminEntriesClient() {
     setSort(prev => prev.col === col ? { col, dir: prev.dir === 'desc' ? 'asc' : 'desc' } : { col, dir: 'asc' })
   }
 
-  // Keep selectedEntry in sync when entries array updates (auto-refresh or checkout)
-  useEffect(() => {
-    if (!selectedEntry) return
-    const updated = entries.find(e => e.id === selectedEntry.id)
-    if (updated && updated.departed_at !== selectedEntry.departed_at) {
-      setSelectedEntry(updated)
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [entries])
-
   useEffect(() => {
     let active = true
     if (!selectedEntry?.has_signature || !selectedEntry?.id) {
@@ -111,8 +101,15 @@ export function AdminEntriesClient() {
         .then(res => res.ok ? res.json() : null)
         .then(data => {
           if (!data) return
-          setEntries(data.entries ?? [])
+          const newEntries: Entry[] = data.entries ?? []
+          setEntries(newEntries)
           setTotal(data.total ?? 0)
+          // Sync open modal with latest departed_at from refresh
+          setSelectedEntry(prev => {
+            if (!prev) return prev
+            const refreshed = newEntries.find(e => e.id === prev.id)
+            return refreshed ?? prev
+          })
         })
         .catch(() => {})
     }, 30_000)
@@ -349,6 +346,21 @@ export function AdminEntriesClient() {
         </>
       )}
 
+      {selectedEntry && (
+        <EntryModal
+          entry={selectedEntry}
+          companyName={companyName}
+          logoUrl={logoUrl}
+          companyPdfUrl={companyPdfUrl}
+          contactPersons={contactPersons}
+          signatureData={signatureData}
+          onClose={() => setSelectedEntry(null)}
+          onNoteUpdated={handleNoteUpdated}
+        />
+      )}
+    </div>
+  )
+}
       {selectedEntry && (
         <EntryModal
           entry={selectedEntry}

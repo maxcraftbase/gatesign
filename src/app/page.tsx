@@ -30,18 +30,22 @@ const typeBadgeClass = {
 
 const content = {
   de: {
-    nav: { login: 'Anmelden', register: 'Jetzt starten' },
+    nav: { login: 'Anmelden', register: 'Jetzt starten', demo: 'Demo anfragen' },
     hero: {
-      title: 'Digitales Check-in Terminal',
-      sub: 'Für Produktions- und Logistikbetriebe. Besucher und Fahrer sicher einchecken, Sicherheitsunterweisungen rechtssicher dokumentieren — automatisch in der Muttersprache jedes Fahrers.',
-      cta: 'Kostenlos testen',
-      login: 'Bereits Kunde? Anmelden',
+      title: 'Sicherheitsbelehrung digital — rechtssicher in 10 Minuten.',
+      sub: 'Kein Papierchaos, keine Sprachbarriere, keine Haftungslücke. GateSign dokumentiert jeden Check-in automatisch — in der Muttersprache jedes Fahrers.',
+      cta: '30 Tage kostenlos testen',
+      demo: 'Demo anfragen',
+    },
+    trustedBy: {
+      text: 'Bereits im Einsatz in Produktion, Logistik und Maschinenbau — in Deutschland, Österreich und der Schweiz.',
+      industries: ['🏭 Produktion', '🚛 Logistik', '⚙️ Maschinenbau', '🏗️ Baugewerbe', '🏪 Großhandel'],
     },
     stats: [
-      { value: '10', label: 'Sprachen' },
-      { value: '28', label: 'Sicherheitsregeln' },
-      { value: '3', label: 'Besuchertypen' },
-      { value: '100%', label: 'Digital & nachweisbar' },
+      { value: '10', label: 'Sprachen — kein Fahrer ohne Verständnis' },
+      { value: '28', label: 'ISO-Regeln — sofort einsetzbar' },
+      { value: '3', label: 'Besuchertypen — getrennt belehrt' },
+      { value: '100%', label: 'Revisionssicher & BG-tauglich' },
     ],
     legal: {
       badge: 'Gesetzliche Pflicht',
@@ -105,7 +109,7 @@ const content = {
           '10 Sprachen — Fahrer wählt selbst',
           '3 Besuchertypen: LKW, Besucher, Dienstleister',
           'Digitale Unterschrift mit Zeitstempel',
-          'Kiosk-Modus: Vollbild, gesichert, kein App-Store',
+          'Kiosk-Modus: Läuft auf jedem Tablet — kein IT-Aufwand',
         ],
       },
       {
@@ -114,7 +118,7 @@ const content = {
           '28 ISO-konforme Sicherheitsregeln',
           'PDF-Belehrung je Besuchertyp',
           'Firmen-PDF automatisch angehängt',
-          'Eigene Hinweise mit KI-Übersetzung',
+          'Eigene Hinweise mit KI-Übersetzung — im Dashboard kontrollierbar',
         ],
       },
       {
@@ -149,7 +153,9 @@ const content = {
     },
     pricing: {
       title: 'Einfache Preisgestaltung',
-      desc: 'Keine Einrichtungsgebühr · Keine Nutzungsabrechnung · Jederzeit kündbar',
+      desc: 'Keine Einrichtungsgebühr · 30 Tage kostenlos · Jederzeit kündbar',
+      trial: '30 Tage kostenlos',
+      support: 'Inkl. E-Mail-Support & Einrichtungshilfe',
       cta: 'Jetzt starten',
       contact: 'Kontakt aufnehmen',
       onRequest: 'Auf Anfrage',
@@ -159,25 +165,36 @@ const content = {
         { label: 'Unbegrenzt', price: null, period: 'Individuelles Angebot', desc: 'Für Konzerne und Betriebe mit vielen Standorten.', highlight: false },
       ],
     },
+    finalCta: {
+      title: 'Bereit für rechtssichere Check-ins?',
+      sub: 'Starten Sie jetzt — keine Kreditkarte, keine Einrichtungsgebühr, jederzeit kündbar.',
+      cta: '30 Tage kostenlos testen →',
+      demo: 'Demo anfragen',
+    },
     footer: {
       rights: '© 2025 Alpha Consult GmbH · GateSign',
       impressum: 'Impressum',
       datenschutz: 'Datenschutz',
+      contact: 'info@gatesign.de',
     },
   },
   en: {
-    nav: { login: 'Log in', register: 'Get started' },
+    nav: { login: 'Log in', register: 'Get started', demo: 'Request demo' },
     hero: {
-      title: 'Digital Check-in Terminal',
-      sub: 'For production and logistics companies. Check in visitors and drivers securely, document safety briefings compliantly — automatically in each driver\'s native language.',
-      cta: 'Try for free',
-      login: 'Already a customer? Log in',
+      title: 'Safety briefings done right — legally compliant in 10 minutes.',
+      sub: 'No paper trail gaps, no language barriers, no liability exposure. GateSign documents every check-in automatically — in every driver\'s native language.',
+      cta: 'Try free for 30 days',
+      demo: 'Request a demo',
+    },
+    trustedBy: {
+      text: 'Already in use across production, logistics and mechanical engineering — in Germany, Austria and Switzerland.',
+      industries: ['🏭 Production', '🚛 Logistics', '⚙️ Engineering', '🏗️ Construction', '🏪 Wholesale'],
     },
     stats: [
-      { value: '10', label: 'Languages' },
-      { value: '28', label: 'Safety rules' },
-      { value: '3', label: 'Visitor types' },
-      { value: '100%', label: 'Digital & documented' },
+      { value: '10', label: 'Languages — no driver left without understanding' },
+      { value: '28', label: 'ISO rules — ready to use immediately' },
+      { value: '3', label: 'Visitor types — briefed separately' },
+      { value: '100%', label: 'Audit-proof & BG-compliant' },
     ],
     legal: {
       badge: 'Legal Requirement',
@@ -241,7 +258,7 @@ const content = {
           '10 languages — visitor chooses',
           '3 visitor types: truck, visitor, contractor',
           'Digital signature with timestamp',
-          'Kiosk mode: fullscreen, secured, no app store',
+          'Kiosk mode: runs on any tablet — no IT effort',
         ],
       },
       {
@@ -250,7 +267,7 @@ const content = {
           '28 ISO-compliant safety rules',
           'PDF briefing per visitor type',
           'Company PDF automatically attached',
-          'Custom hints with AI translation',
+          'Custom hints with AI translation — reviewable in dashboard',
         ],
       },
       {
@@ -285,7 +302,9 @@ const content = {
     },
     pricing: {
       title: 'Simple pricing',
-      desc: 'No setup fee · No usage billing · Cancel anytime',
+      desc: 'No setup fee · 30 days free · Cancel anytime',
+      trial: '30 days free',
+      support: 'Incl. email support & onboarding help',
       cta: 'Get started',
       contact: 'Contact us',
       onRequest: 'On request',
@@ -295,10 +314,17 @@ const content = {
         { label: 'Unlimited', price: null, period: 'Custom quote', desc: 'For enterprises and businesses with many locations.', highlight: false },
       ],
     },
+    finalCta: {
+      title: 'Ready for legally compliant check-ins?',
+      sub: 'Get started now — no credit card, no setup fee, cancel anytime.',
+      cta: 'Try free for 30 days →',
+      demo: 'Request a demo',
+    },
     footer: {
       rights: '© 2025 Alpha Consult GmbH · GateSign',
       impressum: 'Impressum',
       datenschutz: 'Privacy Policy',
+      contact: 'info@gatesign.de',
     },
   },
 }
@@ -334,6 +360,10 @@ export default function LandingPage() {
             >
               {lang === 'de' ? 'EN' : 'DE'}
             </button>
+            <a href="mailto:info@gatesign.de"
+              className="hidden sm:block text-sm text-slate-500 hover:text-slate-900 transition-colors font-medium">
+              {t.nav.demo}
+            </a>
             <Link href="/login" className="text-sm text-slate-600 hover:text-slate-900 transition-colors font-medium">
               {t.nav.login}
             </Link>
@@ -351,7 +381,7 @@ export default function LandingPage() {
         {/* Hero content — centered in remaining space above stats */}
         <div className="flex-1 flex flex-col items-center justify-center px-6 py-16">
           <div className="max-w-3xl w-full">
-            <h1 className="text-5xl font-bold tracking-tight leading-tight mb-6">
+            <h1 className="text-4xl sm:text-5xl font-bold tracking-tight leading-tight mb-6">
               {t.hero.title}
             </h1>
             <p className="text-xl text-slate-500 max-w-2xl mx-auto mb-12 leading-relaxed">
@@ -362,10 +392,10 @@ export default function LandingPage() {
                 className="inline-block bg-slate-900 text-white text-base font-semibold px-8 py-4 rounded-xl hover:bg-slate-700 transition-colors">
                 {t.hero.cta} →
               </Link>
-              <Link href="/login"
+              <a href="mailto:info@gatesign.de"
                 className="inline-block text-slate-500 text-base font-medium px-8 py-4 rounded-xl hover:text-slate-900 hover:bg-slate-50 transition-colors">
-                {t.hero.login}
-              </Link>
+                {t.hero.demo}
+              </a>
             </div>
           </div>
         </div>
@@ -378,6 +408,20 @@ export default function LandingPage() {
                 <div className="text-4xl font-bold text-white mb-1">{s.value}</div>
                 <div className="text-sm text-slate-400 font-medium">{s.label}</div>
               </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Trusted By — Social Proof Strip */}
+      <section className="border-b border-slate-100 py-8">
+        <div className="max-w-5xl mx-auto px-6 text-center">
+          <p className="text-sm text-slate-400 mb-4">{t.trustedBy.text}</p>
+          <div className="flex flex-wrap justify-center gap-2">
+            {t.trustedBy.industries.map((ind, i) => (
+              <span key={i} className="text-sm font-medium bg-slate-50 border border-slate-200 text-slate-600 px-4 py-1.5 rounded-full">
+                {ind}
+              </span>
             ))}
           </div>
         </div>
@@ -403,47 +447,6 @@ export default function LandingPage() {
                 <p className="text-sm text-slate-500 leading-relaxed">{item.text}</p>
               </div>
             ))}
-          </div>
-        </div>
-      </section>
-
-      {/* How it works */}
-      <section className="bg-slate-50 py-20">
-        <div className="max-w-5xl mx-auto px-6">
-          <h2 className="text-2xl font-bold text-center mb-12">{t.how.title}</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-14">
-            {t.how.steps.map((step, i) => (
-              <div key={i} className="text-center">
-                <div className="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center mx-auto mb-4 shadow-sm">
-                  {howIcons[i]}
-                </div>
-                <div className="text-xs font-semibold text-slate-400 mb-1 uppercase tracking-wide">{t.how.step} {i + 1}</div>
-                <h3 className="text-base font-bold mb-2">{step.title}</h3>
-                <p className="text-slate-500 text-sm leading-relaxed">{step.text}</p>
-              </div>
-            ))}
-          </div>
-
-          {/* Terminal step indicators */}
-          <div className="bg-white border border-slate-200 rounded-2xl px-6 py-6 shadow-sm">
-            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide text-center mb-5">
-              {lang === 'de' ? 'Ablauf am Terminal' : 'Terminal flow'}
-            </p>
-            <div className="flex items-center justify-between gap-2">
-              {t.how.terminalSteps.map((step, i) => (
-                <div key={i} className="flex items-center flex-1 last:flex-none">
-                  <div className="flex flex-col items-center flex-1">
-                    <div className="w-8 h-8 rounded-full bg-slate-900 text-white text-xs font-bold flex items-center justify-center mb-2 flex-shrink-0">
-                      {i + 1}
-                    </div>
-                    <span className="text-xs font-medium text-slate-600 text-center leading-tight">{step}</span>
-                  </div>
-                  {i < t.how.terminalSteps.length - 1 && (
-                    <div className="w-6 h-px bg-slate-200 flex-shrink-0 mb-4" />
-                  )}
-                </div>
-              ))}
-            </div>
           </div>
         </div>
       </section>
@@ -499,6 +502,47 @@ export default function LandingPage() {
                   {lang === 'de' ? '6 Regeln aktiv · automatisch übersetzt' : '6 rules active · automatically translated'}
                 </span>
               </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* How it works */}
+      <section className="bg-slate-50 py-20">
+        <div className="max-w-5xl mx-auto px-6">
+          <h2 className="text-2xl font-bold text-center mb-12">{t.how.title}</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-14">
+            {t.how.steps.map((step, i) => (
+              <div key={i} className="text-center">
+                <div className="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center mx-auto mb-4 shadow-sm">
+                  {howIcons[i]}
+                </div>
+                <div className="text-xs font-semibold text-slate-400 mb-1 uppercase tracking-wide">{t.how.step} {i + 1}</div>
+                <h3 className="text-base font-bold mb-2">{step.title}</h3>
+                <p className="text-slate-500 text-sm leading-relaxed">{step.text}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Terminal step indicators */}
+          <div className="bg-white border border-slate-200 rounded-2xl px-6 py-6 shadow-sm">
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide text-center mb-5">
+              {lang === 'de' ? 'Ablauf am Terminal' : 'Terminal flow'}
+            </p>
+            <div className="flex items-center justify-between gap-2">
+              {t.how.terminalSteps.map((step, i) => (
+                <div key={i} className="flex items-center flex-1 last:flex-none">
+                  <div className="flex flex-col items-center flex-1">
+                    <div className="w-8 h-8 rounded-full bg-slate-900 text-white text-xs font-bold flex items-center justify-center mb-2 flex-shrink-0">
+                      {i + 1}
+                    </div>
+                    <span className="text-xs font-medium text-slate-600 text-center leading-tight">{step}</span>
+                  </div>
+                  {i < t.how.terminalSteps.length - 1 && (
+                    <div className="w-6 h-px bg-slate-200 flex-shrink-0 mb-4" />
+                  )}
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -669,6 +713,13 @@ export default function LandingPage() {
                 ? 'bg-slate-900 border-slate-900 text-white'
                 : 'bg-white border-slate-200'
             }`}>
+              <div className={`text-xs font-semibold mb-3 px-3 py-1 rounded-full ${
+                tier.highlight
+                  ? 'bg-white/10 text-white'
+                  : 'bg-emerald-50 text-emerald-700'
+              }`}>
+                {t.pricing.trial}
+              </div>
               <div className={`text-sm font-bold mb-3 ${tier.highlight ? 'text-slate-300' : 'text-slate-700'}`}>
                 {tier.label}
               </div>
@@ -682,8 +733,11 @@ export default function LandingPage() {
                 </div>
               )}
               <div className="text-sm text-slate-400 mb-5">{tier.period}</div>
-              <p className={`text-sm leading-relaxed mb-6 flex-1 ${tier.highlight ? 'text-slate-300' : 'text-slate-500'}`}>
+              <p className={`text-sm leading-relaxed mb-4 flex-1 ${tier.highlight ? 'text-slate-300' : 'text-slate-500'}`}>
                 {tier.desc}
+              </p>
+              <p className={`text-xs mb-6 ${tier.highlight ? 'text-slate-400' : 'text-slate-400'}`}>
+                {t.pricing.support}
               </p>
               {tier.price ? (
                 <Link href="/register"
@@ -705,10 +759,31 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Final CTA Block */}
+      <section className="bg-slate-900 py-20">
+        <div className="max-w-2xl mx-auto px-6 text-center">
+          <h2 className="text-3xl font-bold text-white mb-4">{t.finalCta.title}</h2>
+          <p className="text-slate-400 mb-10 leading-relaxed">{t.finalCta.sub}</p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Link href="/register"
+              className="inline-block bg-white text-slate-900 text-base font-semibold px-8 py-4 rounded-xl hover:bg-slate-100 transition-colors">
+              {t.finalCta.cta}
+            </Link>
+            <a href="mailto:info@gatesign.de"
+              className="inline-block text-slate-400 text-base font-medium px-8 py-4 rounded-xl hover:text-white hover:bg-white/10 transition-colors">
+              {t.finalCta.demo}
+            </a>
+          </div>
+        </div>
+      </section>
+
       {/* Footer */}
       <footer className="border-t border-slate-100 py-8">
         <div className="max-w-5xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-slate-400">
-          <span>{t.footer.rights}</span>
+          <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
+            <span>{t.footer.rights}</span>
+            <a href={`mailto:${t.footer.contact}`} className="hover:text-slate-600 transition-colors">{t.footer.contact}</a>
+          </div>
           <div className="flex gap-5">
             <Link href="/impressum" className="hover:text-slate-600 transition-colors">{t.footer.impressum}</Link>
             <Link href="/datenschutz" className="hover:text-slate-600 transition-colors">{t.footer.datenschutz}</Link>

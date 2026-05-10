@@ -44,6 +44,7 @@ export function KioskClient({ slug, terminalSlug, terminalName: initialTerminalN
   const [activeSafetyRules, setActiveSafetyRules] = useState<string[]>([])
   const [ruleVisitorTypes, setRuleVisitorTypes] = useState<Record<string, string[]>>({})
   const [terminalName, setTerminalName] = useState(initialTerminalName ?? '')
+  const [allowedVisitorTypes, setAllowedVisitorTypes] = useState<string[]>(['truck', 'visitor', 'service'])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [adminModalOpen, setAdminModalOpen] = useState(false)
@@ -116,6 +117,9 @@ export function KioskClient({ slug, terminalSlug, terminalName: initialTerminalN
         if (data.rule_visitor_types) {
           try { setRuleVisitorTypes(JSON.parse(data.rule_visitor_types)) } catch { /* ignore */ }
         }
+        if (data.allowed_visitor_types) {
+          try { setAllowedVisitorTypes(JSON.parse(data.allowed_visitor_types)) } catch { /* ignore */ }
+        }
         const isValidUrl = (v: unknown) => typeof v === 'string' && v.startsWith('http')
         const urls: Record<string, string> = {}
         for (const key of ['truck', 'visitor', 'service']) {
@@ -128,7 +132,15 @@ export function KioskClient({ slug, terminalSlug, terminalName: initialTerminalN
 
   function handleLanguageSelect(selected: Language) {
     setLang(selected)
-    setStep(2)
+    // Auto-skip type selection if only one type is allowed
+    if (allowedVisitorTypes.length === 1) {
+      const onlyType = allowedVisitorTypes[0] as VisitorType
+      setVisitorType(onlyType)
+      setBriefingPdfUrl(pdfUrls[onlyType] ?? '')
+      setStep(3)
+    } else {
+      setStep(2)
+    }
   }
 
   function handleVisitorTypeSelect(type: VisitorType) {
@@ -228,7 +240,7 @@ export function KioskClient({ slug, terminalSlug, terminalName: initialTerminalN
         </div>
       )}
 
-      {step === 0 && <WelcomeScreen title={welcomeTitle} subtitle={welcomeSubtitle} companyName={companyName} logoUrl={logoUrl} onStart={() => setStep(1)} />}
+      {step === 0 && <WelcomeScreen title={welcomeTitle} subtitle={welcomeSubtitle} companyName={companyName} logoUrl={logoUrl} terminalName={terminalName || undefined} onStart={() => setStep(1)} />}
       {step === 1 && <LanguageSelect onSelect={handleLanguageSelect} onBack={() => setStep(0)} />}
       {step === 2 && (
         <VisitorTypeSelect
@@ -236,6 +248,7 @@ export function KioskClient({ slug, terminalSlug, terminalName: initialTerminalN
           onSelect={handleVisitorTypeSelect}
           onBack={() => setStep(1)}
           info={{ hoursWeekday, hoursFri, friClosed, hoursSat, satClosed, hoursSun, sunClosed, customHints: [] }}
+          allowedTypes={allowedVisitorTypes as VisitorType[]}
         />
       )}
       {step === 3 && (

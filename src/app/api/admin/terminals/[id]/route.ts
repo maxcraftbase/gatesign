@@ -22,11 +22,17 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     return NextResponse.json({ error: 'Not found' }, { status: 404 })
   }
 
-  const body = await req.json() as { name?: string; is_active?: boolean; sort_order?: number }
+  const body = await req.json() as { name?: string; is_active?: boolean; sort_order?: number; allowed_visitor_types?: string[] }
   const update: Record<string, unknown> = {}
   if (body.name !== undefined)       update.name = body.name.trim()
   if (body.is_active !== undefined)  update.is_active = body.is_active
   if (body.sort_order !== undefined) update.sort_order = body.sort_order
+  if (body.allowed_visitor_types !== undefined) {
+    const valid = ['truck', 'visitor', 'service']
+    const filtered = body.allowed_visitor_types.filter(t => valid.includes(t))
+    if (filtered.length === 0) return NextResponse.json({ error: 'Mindestens ein Typ erforderlich' }, { status: 400 })
+    update.allowed_visitor_types = JSON.stringify(filtered)
+  }
 
   if (!Object.keys(update).length) return NextResponse.json({ error: 'Keine Felder' }, { status: 400 })
 

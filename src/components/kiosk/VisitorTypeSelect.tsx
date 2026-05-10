@@ -36,20 +36,25 @@ const TYPE_ICONS: Record<string, React.ReactNode> = {
   ),
 }
 
-export function VisitorTypeSelect({ lang, onSelect, onBack, info }: {
+export function VisitorTypeSelect({ lang, onSelect, onBack, info, allowedTypes }: {
   lang: Language
   onSelect: (t: VisitorType) => void
   onBack: () => void
   info: InfoPanelProps
+  allowedTypes?: VisitorType[]
 }) {
   const t = translations[lang]
   const hasHours = !!info.hoursWeekday
+  const visibleTypes = allowedTypes && allowedTypes.length > 0
+    ? VISITOR_TYPES.filter(({ type }) => allowedTypes.includes(type))
+    : VISITOR_TYPES
+  const cols = visibleTypes.length === 1 ? 'grid-cols-1' : visibleTypes.length === 2 ? 'grid-cols-2' : 'grid-cols-1 sm:grid-cols-3'
 
   return (
     <div className="flex flex-col flex-1 px-6 py-4">
       <h2 className="text-3xl font-bold text-slate-900 text-center mb-8">{t.choose_type}</h2>
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 max-w-3xl mx-auto w-full">
-        {VISITOR_TYPES.map(({ type, labelKey }) => (
+      <div className={`grid ${cols} gap-6 max-w-3xl mx-auto w-full`}>
+        {visibleTypes.map(({ type, labelKey }) => (
           <button
             key={type}
             onClick={() => onSelect(type)}

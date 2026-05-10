@@ -22,7 +22,10 @@ export async function GET(req: NextRequest) {
     // Attach terminal info if requested
     if (terminalSlug) {
       const terminal = await getTerminalBySlug(company.id, terminalSlug)
-      if (terminal) settings.terminal_name = terminal.name
+      if (terminal) {
+        settings.terminal_name = terminal.name
+        settings.allowed_visitor_types = terminal.allowed_visitor_types ?? '["truck","visitor","service"]'
+      }
     }
 
     return NextResponse.json(settings)

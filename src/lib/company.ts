@@ -8,6 +8,7 @@ export interface Terminal {
   is_active: boolean
   sort_order: number
   created_at: string
+  allowed_visitor_types: string
 }
 
 export function generateSlug(name: string): string {
@@ -111,9 +112,11 @@ export async function createCompanyWithDefaults(
   return { id: company.id }
 }
 
+const TERMINAL_SELECT = 'id,company_id,name,slug,is_active,sort_order,created_at,allowed_visitor_types'
+
 export async function getTerminalBySlug(companyId: string, terminalSlug: string): Promise<Terminal | null> {
   const res = await fetch(
-    `${supabaseUrl}/rest/v1/terminals?company_id=eq.${encodeURIComponent(companyId)}&slug=eq.${encodeURIComponent(terminalSlug)}&is_active=eq.true&select=id,company_id,name,slug,is_active,sort_order,created_at&limit=1`,
+    `${supabaseUrl}/rest/v1/terminals?company_id=eq.${encodeURIComponent(companyId)}&slug=eq.${encodeURIComponent(terminalSlug)}&is_active=eq.true&select=${TERMINAL_SELECT}&limit=1`,
     { headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}` }, cache: 'no-store' }
   )
   if (!res.ok) return null
@@ -123,7 +126,7 @@ export async function getTerminalBySlug(companyId: string, terminalSlug: string)
 
 export async function getFirstTerminal(companyId: string): Promise<Terminal | null> {
   const res = await fetch(
-    `${supabaseUrl}/rest/v1/terminals?company_id=eq.${encodeURIComponent(companyId)}&is_active=eq.true&order=sort_order.asc,created_at.asc&select=id,company_id,name,slug,is_active,sort_order,created_at&limit=1`,
+    `${supabaseUrl}/rest/v1/terminals?company_id=eq.${encodeURIComponent(companyId)}&is_active=eq.true&order=sort_order.asc,created_at.asc&select=${TERMINAL_SELECT}&limit=1`,
     { headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}` }, cache: 'no-store' }
   )
   if (!res.ok) return null
@@ -133,7 +136,7 @@ export async function getFirstTerminal(companyId: string): Promise<Terminal | nu
 
 export async function listTerminals(companyId: string): Promise<Terminal[]> {
   const res = await fetch(
-    `${supabaseUrl}/rest/v1/terminals?company_id=eq.${encodeURIComponent(companyId)}&order=sort_order.asc,created_at.asc&select=id,company_id,name,slug,is_active,sort_order,created_at`,
+    `${supabaseUrl}/rest/v1/terminals?company_id=eq.${encodeURIComponent(companyId)}&order=sort_order.asc,created_at.asc&select=${TERMINAL_SELECT}`,
     { headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}` }, cache: 'no-store' }
   )
   if (!res.ok) return []

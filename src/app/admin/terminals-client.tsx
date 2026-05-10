@@ -4,6 +4,14 @@ import { useState, useEffect } from 'react'
 import { Plus, Pencil, Trash2, Check, X, Monitor, ExternalLink } from 'lucide-react'
 import { PLAN_LIMITS, type PlanName } from '@/lib/subscription'
 
+type VisitorTypeKey = 'truck' | 'visitor' | 'service'
+
+const VISITOR_TYPE_OPTIONS: { key: VisitorTypeKey; label: string; icon: string }[] = [
+  { key: 'truck',   label: 'LKW',      icon: '🚛' },
+  { key: 'visitor', label: 'Besucher', icon: '🤝' },
+  { key: 'service', label: 'Service',  icon: '🔧' },
+]
+
 interface Terminal {
   id: string
   name: string
@@ -11,6 +19,7 @@ interface Terminal {
   is_active: boolean
   sort_order: number
   created_at: string
+  allowed_visitor_types: string
 }
 
 export function TerminalsClient({ slug }: { slug: string }) {
@@ -25,6 +34,7 @@ export function TerminalsClient({ slug }: { slug: string }) {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editName, setEditName] = useState('')
   const [saving, setSaving] = useState(false)
+  const [savingTypes, setSavingTypes] = useState<string | null>(null)
 
   async function loadTerminals() {
     setLoading(true)
@@ -99,6 +109,26 @@ export function TerminalsClient({ slug }: { slug: string }) {
     void loadTerminals()
   }
 
+  async function handleToggleType(terminal: Terminal, typeKey: VisitorTypeKey) {
+    let current: VisitorTypeKey[] = ['truck', 'visitor', 'service']
+    try { current = JSON.parse(terminal.allowed_visitor_types) } catch { /* use default */ }
+    const next = current.includes(typeKey)
+      ? current.filter(t => t !== typeKey)
+      : [...current, typeKey]
+    if (next.length === 0) return // enforce minimum 1
+    setSavingTypes(terminal.id)
+    await fetch(`/api/admin/terminals/${terminal.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ allowed_visitor_types: next }),
+    })
+    setTerminals(prev => prev.map(t => t.id === terminal.id
+      ? { ...t, allowed_visitor_types: JSON.stringify(next) }
+      : t
+    ))
+    setSavingTypes(null)
+  }
+
   const kioskUrl = (termSlug: string) => `${typeof window !== 'undefined' ? window.location.origin : ''}/${slug}/${termSlug}`
 
   return (
@@ -143,65 +173,97 @@ export function TerminalsClient({ slug }: { slug: string }) {
               <p className="px-6 py-8 text-sm text-slate-400 italic text-center">Noch keine Terminals vorhanden.</p>
             )}
             {terminals.map(terminal => (
-              <div key={terminal.id} className="flex items-center gap-4 px-6 py-4">
-                <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${terminal.is_active ? 'bg-emerald-50' : 'bg-slate-100'}`}>
-                  <Monitor className={`w-4 h-4 ${terminal.is_active ? 'text-emerald-600' : 'text-slate-400'}`} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  {editingId === terminal.id ? (
-                    <div className="flex items-center gap-2">
-                      <input
-                        value={editName}
-                        onChange={e => setEditName(e.target.value)}
-                        onKeyDown={e => { if (e.key === 'Enter') void handleSaveEdit(terminal.id); if (e.key === 'Escape') setEditingId(null) }}
-                        className="flex-1 px-3 py-1.5 rounded-lg border border-slate-300 text-sm outline-none focus:border-slate-900"
-                        autoFocus
-                      />
-                      <button onClick={() => void handleSaveEdit(terminal.id)} disabled={saving}
-                        className="p-1.5 rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-colors">
-                        <Check className="w-4 h-4" />
-                      </button>
-                      <button onClick={() => setEditingId(null)}
-                        className="p-1.5 rounded-lg bg-slate-100 text-slate-500 hover:bg-slate-200 transition-colors">
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
-                  ) : (
-                    <>
-                      <p className="text-sm font-semibold text-slate-900">{terminal.name}</p>
-                      <div className="flex items-center gap-2 mt-0.5">
-                        <p className="text-xs text-slate-400 font-mono">{terminal.slug}</p>
-                        <a href={kioskUrl(terminal.slug)} target="_blank" rel="noopener noreferrer"
-                          onClick={e => e.stopPropagation()}
-                          className="text-xs text-indigo-500 hover:text-indigo-700 flex items-center gap-0.5 transition-colors">
-                          <ExternalLink className="w-3 h-3" />Kiosk öffnen
-                        </a>
+              <div key={terminal.id} className="flex flex-col px-6 py-4 gap-3">
+                {/* Top row: icon + info + actions */}
+                <div className="flex items-center gap-4">
+                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${terminal.is_active ? 'bg-emerald-50' : 'bg-slate-100'}`}>
+                    <Monitor className={`w-4 h-4 ${terminal.is_active ? 'text-emerald-600' : 'text-slate-400'}`} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    {editingId === terminal.id ? (
+                      <div className="flex items-center gap-2">
+                        <input
+                          value={editName}
+                          onChange={e => setEditName(e.target.value)}
+                          onKeyDown={e => { if (e.key === 'Enter') void handleSaveEdit(terminal.id); if (e.key === 'Escape') setEditingId(null) }}
+                          className="flex-1 px-3 py-1.5 rounded-lg border border-slate-300 text-sm outline-none focus:border-slate-900"
+                          autoFocus
+                        />
+                        <button onClick={() => void handleSaveEdit(terminal.id)} disabled={saving}
+                          className="p-1.5 rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-colors">
+                          <Check className="w-4 h-4" />
+                        </button>
+                        <button onClick={() => setEditingId(null)}
+                          className="p-1.5 rounded-lg bg-slate-100 text-slate-500 hover:bg-slate-200 transition-colors">
+                          <X className="w-4 h-4" />
+                        </button>
                       </div>
-                    </>
-                  )}
+                    ) : (
+                      <>
+                        <p className="text-sm font-semibold text-slate-900">{terminal.name}</p>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <p className="text-xs text-slate-400 font-mono">{terminal.slug}</p>
+                          <a href={kioskUrl(terminal.slug)} target="_blank" rel="noopener noreferrer"
+                            onClick={e => e.stopPropagation()}
+                            className="text-xs text-indigo-500 hover:text-indigo-700 flex items-center gap-0.5 transition-colors">
+                            <ExternalLink className="w-3 h-3" />Kiosk öffnen
+                          </a>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className={`text-xs px-2.5 py-0.5 rounded-full font-semibold ${terminal.is_active ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
+                      {terminal.is_active ? 'Aktiv' : 'Inaktiv'}
+                    </span>
+                    {editingId !== terminal.id && (
+                      <>
+                        <button onClick={() => { setEditingId(terminal.id); setEditName(terminal.name) }}
+                          className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors" title="Umbenennen">
+                          <Pencil className="w-4 h-4" />
+                        </button>
+                        <button onClick={() => void handleToggleActive(terminal)}
+                          className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+                          title={terminal.is_active ? 'Deaktivieren' : 'Aktivieren'}>
+                          {terminal.is_active ? <X className="w-4 h-4" /> : <Check className="w-4 h-4" />}
+                        </button>
+                        <button onClick={() => void handleDelete(terminal.id, terminal.name)}
+                          className="p-1.5 rounded-lg text-slate-300 hover:text-red-500 hover:bg-red-50 transition-colors" title="Löschen">
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  <span className={`text-xs px-2.5 py-0.5 rounded-full font-semibold ${terminal.is_active ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
-                    {terminal.is_active ? 'Aktiv' : 'Inaktiv'}
-                  </span>
-                  {editingId !== terminal.id && (
-                    <>
-                      <button onClick={() => { setEditingId(terminal.id); setEditName(terminal.name) }}
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors" title="Umbenennen">
-                        <Pencil className="w-4 h-4" />
-                      </button>
-                      <button onClick={() => void handleToggleActive(terminal)}
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
-                        title={terminal.is_active ? 'Deaktivieren' : 'Aktivieren'}>
-                        {terminal.is_active ? <X className="w-4 h-4" /> : <Check className="w-4 h-4" />}
-                      </button>
-                      <button onClick={() => void handleDelete(terminal.id, terminal.name)}
-                        className="p-1.5 rounded-lg text-slate-300 hover:text-red-500 hover:bg-red-50 transition-colors" title="Löschen">
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </>
-                  )}
-                </div>
+                {/* Visitor type chips */}
+                {(() => {
+                  let active: VisitorTypeKey[] = ['truck', 'visitor', 'service']
+                  try { active = JSON.parse(terminal.allowed_visitor_types) } catch { /* use default */ }
+                  return (
+                    <div className="flex items-center gap-2 pl-13">
+                      <span className="text-xs text-slate-400 mr-1">Typen:</span>
+                      {VISITOR_TYPE_OPTIONS.map(({ key, label, icon }) => {
+                        const isOn = active.includes(key)
+                        const isLast = isOn && active.length === 1
+                        return (
+                          <button
+                            key={key}
+                            disabled={savingTypes === terminal.id || isLast}
+                            onClick={() => void handleToggleType(terminal, key)}
+                            title={isLast ? 'Mindestens ein Typ muss aktiv sein' : undefined}
+                            className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
+                              isOn
+                                ? 'bg-slate-900 text-white'
+                                : 'bg-slate-100 text-slate-400 hover:bg-slate-200'
+                            } disabled:opacity-50`}
+                          >
+                            {icon} {label}
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )
+                })()}
               </div>
             ))}
           </div>

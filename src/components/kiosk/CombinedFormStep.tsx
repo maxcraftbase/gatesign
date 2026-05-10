@@ -128,7 +128,7 @@ export function CombinedFormStep({
           )}
           {(visitorType === 'visitor' || visitorType === 'service') && (
             <div>
-              <label className={labelCls}>{t.field_contact_person} <span className="text-red-500">*</span></label>
+              <label className={labelCls}>{t.field_contact_person}</label>
               <input className={inputCls} placeholder={t.field_contact_placeholder}
                 value={formData.contactPerson} onChange={e => onChange({ ...formData, contactPerson: e.target.value })}
                 autoComplete="off" />

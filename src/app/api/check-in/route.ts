@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import { getCompanyBySlug } from '@/lib/company'
+import { getCompanyBySlug, getTerminalBySlug } from '@/lib/company'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { supabaseUrl, anonKey } from '@/lib/supabase-server'
 
 const checkInSchema = z.object({
   slug: z.string().nullish(),
+  terminal_slug: z.string().nullish(),
   visitor_type: z.enum(['truck', 'visitor', 'service']).nullish(),
   driver_name: z.string().min(1).max(100),
   company_name: z.string().min(1).max(150),
@@ -35,6 +36,7 @@ export async function POST(req: NextRequest) {
 
     const {
       slug,
+      terminal_slug,
       visitor_type,
       driver_name,
       company_name,
@@ -51,6 +53,7 @@ export async function POST(req: NextRequest) {
     } = parsed.data
 
     const company = slug ? await getCompanyBySlug(slug) : null
+    const terminal = (company && terminal_slug) ? await getTerminalBySlug(company.id, terminal_slug) : null
 
     interface CheckInPayload {
       visitor_type: string
@@ -62,6 +65,7 @@ export async function POST(req: NextRequest) {
       briefing_version: string
       has_signature: boolean
       company_id?: string
+      terminal_id?: string
       briefing_accepted_at?: string
       phone?: string
       trailer_plate?: string
@@ -81,10 +85,11 @@ export async function POST(req: NextRequest) {
       has_signature: has_signature ?? false,
     }
 
-    if (company) payload.company_id = company.id
+    if (company)   payload.company_id = company.id
+    if (terminal)  payload.terminal_id = terminal.id
     if (briefing_accepted) payload.briefing_accepted_at = new Date().toISOString()
-    if (phone) payload.phone = phone
-    if (trailer_plate) payload.trailer_plate = trailer_plate
+    if (phone)          payload.phone = phone
+    if (trailer_plate)  payload.trailer_plate = trailer_plate
     if (contact_person) payload.contact_person = contact_person
     if (signature_data) payload.signature_data = signature_data
     if (reference_number) payload.reference_number = reference_number

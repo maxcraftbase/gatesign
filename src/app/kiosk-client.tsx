@@ -13,7 +13,11 @@ import { SuccessScreen } from '@/components/kiosk/SuccessScreen'
 
 const EMPTY_FORM: CheckInFormData = { name: '', company: '', plate: '', trailerPlate: '', phone: '', reference: '', contactPerson: '' }
 
-export function KioskClient({ slug }: { slug: string }) {
+export function KioskClient({ slug, terminalSlug, terminalName: initialTerminalName }: {
+  slug: string
+  terminalSlug?: string
+  terminalName?: string
+}) {
   const [step, setStep] = useState(0)
   const [lang, setLang] = useState<Language>('de')
   const [visitorType, setVisitorType] = useState<VisitorType>('truck')
@@ -39,6 +43,7 @@ export function KioskClient({ slug }: { slug: string }) {
   const [customHintsTypes, setCustomHintsTypes] = useState<string[][]>([])
   const [activeSafetyRules, setActiveSafetyRules] = useState<string[]>([])
   const [ruleVisitorTypes, setRuleVisitorTypes] = useState<Record<string, string[]>>({})
+  const [terminalName, setTerminalName] = useState(initialTerminalName ?? '')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [adminModalOpen, setAdminModalOpen] = useState(false)
@@ -73,10 +78,14 @@ export function KioskClient({ slug }: { slug: string }) {
   }
 
   useEffect(() => {
-    fetch(`/api/settings?slug=${slug}`)
+    const url = terminalSlug
+      ? `/api/settings?slug=${slug}&terminal=${terminalSlug}`
+      : `/api/settings?slug=${slug}`
+    fetch(url)
       .then(r => r.json())
       .then((data: Record<string, string>) => {
         if (data.company_name) setCompanyName(data.company_name)
+        if (data.terminal_name) setTerminalName(data.terminal_name)
         if (data.logo_url) setLogoUrl(data.logo_url)
         if (data.welcome_title) setWelcomeTitle(data.welcome_title)
         if (data.welcome_subtitle) setWelcomeSubtitle(data.welcome_subtitle)
@@ -115,7 +124,7 @@ export function KioskClient({ slug }: { slug: string }) {
         setPdfUrls(urls)
       })
       .catch(() => {})
-  }, [slug])
+  }, [slug, terminalSlug])
 
   function handleLanguageSelect(selected: Language) {
     setLang(selected)
@@ -137,6 +146,7 @@ export function KioskClient({ slug }: { slug: string }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           slug,
+          terminal_slug: terminalSlug ?? null,
           visitor_type: visitorType,
           driver_name: formData.name,
           company_name: formData.company,
@@ -187,7 +197,10 @@ export function KioskClient({ slug }: { slug: string }) {
   return (
     <div className="min-h-screen bg-white flex flex-col overflow-hidden select-none">
       <header className="flex items-center justify-between px-4 py-2 border-b border-slate-200">
-        <button onClick={handleReset} className="text-slate-900 font-bold text-xl tracking-tight shrink-0 hover:text-slate-600 transition-colors">GateSign</button>
+        <div className="flex items-baseline gap-2 shrink-0">
+          <button onClick={handleReset} className="text-slate-900 font-bold text-xl tracking-tight hover:text-slate-600 transition-colors">GateSign</button>
+          {terminalName && <span className="text-slate-400 text-sm font-medium">{terminalName}</span>}
+        </div>
         {step > 0 && step < 5 && (
           <div className="flex-1 mx-2">
             <ProgressBar step={step} lang={lang} />

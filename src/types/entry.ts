@@ -16,6 +16,8 @@ export interface Entry {
   staff_note: string | null
   staff_note_translated: string | null
   assigned_contact: string | null
+  terminal_id: string | null
+  terminal_name: string | null
 }
 
 export const VISITOR_TYPE_LABELS: Record<string, { label: string; color: string }> = {

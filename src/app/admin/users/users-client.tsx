@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { UserPlus, Trash2, ChevronDown, MailCheck, Plus, X } from 'lucide-react'
+import { UserPlus, Trash2, ChevronDown, MailCheck, Plus, X, Monitor } from 'lucide-react'
 
 interface CompanyUser {
   id: string
@@ -11,6 +11,11 @@ interface CompanyUser {
   status: 'pending' | 'active'
   created_at: string
   last_login_at: string | null
+}
+
+interface Terminal {
+  id: string
+  name: string
 }
 
 function formatDate(iso: string | null) {
@@ -32,18 +37,50 @@ export function UsersClient() {
   const [contactPersons, setContactPersons] = useState<string[]>([])
   const [newContactPerson, setNewContactPerson] = useState('')
   const [savingContacts, setSavingContacts] = useState(false)
+  const [terminals, setTerminals] = useState<Terminal[]>([])
+  const [terminalAccess, setTerminalAccess] = useState<Record<string, string[]>>({}) // userId → terminalIds[]
+  const [savingAccess, setSavingAccess] = useState<string | null>(null) // userId being saved
 
-  async function loadUsers() {
-    setLoading(true)
+  async function loadTerminals() {
     try {
-      const res = await fetch('/api/admin/users')
+      const res = await fetch('/api/admin/terminals')
       const data = await res.json()
-      setUsers(data.users ?? [])
-    } catch { setError('Fehler beim Laden') } finally { setLoading(false) }
+      setTerminals(data.terminals ?? [])
+    } catch { /* ignore */ }
+  }
+
+  async function loadAllAccess(userList: CompanyUser[]) {
+    const members = userList.filter(u => u.role === 'member' && u.status === 'active')
+    const entries: Record<string, string[]> = {}
+    await Promise.all(members.map(async user => {
+      // Fetch per-terminal access for each member by querying all terminals
+      // We invert: fetch all terminals and check user_terminal_access
+      try {
+        const res = await fetch(`/api/admin/users/${user.id}/terminal-access`)
+        if (res.ok) {
+          const d = await res.json()
+          entries[user.id] = d.terminal_ids ?? []
+        }
+      } catch { /* ignore */ }
+    }))
+    setTerminalAccess(entries)
   }
 
   // eslint-disable-next-line react-hooks/set-state-in-effect
-  useEffect(() => { void loadUsers() }, [])
+  useEffect(() => {
+    void (async () => {
+      setLoading(true)
+      try {
+        const res = await fetch('/api/admin/users')
+        const data = await res.json()
+        const userList: CompanyUser[] = data.users ?? []
+        setUsers(userList)
+        void loadAllAccess(userList)
+      } catch { setError('Fehler beim Laden') } finally { setLoading(false) }
+    })()
+  }, [])
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => { void loadTerminals() }, [])
 
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => {
@@ -72,7 +109,11 @@ export function UsersClient() {
       setInviteSuccess(true)
       setInviteEmail('')
       setInviteName('')
-      void loadUsers()
+      const res2 = await fetch('/api/admin/users')
+      const d2 = await res2.json()
+      const refreshedUsers: CompanyUser[] = d2.users ?? []
+      setUsers(refreshedUsers)
+      void loadAllAccess(refreshedUsers)
       setTimeout(() => setInviteSuccess(false), 4000)
     } catch { setInviteError('Netzwerkfehler') } finally { setInviting(false) }
   }
@@ -127,6 +168,28 @@ export function UsersClient() {
     const res = await fetch(`/api/admin/users/${id}`, { method: 'DELETE' })
     if (res.ok) setUsers(prev => prev.filter(u => u.id !== id))
     else { const d = await res.json(); alert(d.error ?? 'Fehler') }
+  }
+
+  async function handleTerminalToggle(userId: string, terminalId: string) {
+    const current = terminalAccess[userId] ?? []
+    const next = current.includes(terminalId)
+      ? current.filter(id => id !== terminalId)
+      : [...current, terminalId]
+    setTerminalAccess(prev => ({ ...prev, [userId]: next }))
+    setSavingAccess(userId)
+    try {
+      await fetch(`/api/admin/terminals/${terminalId}/access`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_ids: next.length > 0 ? [userId] : [] }),
+      })
+      // Reload full access state for this user to stay consistent
+      const res = await fetch(`/api/admin/users/${userId}/terminal-access`)
+      if (res.ok) {
+        const d = await res.json()
+        setTerminalAccess(prev => ({ ...prev, [userId]: d.terminal_ids ?? [] }))
+      }
+    } catch { /* ignore */ } finally { setSavingAccess(null) }
   }
 
   return (
@@ -186,7 +249,8 @@ export function UsersClient() {
         ) : (
           <div className="divide-y divide-slate-100">
             {users.map(user => (
-              <div key={user.id} className="flex items-center gap-4 px-6 py-4">
+              <div key={user.id} className="px-6 py-4">
+                <div className="flex items-center gap-4">
                 <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center shrink-0">
                   <span className="text-sm font-bold text-slate-600">{(user.name ?? user.email)[0].toUpperCase()}</span>
                 </div>
@@ -224,6 +288,34 @@ export function UsersClient() {
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
+                </div>
+                {/* Terminal-Zuweisung: nur für Members mit mehreren Terminals */}
+                {user.role === 'member' && user.status === 'active' && terminals.length > 1 && (
+                  <div className="mt-3 pl-[52px]">
+                    <p className="text-xs font-semibold text-slate-500 mb-1.5 flex items-center gap-1">
+                      <Monitor className="w-3.5 h-3.5" />
+                      Terminal-Zugang
+                      {savingAccess === user.id && <span className="ml-1 text-slate-400">Speichern…</span>}
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {terminals.map(t => {
+                        const hasAccess = (terminalAccess[user.id] ?? []).includes(t.id)
+                        return (
+                          <button key={t.id}
+                            onClick={() => void handleTerminalToggle(user.id, t.id)}
+                            disabled={savingAccess === user.id}
+                            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-medium transition-colors ${hasAccess ? 'bg-indigo-50 border-indigo-300 text-indigo-700' : 'bg-white border-slate-200 text-slate-400 hover:border-slate-400'}`}>
+                            <Monitor className="w-3 h-3" />
+                            {t.name}
+                          </button>
+                        )
+                      })}
+                    </div>
+                    {(terminalAccess[user.id] ?? []).length === 0 && (
+                      <p className="text-xs text-amber-600 mt-1">Kein Terminal zugewiesen — Mitarbeiter sieht keine Einträge</p>
+                    )}
+                  </div>
+                )}
               </div>
             ))}
           </div>

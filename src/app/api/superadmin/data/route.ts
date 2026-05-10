@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { isSuperadminAuthorized } from '@/lib/superadmin-auth'
 import { supabaseUrl, serviceKey } from '@/lib/supabase-server'
+import { applyPlan, type PlanName } from '@/lib/subscription'
 
 export async function GET(req: NextRequest) {
   if (!isSuperadminAuthorized(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -65,11 +66,20 @@ export async function GET(req: NextRequest) {
 
 export async function PATCH(req: NextRequest) {
   if (!isSuperadminAuthorized(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  const { companyId, subscription_status, trial_ends_at } = await req.json()
+  const { companyId, subscription_status, trial_ends_at, plan } = await req.json()
 
   const update: Record<string, unknown> = {}
   if (subscription_status !== undefined) update.subscription_status = subscription_status
   if (trial_ends_at !== undefined) update.trial_ends_at = trial_ends_at
+
+  // Plan change: routes through applyPlan() so Stripe webhook can use the same path later
+  if (plan !== undefined) {
+    const validPlans: PlanName[] = ['starter', 'professional', 'enterprise']
+    if (!validPlans.includes(plan)) return NextResponse.json({ error: 'Ungültiger Plan' }, { status: 400 })
+    const ok = await applyPlan(companyId, plan as PlanName)
+    if (!ok) return NextResponse.json({ error: 'Plan-Update fehlgeschlagen' }, { status: 500 })
+    if (Object.keys(update).length === 0) return NextResponse.json({ success: true })
+  }
 
   if (Object.keys(update).length === 0) {
     return NextResponse.json({ error: 'Keine Felder zum Aktualisieren' }, { status: 400 })

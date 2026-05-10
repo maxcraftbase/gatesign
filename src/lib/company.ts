@@ -1,4 +1,14 @@
-import { supabaseUrl, anonKey } from '@/lib/supabase-server'
+import { supabaseUrl, anonKey, serviceKey } from '@/lib/supabase-server'
+
+export interface Terminal {
+  id: string
+  company_id: string
+  name: string
+  slug: string
+  is_active: boolean
+  sort_order: number
+  created_at: string
+}
 
 export function generateSlug(name: string): string {
   const base = name
@@ -86,5 +96,62 @@ export async function createCompanyWithDefaults(
     body: JSON.stringify(defaultSettings),
   })
 
+  // Create default terminal (same slug as company for backward compat)
+  await fetch(`${supabaseUrl}/rest/v1/terminals`, {
+    method: 'POST',
+    headers: {
+      apikey: anonKey,
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+      Prefer: 'return=minimal',
+    },
+    body: JSON.stringify({ company_id: company.id, name: `${name} Terminal`, slug, is_active: true, sort_order: 0 }),
+  })
+
   return { id: company.id }
+}
+
+export async function getTerminalBySlug(companyId: string, terminalSlug: string): Promise<Terminal | null> {
+  const res = await fetch(
+    `${supabaseUrl}/rest/v1/terminals?company_id=eq.${encodeURIComponent(companyId)}&slug=eq.${encodeURIComponent(terminalSlug)}&is_active=eq.true&select=id,company_id,name,slug,is_active,sort_order,created_at&limit=1`,
+    { headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}` }, cache: 'no-store' }
+  )
+  if (!res.ok) return null
+  const data = await res.json()
+  return data?.[0] ?? null
+}
+
+export async function getFirstTerminal(companyId: string): Promise<Terminal | null> {
+  const res = await fetch(
+    `${supabaseUrl}/rest/v1/terminals?company_id=eq.${encodeURIComponent(companyId)}&is_active=eq.true&order=sort_order.asc,created_at.asc&select=id,company_id,name,slug,is_active,sort_order,created_at&limit=1`,
+    { headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}` }, cache: 'no-store' }
+  )
+  if (!res.ok) return null
+  const data = await res.json()
+  return data?.[0] ?? null
+}
+
+export async function listTerminals(companyId: string): Promise<Terminal[]> {
+  const res = await fetch(
+    `${supabaseUrl}/rest/v1/terminals?company_id=eq.${encodeURIComponent(companyId)}&order=sort_order.asc,created_at.asc&select=id,company_id,name,slug,is_active,sort_order,created_at`,
+    { headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}` }, cache: 'no-store' }
+  )
+  if (!res.ok) return []
+  return await res.json()
+}
+
+export async function createDefaultTerminal(companyId: string, companyName: string, companySlug: string, accessToken: string): Promise<Terminal | null> {
+  const res = await fetch(`${supabaseUrl}/rest/v1/terminals`, {
+    method: 'POST',
+    headers: {
+      apikey: anonKey,
+      Authorization: `Bearer ${accessToken}`,
+      'Content-Type': 'application/json',
+      Prefer: 'return=representation',
+    },
+    body: JSON.stringify({ company_id: companyId, name: `${companyName} Terminal`, slug: companySlug, is_active: true, sort_order: 0 }),
+  })
+  if (!res.ok) return null
+  const [terminal] = await res.json()
+  return terminal ?? null
 }

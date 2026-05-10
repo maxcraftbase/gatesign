@@ -1,5 +1,7 @@
 -- Drop old tables if they exist
+DROP TABLE IF EXISTS user_terminal_access CASCADE;
 DROP TABLE IF EXISTS check_ins CASCADE;
+DROP TABLE IF EXISTS terminals CASCADE;
 DROP TABLE IF EXISTS briefing_confirmations CASCADE;
 DROP TABLE IF EXISTS briefing_translations CASCADE;
 DROP TABLE IF EXISTS safety_briefings CASCADE;
@@ -7,6 +9,18 @@ DROP TABLE IF EXISTS drivers CASCADE;
 DROP TABLE IF EXISTS sites CASCADE;
 DROP TABLE IF EXISTS companies CASCADE;
 DROP TABLE IF EXISTS app_settings CASCADE;
+
+-- Terminals (one or more per company)
+CREATE TABLE IF NOT EXISTS terminals (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  company_id UUID NOT NULL,
+  name TEXT NOT NULL,
+  slug TEXT NOT NULL,
+  is_active BOOLEAN NOT NULL DEFAULT true,
+  sort_order INT NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  UNIQUE (company_id, slug)
+);
 
 -- Check-in records
 CREATE TABLE IF NOT EXISTS check_ins (
@@ -25,7 +39,16 @@ CREATE TABLE IF NOT EXISTS check_ins (
   briefing_version TEXT,
   has_signature BOOLEAN DEFAULT false,
   signature_data TEXT,
-  reference_number TEXT
+  reference_number TEXT,
+  terminal_id UUID
+);
+
+-- Which users can see which terminals (opt-out: no row = no access for members)
+CREATE TABLE IF NOT EXISTS user_terminal_access (
+  user_id UUID NOT NULL,
+  terminal_id UUID NOT NULL,
+  company_id UUID NOT NULL,
+  PRIMARY KEY (user_id, terminal_id)
 );
 
 -- Safety briefing content per language and visitor type
@@ -85,6 +108,8 @@ ON CONFLICT (key) DO NOTHING;
 ALTER TABLE check_ins ENABLE ROW LEVEL SECURITY;
 ALTER TABLE safety_briefings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE app_settings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE terminals ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_terminal_access ENABLE ROW LEVEL SECURITY;
 
 -- check_ins: anyone can insert, only authenticated can read
 CREATE POLICY "public insert check_ins" ON check_ins FOR INSERT WITH CHECK (true);
@@ -97,3 +122,11 @@ CREATE POLICY "authenticated write briefings" ON safety_briefings FOR ALL USING 
 -- app_settings: public read, authenticated write
 CREATE POLICY "public read settings" ON app_settings FOR SELECT USING (true);
 CREATE POLICY "authenticated write settings" ON app_settings FOR ALL USING (auth.role() = 'authenticated');
+
+-- terminals: public read (kiosk needs to look up terminal), authenticated write
+CREATE POLICY "public read terminals" ON terminals FOR SELECT USING (true);
+CREATE POLICY "authenticated write terminals" ON terminals FOR ALL USING (auth.role() = 'authenticated');
+
+-- user_terminal_access: authenticated only
+CREATE POLICY "authenticated read user_terminal_access" ON user_terminal_access FOR SELECT USING (auth.role() = 'authenticated');
+CREATE POLICY "authenticated write user_terminal_access" ON user_terminal_access FOR ALL USING (auth.role() = 'authenticated');

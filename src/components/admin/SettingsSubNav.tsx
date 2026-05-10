@@ -9,16 +9,19 @@ export function SettingsSubNav({ slug }: { slug: string }) {
   const base = `/${slug}/admin`
 
   const tabs = [
-    { href: `${base}/settings`,   label: 'Allgemein' },
-    { href: `${base}/users`,      label: 'Nutzer & Ansprechpartner' },
-    { href: `${base}/documents`,  label: 'Dokumente' },
-    { href: `${base}/audit`,      label: 'Protokoll' },
+    { href: `${base}/settings`,            label: 'Allgemein' },
+    { href: `${base}/settings/terminals`,  label: 'Terminals' },
+    { href: `${base}/users`,               label: 'Nutzer & Ansprechpartner' },
+    { href: `${base}/documents`,           label: 'Dokumente' },
+    { href: `${base}/audit`,               label: 'Protokoll' },
   ]
 
   return (
     <div className="flex gap-1 mb-8 border-b border-slate-200 pb-0">
       {tabs.map(tab => {
-        const active = pathname.startsWith(tab.href)
+        const active = tab.href === `${base}/settings`
+          ? pathname === tab.href
+          : pathname.startsWith(tab.href)
         return (
           <Link
             key={tab.href}

@@ -19,14 +19,17 @@ export function AdminEntriesClient() {
   const [companyPdfUrl, setCompanyPdfUrl] = useState('')
   const [search, setSearch] = useState('')
   const [typeFilter, setTypeFilter] = useState('')
+  const [terminalFilter, setTerminalFilter] = useState('')
+  const [terminals, setTerminals] = useState<{ id: string; name: string }[]>([])
   const [sort, setSort] = useState<{ col: string; dir: 'asc' | 'desc' }>({ col: 'created_at', dir: 'desc' })
 
-  const loadEntries = useCallback((p: number, q: string, type: string, sortCol: string, sortDir: 'asc' | 'desc') => {
+  const loadEntries = useCallback((p: number, q: string, type: string, terminal: string, sortCol: string, sortDir: 'asc' | 'desc') => {
     setLoading(true)
     setError('')
     const qs = new URLSearchParams({ page: String(p), sort: sortCol, dir: sortDir })
     if (q.trim()) qs.set('search', q.trim())
     if (type) qs.set('type', type)
+    if (terminal) qs.set('terminal', terminal)
     fetch(`/api/admin/entries?${qs}`)
       .then(res => { if (!res.ok) throw new Error('Failed'); return res.json() })
       .then(data => {
@@ -36,6 +39,7 @@ export function AdminEntriesClient() {
         setLogoUrl(data.logoUrl ?? '')
         if (data.contactPersons) setContactPersons(data.contactPersons)
         setCompanyPdfUrl(data.companyPdfUrl ?? '')
+        if (data.terminals) setTerminals(data.terminals)
         setPage(p)
       })
       .catch(() => setError('Fehler beim Laden der Einträge.'))
@@ -49,10 +53,10 @@ export function AdminEntriesClient() {
     mountedRef.current = true
     const isSearchChange = !isMount && search !== searchRef.current
     searchRef.current = search
-    const t = setTimeout(() => loadEntries(1, search, typeFilter, sort.col, sort.dir), isSearchChange ? 350 : 0)
+    const t = setTimeout(() => loadEntries(1, search, typeFilter, terminalFilter, sort.col, sort.dir), isSearchChange ? 350 : 0)
     return () => clearTimeout(t)
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search, typeFilter, sort])
+  }, [search, typeFilter, terminalFilter, sort])
 
   function toggleSort(col: string) {
     setSort(prev => prev.col === col ? { col, dir: prev.dir === 'desc' ? 'asc' : 'desc' } : { col, dir: 'asc' })
@@ -76,6 +80,7 @@ export function AdminEntriesClient() {
       const qs = new URLSearchParams({ page: String(page), sort: sort.col, dir: sort.dir })
       if (search.trim()) qs.set('search', search.trim())
       if (typeFilter) qs.set('type', typeFilter)
+      if (terminalFilter) qs.set('terminal', terminalFilter)
       fetch(`/api/admin/entries?${qs}`)
         .then(res => res.ok ? res.json() : null)
         .then(data => {
@@ -86,7 +91,7 @@ export function AdminEntriesClient() {
         .catch(() => {})
     }, 30_000)
     return () => clearInterval(id)
-  }, [search, typeFilter, sort, page])
+  }, [search, typeFilter, terminalFilter, sort, page])
 
   function handleNoteUpdated(id: string, note: string, translated: string, assignedContact: string | null) {
     setEntries(prev => prev.map(e => e.id === id ? { ...e, staff_note: note, staff_note_translated: translated, assigned_contact: assignedContact } : e))
@@ -103,7 +108,7 @@ export function AdminEntriesClient() {
           <p className="text-slate-500 text-sm mt-1">{total} Einträge{search ? ' gefunden' : ' gesamt'}</p>
         </div>
         <div className="flex gap-3">
-          <button onClick={() => loadEntries(page, search, typeFilter, sort.col, sort.dir)}
+          <button onClick={() => loadEntries(page, search, typeFilter, terminalFilter, sort.col, sort.dir)}
             className="flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors">
             <RefreshCw className="w-4 h-4" />
             Aktualisieren
@@ -127,13 +132,24 @@ export function AdminEntriesClient() {
             className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 text-sm outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-100 bg-white"
           />
         </div>
-        <div className="flex gap-1.5">
+        <div className="flex gap-1.5 flex-wrap">
           {([['', 'Alle'], ['truck', 'LKW'], ['visitor', 'Besucher'], ['service', 'Dienst']] as [string, string][]).map(([val, label]) => (
             <button key={val} onClick={() => setTypeFilter(val)}
               className={`px-3 py-2 rounded-xl border text-sm font-medium transition-colors whitespace-nowrap ${typeFilter === val ? 'bg-slate-900 border-slate-900 text-white' : 'bg-white border-slate-200 text-slate-600 hover:border-slate-400'}`}>
               {label}
             </button>
           ))}
+          {terminals.length > 1 && (
+            <>
+              <div className="w-px bg-slate-200 mx-1 self-stretch" />
+              {[{ id: '', name: 'Alle Terminals' }, ...terminals].map(t => (
+                <button key={t.id} onClick={() => setTerminalFilter(t.id)}
+                  className={`px-3 py-2 rounded-xl border text-sm font-medium transition-colors whitespace-nowrap ${terminalFilter === t.id ? 'bg-indigo-600 border-indigo-600 text-white' : 'bg-white border-slate-200 text-slate-600 hover:border-slate-400'}`}>
+                  {t.name}
+                </button>
+              ))}
+            </>
+          )}
         </div>
       </div>
 
@@ -150,7 +166,7 @@ export function AdminEntriesClient() {
       ) : (
         <>
           <div className="flex flex-col gap-2">
-            <div className="grid grid-cols-[100px_140px_80px_1fr_1fr_110px_50px_70px_30px] gap-3 px-4 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">
+            <div className="grid grid-cols-[100px_140px_80px_1fr_1fr_110px_120px_50px_70px_30px] gap-3 px-4 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">
               <span>Referenz</span>
               <button onClick={() => toggleSort('created_at')} className="flex items-center gap-0.5 hover:text-slate-700 transition-colors text-left">
                 Zeit<span className="ml-0.5">{sort.col === 'created_at' ? (sort.dir === 'desc' ? '↓' : '↑') : '↕'}</span>
@@ -163,6 +179,7 @@ export function AdminEntriesClient() {
                 Firma<span className="ml-0.5">{sort.col === 'company_name' ? (sort.dir === 'desc' ? '↓' : '↑') : '↕'}</span>
               </button>
               <span>Kennzeichen</span>
+              <span>Terminal</span>
               <span>Spr.</span>
               <span>Belehrung</span>
               <span></span>
@@ -172,7 +189,7 @@ export function AdminEntriesClient() {
               {entries.map(entry => (
                 <div key={entry.id}
                   onClick={() => setSelectedEntry(entry)}
-                  className="grid grid-cols-[100px_140px_80px_1fr_1fr_110px_50px_70px_30px] gap-3 items-center bg-white border border-slate-100 rounded-xl px-4 py-3 hover:border-blue-200 hover:shadow-sm transition-all cursor-pointer">
+                  className="grid grid-cols-[100px_140px_80px_1fr_1fr_110px_120px_50px_70px_30px] gap-3 items-center bg-white border border-slate-100 rounded-xl px-4 py-3 hover:border-blue-200 hover:shadow-sm transition-all cursor-pointer">
                   <span className="font-mono text-xs text-slate-500 truncate">
                     {entry.reference_number ?? <span className="text-slate-300">—</span>}
                   </span>
@@ -188,6 +205,9 @@ export function AdminEntriesClient() {
                   <span className="text-slate-600 text-sm truncate">{entry.company_name}</span>
                   <span className="font-mono text-slate-700 bg-slate-100 px-2 py-0.5 rounded text-xs w-fit">
                     {entry.license_plate}
+                  </span>
+                  <span className="text-xs text-slate-500 truncate">
+                    {entry.terminal_name ?? <span className="text-slate-300">—</span>}
                   </span>
                   <span className="text-base" title={entry.language}>
                     {LANG_FLAGS[entry.language] ?? entry.language}
@@ -207,12 +227,12 @@ export function AdminEntriesClient() {
 
           {totalPages > 1 && (
             <div className="flex items-center justify-center gap-3 mt-6">
-              <button onClick={() => loadEntries(page - 1, search, typeFilter, sort.col, sort.dir)} disabled={page <= 1}
+              <button onClick={() => loadEntries(page - 1, search, typeFilter, terminalFilter, sort.col, sort.dir)} disabled={page <= 1}
                 className="px-4 py-2 rounded-xl border border-slate-200 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed">
                 ← Zurück
               </button>
               <span className="text-sm text-slate-500">Seite {page} von {totalPages}</span>
-              <button onClick={() => loadEntries(page + 1, search, typeFilter, sort.col, sort.dir)} disabled={page >= totalPages}
+              <button onClick={() => loadEntries(page + 1, search, typeFilter, terminalFilter, sort.col, sort.dir)} disabled={page >= totalPages}
                 className="px-4 py-2 rounded-xl border border-slate-200 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed">
                 Weiter →
               </button>

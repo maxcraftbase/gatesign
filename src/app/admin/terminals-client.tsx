@@ -33,7 +33,7 @@ export function TerminalsClient({ slug }: { slug: string }) {
       const data = await res.json()
       setTerminals(data.terminals ?? [])
       setPlan(data.plan ?? 'starter')
-      setTerminalLimit(data.terminal_limit ?? 1)
+      setTerminalLimit(data.terminal_limit !== undefined ? (data.terminal_limit as number | null) : 1)
     } catch { setError('Fehler beim Laden') } finally { setLoading(false) }
   }
 

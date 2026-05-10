@@ -78,6 +78,16 @@ export function AdminEntriesClient() {
     setSort(prev => prev.col === col ? { col, dir: prev.dir === 'desc' ? 'asc' : 'desc' } : { col, dir: 'asc' })
   }
 
+  // Keep selectedEntry in sync when entries array updates (auto-refresh or checkout)
+  useEffect(() => {
+    if (!selectedEntry) return
+    const updated = entries.find(e => e.id === selectedEntry.id)
+    if (updated && updated.departed_at !== selectedEntry.departed_at) {
+      setSelectedEntry(updated)
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [entries])
+
   useEffect(() => {
     let active = true
     if (!selectedEntry?.has_signature || !selectedEntry?.id) {

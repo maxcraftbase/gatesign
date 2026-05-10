@@ -112,6 +112,27 @@ export function EntryModal({ entry, companyName, logoUrl, companyPdfUrl, contact
           </div>
         </div>
 
+        {entry.departed_at && (() => {
+          const ms = new Date(entry.departed_at).getTime() - new Date(entry.created_at).getTime()
+          const totalMin = Math.round(ms / 60000)
+          const h = Math.floor(totalMin / 60)
+          const m = totalMin % 60
+          const duration = h > 0 ? `${h} Std. ${m} Min.` : `${m} Min.`
+          return (
+            <div className="mx-6 mt-4 bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3 flex items-center gap-6">
+              <div>
+                <p className="text-xs font-semibold text-emerald-600 uppercase tracking-wider mb-0.5">Gesamtzeit</p>
+                <p className="text-base font-bold text-emerald-800">{duration}</p>
+              </div>
+              <div className="w-px h-8 bg-emerald-200" />
+              <div>
+                <p className="text-xs font-semibold text-emerald-600 uppercase tracking-wider mb-0.5">Abgemeldet</p>
+                <p className="text-base font-medium text-emerald-800">{new Intl.DateTimeFormat('de-DE', { timeStyle: 'short' }).format(new Date(entry.departed_at))}</p>
+              </div>
+            </div>
+          )
+        })()}
+
         <div className="px-6 py-5 grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3 border-b border-slate-100">
           {entry.reference_number && (
             <div className="col-span-2">
@@ -147,26 +168,6 @@ export function EntryModal({ entry, companyName, logoUrl, companyPdfUrl, contact
             <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-0.5">Belehrung</p>
             <p className="text-sm">{entry.briefing_accepted ? <span className="text-emerald-600 font-semibold">✓ Akzeptiert</span> : '—'}</p>
           </div>
-          {entry.departed_at && (() => {
-            const ms = new Date(entry.departed_at).getTime() - new Date(entry.created_at).getTime()
-            const totalMin = Math.round(ms / 60000)
-            const h = Math.floor(totalMin / 60)
-            const m = totalMin % 60
-            const duration = h > 0 ? `${h} Std. ${m} Min.` : `${m} Min.`
-            return (
-              <div className="col-span-2 bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3 flex items-center gap-4">
-                <div>
-                  <p className="text-xs font-semibold text-emerald-600 uppercase tracking-wider mb-0.5">Gesamtzeit</p>
-                  <p className="text-sm font-bold text-emerald-800">{duration}</p>
-                </div>
-                <div className="w-px h-8 bg-emerald-200" />
-                <div>
-                  <p className="text-xs font-semibold text-emerald-600 uppercase tracking-wider mb-0.5">Abgemeldet</p>
-                  <p className="text-sm font-medium text-emerald-800">{new Intl.DateTimeFormat('de-DE', { timeStyle: 'short' }).format(new Date(entry.departed_at))}</p>
-                </div>
-              </div>
-            )
-          })()}
           <div className={entry.has_signature && signatureData ? 'col-span-2' : ''}>
             <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-0.5">Unterschrift</p>
             {entry.has_signature ? (

@@ -361,18 +361,3 @@ export function AdminEntriesClient() {
     </div>
   )
 }
-      {selectedEntry && (
-        <EntryModal
-          entry={selectedEntry}
-          companyName={companyName}
-          logoUrl={logoUrl}
-          companyPdfUrl={companyPdfUrl}
-          contactPersons={contactPersons}
-          signatureData={signatureData}
-          onClose={() => setSelectedEntry(null)}
-          onNoteUpdated={handleNoteUpdated}
-        />
-      )}
-    </div>
-  )
-}

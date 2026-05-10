@@ -12,10 +12,19 @@ type Company = {
   subscription_status: string
   trial_ends_at: string | null
   created_at: string
+  plan: string
+  terminal_limit: number | null
   total_check_ins: number
   check_ins_7d: number
   last_check_in: string | null
 }
+
+const PLANS = [
+  { value: 'starter',      label: 'Starter',      limit: '1 Terminal' },
+  { value: 'professional', label: 'Professional',  limit: '3 Terminals' },
+  { value: 'enterprise',   label: 'Enterprise',    limit: '∞ Terminals' },
+] as const
+type PlanValue = typeof PLANS[number]['value']
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -71,6 +80,7 @@ export default function SuperadminPage() {
 
   const [toggling, setToggling] = useState<string | null>(null)
   const [extendingTrial, setExtendingTrial] = useState<string | null>(null)
+  const [changingPlan, setChangingPlan] = useState<string | null>(null)
 
   // Agents
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null)
@@ -127,6 +137,20 @@ export default function SuperadminPage() {
     })
     setCompanies(prev => prev.map(c => c.id === company.id ? { ...c, subscription_status: next } : c))
     setToggling(null)
+  }
+
+  async function changePlan(company: Company, plan: PlanValue) {
+    setChangingPlan(company.id)
+    await fetch('/api/superadmin/data', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ companyId: company.id, plan }),
+    })
+    setCompanies(prev => prev.map(c => c.id === company.id
+      ? { ...c, plan, terminal_limit: plan === 'enterprise' ? null : plan === 'professional' ? 3 : 1 }
+      : c
+    ))
+    setChangingPlan(null)
   }
 
   async function extendTrial(company: Company, days: number) {
@@ -450,6 +474,7 @@ export default function SuperadminPage() {
                         <th className="text-right px-4 py-3 text-xs font-semibold text-zinc-500 uppercase tracking-wide">7T / Gesamt</th>
                         <th className="text-left px-4 py-3 text-xs font-semibold text-zinc-500 uppercase tracking-wide">Letzter</th>
                         <th className="text-left px-4 py-3 text-xs font-semibold text-zinc-500 uppercase tracking-wide">Status</th>
+                        <th className="text-left px-4 py-3 text-xs font-semibold text-zinc-500 uppercase tracking-wide">Plan</th>
                         <th className="text-right px-4 py-3 text-xs font-semibold text-zinc-500 uppercase tracking-wide">Aktionen</th>
                       </tr>
                     </thead>
@@ -482,6 +507,18 @@ export default function SuperadminPage() {
                                   {trialDays <= 0 ? 'abgelaufen' : `noch ${trialDays}T`}
                                 </p>
                               )}
+                            </td>
+                            <td className="px-4 py-4">
+                              <select
+                                value={c.plan ?? 'starter'}
+                                disabled={changingPlan === c.id}
+                                onChange={e => void changePlan(c, e.target.value as PlanValue)}
+                                className="text-xs bg-zinc-800 border border-zinc-700 text-zinc-200 rounded-lg px-2 py-1.5 outline-none focus:border-zinc-500 disabled:opacity-50 cursor-pointer"
+                              >
+                                {PLANS.map(p => (
+                                  <option key={p.value} value={p.value}>{p.label} ({p.limit})</option>
+                                ))}
+                              </select>
                             </td>
                             <td className="px-4 py-4">
                               <div className="flex items-center justify-end gap-1.5">

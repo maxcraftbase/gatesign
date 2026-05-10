@@ -8,7 +8,7 @@ export async function GET(req: NextRequest) {
   const headers = { apikey: serviceKey, Authorization: `Bearer ${serviceKey}` }
 
   const [companiesRes, checkInsRes] = await Promise.all([
-    fetch(`${supabaseUrl}/rest/v1/companies?select=id,name,slug,email,subscription_status,trial_ends_at,created_at&order=created_at.desc`, {
+    fetch(`${supabaseUrl}/rest/v1/companies?select=id,name,slug,email,subscription_status,trial_ends_at,created_at,plan,terminal_limit&order=created_at.desc`, {
       headers, cache: 'no-store',
     }),
     fetch(`${supabaseUrl}/rest/v1/check_ins?select=company_id,created_at`, {
@@ -34,6 +34,7 @@ export async function GET(req: NextRequest) {
   type RawCompany = {
     id: string; name: string; slug: string; email: string
     subscription_status: string | null; trial_ends_at: string | null; created_at: string
+    plan: string | null; terminal_limit: number | null
   }
 
   const stats = companies.map((c: RawCompany) => {
@@ -50,6 +51,8 @@ export async function GET(req: NextRequest) {
       subscription_status: c.subscription_status ?? 'inactive',
       trial_ends_at: c.trial_ends_at,
       created_at: c.created_at,
+      plan: c.plan ?? 'starter',
+      terminal_limit: c.terminal_limit,
       total_check_ins: companyCheckIns.length,
       check_ins_7d: checkIns7d,
       last_check_in: lastCheckIn,

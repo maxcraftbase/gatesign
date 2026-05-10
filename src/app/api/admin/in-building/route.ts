@@ -14,13 +14,14 @@ export async function GET() {
     const params = new URLSearchParams({
       company_id: `eq.${ctx.company.id}`,
       departed_at: 'is.null',
-      visitor_type: 'in.(visitor,service)',
       created_at: `gte.${encodeURIComponent(todayStart.toISOString())}`,
       select: 'id,created_at,driver_name,company_name,license_plate,language,visitor_type,reference_number,contact_person',
       order: 'created_at.desc',
     })
 
-    const res = await fetch(`${supabaseUrl}/rest/v1/check_ins?${params}`, {
+    // Append in-filter manually — URLSearchParams would encode parentheses/commas
+    // which PostgREST cannot parse
+    const res = await fetch(`${supabaseUrl}/rest/v1/check_ins?${params}&visitor_type=in.(visitor,service)`, {
       headers: { apikey: anonKey, Authorization: `Bearer ${ctx.accessToken}` },
       cache: 'no-store',
     })

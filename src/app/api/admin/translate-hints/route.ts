@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import * as Sentry from '@sentry/nextjs'
 import { getAdminContext } from '@/lib/admin-auth'
 import { checkAdminRateLimit } from '@/lib/rate-limit'
@@ -9,11 +9,11 @@ const DEEPL_LANGS: Record<string, string> = {
   hu: 'HU', bg: 'BG', uk: 'UK', ru: 'RU', tr: 'TR',
 }
 
-export async function POST() {
+export async function POST(req: NextRequest) {
   try {
     const ctx = await getAdminContext()
     if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    if (!await checkAdminRateLimit(ctx.company.id, 'translate-hints', 3, 60_000)) {
+    if (!await checkAdminRateLimit(ctx.company.id, 'translate-hints', 10, 60_000)) {
       return NextResponse.json({ error: 'Zu viele Anfragen. Bitte warten.' }, { status: 429 })
     }
 
@@ -23,12 +23,20 @@ export async function POST() {
       ? 'https://api-free.deepl.com/v2/translate'
       : 'https://api.deepl.com/v2/translate'
 
-    const settingsRes = await fetch(
-      `${supabaseUrl}/rest/v1/app_settings?company_id=eq.${ctx.company.id}&key=eq.custom_hints&select=value`,
-      { headers: { apikey: anonKey, Authorization: `Bearer ${ctx.accessToken}` }, cache: 'no-store' }
-    )
-    const rows = await settingsRes.json() as { value: string }[]
-    const hints: string[] = rows[0]?.value ? JSON.parse(rows[0].value) as string[] : []
+    // Accept hints from request body (for instant translation on add/remove),
+    // or fall back to reading from DB (for manual / on-save trigger)
+    let hints: string[]
+    const body = await req.json().catch(() => ({})) as { hints?: string[] }
+    if (Array.isArray(body.hints)) {
+      hints = body.hints.map((h: string) => String(h)).filter(Boolean)
+    } else {
+      const settingsRes = await fetch(
+        `${supabaseUrl}/rest/v1/app_settings?company_id=eq.${ctx.company.id}&key=eq.custom_hints&select=value`,
+        { headers: { apikey: anonKey, Authorization: `Bearer ${ctx.accessToken}` }, cache: 'no-store' }
+      )
+      const rows = await settingsRes.json() as { value: string }[]
+      hints = rows[0]?.value ? JSON.parse(rows[0].value) as string[] : []
+    }
 
     if (hints.length === 0) return NextResponse.json({ success: true, translations: {} })
 

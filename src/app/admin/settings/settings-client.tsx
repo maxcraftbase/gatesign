@@ -146,20 +146,28 @@ export function AdminSettingsClient() {
   function addHint() {
     const trimmed = newHint.trim()
     if (!trimmed) return
+    const newHints = [...getCustomHints(), trimmed]
     setSettings(s => ({
       ...s,
-      custom_hints: JSON.stringify([...getCustomHints(), trimmed]),
+      custom_hints: JSON.stringify(newHints),
       custom_hints_types: JSON.stringify([...getCustomHintsTypes(), ['all']]),
     }))
     setNewHint('')
+    void handleTranslate(newHints)
   }
 
   function removeHint(index: number) {
+    const newHints = getCustomHints().filter((_, i) => i !== index)
     setSettings(s => ({
       ...s,
-      custom_hints: JSON.stringify(getCustomHints().filter((_, i) => i !== index)),
+      custom_hints: JSON.stringify(newHints),
       custom_hints_types: JSON.stringify(getCustomHintsTypes().filter((_, i) => i !== index)),
     }))
+    if (newHints.length > 0) {
+      void handleTranslate(newHints)
+    } else {
+      setTranslations({})
+    }
   }
 
   function toggleHintType(index: number, type: string) {
@@ -250,12 +258,16 @@ export function AdminSettingsClient() {
     setSettings(s => ({ ...s, [`briefing_pdf_${visitorType}`]: '' }))
   }
 
-  async function handleTranslate() {
+  async function handleTranslate(hintsOverride?: string[]) {
     setTranslateError('')
     setTranslateSuccess(false)
     setTranslating(true)
     try {
-      const res = await fetch('/api/admin/translate-hints', { method: 'POST' })
+      const res = await fetch('/api/admin/translate-hints', {
+        method: 'POST',
+        headers: hintsOverride ? { 'Content-Type': 'application/json' } : {},
+        body: hintsOverride ? JSON.stringify({ hints: hintsOverride }) : undefined,
+      })
       if (res.ok) {
         const data = await res.json() as { translations: Record<string, string[]> }
         if (Object.keys(data.translations).length > 0) setTranslations(data.translations)

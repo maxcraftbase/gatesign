@@ -371,63 +371,66 @@ export function AdminSettingsClient() {
       {/* Allgemein */}
       <div className="bg-white rounded-2xl border border-slate-100 p-6 mb-6">
         <h2 className="text-lg font-bold text-slate-900 mb-5">Allgemein</h2>
-        <div className="flex flex-col gap-5">
 
-          {/* Logo */}
-          <div>
-            <label className={labelCls}>Logo</label>
-            {settings.logo_url ? (
-              <div className="flex items-center gap-4 p-4 bg-slate-50 border border-slate-200 rounded-xl">
-                <div className="w-24 h-16 flex items-center justify-center bg-white rounded-lg border border-slate-200 overflow-hidden shrink-0">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={settings.logo_url} alt="Logo" className="max-w-full max-h-full object-contain p-1" />
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-slate-700 mb-1">Logo hochgeladen</p>
-                  <p className="text-xs text-slate-400">Wird im Terminal auf dem Willkommensbildschirm angezeigt.</p>
-                </div>
-                <div className="flex flex-col gap-2 shrink-0">
-                  <button type="button" onClick={() => logoInputRef.current?.click()}
-                    className="text-xs px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100 transition-colors">
-                    Ersetzen
-                  </button>
-                  <button type="button" onClick={handleLogoDelete}
-                    className="text-xs px-3 py-1.5 rounded-lg border border-red-100 text-red-500 hover:bg-red-50 transition-colors">
-                    Löschen
-                  </button>
-                </div>
+        {/* Logo */}
+        <div className="mb-5">
+          <label className={labelCls}>Logo</label>
+          {settings.logo_url ? (
+            <div className="flex items-center gap-4 p-4 bg-slate-50 border border-slate-200 rounded-xl">
+              <div className="w-24 h-16 flex items-center justify-center bg-white rounded-lg border border-slate-200 overflow-hidden shrink-0">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={settings.logo_url} alt="Logo" className="max-w-full max-h-full object-contain p-1" />
               </div>
-            ) : (
-              <div onClick={() => logoInputRef.current?.click()}
-                className="flex flex-col items-center justify-center gap-3 h-32 rounded-xl border-2 border-dashed border-slate-200 hover:border-blue-400 hover:bg-blue-50 cursor-pointer transition-all group">
-                <div className="w-10 h-10 rounded-full bg-slate-100 group-hover:bg-blue-100 flex items-center justify-center transition-colors">
-                  <svg className="w-5 h-5 text-slate-400 group-hover:text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
-                  </svg>
-                </div>
-                <div className="text-center">
-                  <p className="text-sm font-medium text-slate-600 group-hover:text-blue-600 transition-colors">
-                    {uploadingLogo ? 'Wird hochgeladen…' : 'Logo hochladen'}
-                  </p>
-                  <p className="text-xs text-slate-400 mt-0.5">PNG, JPG, SVG oder WebP — max. 2 MB</p>
-                </div>
+              <div className="flex-1">
+                <p className="text-sm font-medium text-slate-700 mb-1">Logo hochgeladen</p>
+                <p className="text-xs text-slate-400">Wird im Terminal auf dem Willkommensbildschirm angezeigt.</p>
               </div>
-            )}
-            <input ref={logoInputRef} type="file" accept="image/png,image/jpeg,image/jpg,image/svg+xml,image/webp"
-              className="hidden"
-              onChange={e => {
-                const file = e.target.files?.[0]
-                if (file) void handleLogoUpload(file)
-                e.target.value = ''
-              }} />
-          </div>
+              <div className="flex flex-col gap-2 shrink-0">
+                <button type="button" onClick={() => logoInputRef.current?.click()}
+                  className="text-xs px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100 transition-colors">
+                  Ersetzen
+                </button>
+                <button type="button" onClick={handleLogoDelete}
+                  className="text-xs px-3 py-1.5 rounded-lg border border-red-100 text-red-500 hover:bg-red-50 transition-colors">
+                  Löschen
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div onClick={() => logoInputRef.current?.click()}
+              className="flex flex-col items-center justify-center gap-3 h-28 rounded-xl border-2 border-dashed border-slate-200 hover:border-blue-400 hover:bg-blue-50 cursor-pointer transition-all group">
+              <div className="w-9 h-9 rounded-full bg-slate-100 group-hover:bg-blue-100 flex items-center justify-center transition-colors">
+                <svg className="w-4 h-4 text-slate-400 group-hover:text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                </svg>
+              </div>
+              <p className="text-sm font-medium text-slate-600 group-hover:text-blue-600 transition-colors">
+                {uploadingLogo ? 'Wird hochgeladen…' : 'Logo hochladen'}
+              </p>
+            </div>
+          )}
+          <input ref={logoInputRef} type="file" accept="image/png,image/jpeg,image/jpg,image/svg+xml,image/webp"
+            className="hidden"
+            onChange={e => {
+              const file = e.target.files?.[0]
+              if (file) void handleLogoUpload(file)
+              e.target.value = ''
+            }} />
+        </div>
 
+        {/* Text fields — 2-column grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
           <div>
             <label className={labelCls}>Firmenname</label>
             <input className={inputCls} value={settings.company_name}
               onChange={e => setSettings(s => ({ ...s, company_name: e.target.value }))}
               placeholder="z.B. Muster Logistik GmbH" />
-            <p className="text-xs text-slate-400 mt-1">Wird im Terminal über dem Willkommenstitel angezeigt.</p>
+          </div>
+          <div>
+            <label className={labelCls}>Standortinfo <span className="text-slate-400 font-normal">(optional)</span></label>
+            <input className={inputCls} value={settings.site_info}
+              onChange={e => setSettings(s => ({ ...s, site_info: e.target.value }))}
+              placeholder="z.B. Lager Nord, Tor 3" />
           </div>
           <div>
             <label className={labelCls}>Willkommenstitel</label>
@@ -441,58 +444,57 @@ export function AdminSettingsClient() {
               onChange={e => setSettings(s => ({ ...s, welcome_subtitle: e.target.value }))}
               placeholder="Bitte melden Sie sich hier an" />
           </div>
-          <div>
-            <label className={labelCls}>Standortinfo (optional)</label>
-            <input className={inputCls} value={settings.site_info}
-              onChange={e => setSettings(s => ({ ...s, site_info: e.target.value }))}
-              placeholder="z.B. Lager Nord, Tor 3" />
-          </div>
-          <label className="flex items-center gap-3 cursor-pointer">
-            <div
-              onClick={() => setSettings(s => ({ ...s, signature_required: s.signature_required === 'true' ? 'false' : 'true' }))}
-              className={`w-12 h-6 rounded-full transition-colors cursor-pointer flex items-center px-1 ${settings.signature_required === 'true' ? 'bg-blue-600' : 'bg-slate-300'}`}
-            >
-              <div className={`w-4 h-4 bg-white rounded-full shadow transition-transform ${settings.signature_required === 'true' ? 'translate-x-6' : 'translate-x-0'}`} />
-            </div>
-            <span className="text-sm font-medium text-slate-700">Unterschrift erforderlich</span>
-          </label>
-
-          {/* Referenznummer verpflichtend */}
-          {(() => {
-            const types: string[] = (() => { try { return JSON.parse(settings.reference_required_types) } catch { return [] } })()
-            const isOn = types.length > 0
-            const ALL = ['truck', 'visitor', 'service']
-            const LABELS: Record<string, string> = { truck: 'LKW', visitor: 'Besucher', service: 'Dienstleister' }
-            function toggleMain() {
-              setSettings(s => ({ ...s, reference_required_types: isOn ? '[]' : JSON.stringify(ALL) }))
-            }
-            function toggleType(t: string) {
-              const next = types.includes(t) ? types.filter(x => x !== t) : [...types, t]
-              setSettings(s => ({ ...s, reference_required_types: JSON.stringify(next) }))
-            }
-            return (
-              <div className="flex flex-col gap-2">
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <div onClick={toggleMain}
-                    className={`w-12 h-6 rounded-full transition-colors cursor-pointer flex items-center px-1 ${isOn ? 'bg-blue-600' : 'bg-slate-300'}`}>
-                    <div className={`w-4 h-4 bg-white rounded-full shadow transition-transform ${isOn ? 'translate-x-6' : 'translate-x-0'}`} />
-                  </div>
-                  <span className="text-sm font-medium text-slate-700">Referenznummer erforderlich</span>
-                </label>
-                {isOn && (
-                  <div className="flex gap-2 pl-15 ml-15">
-                    {ALL.map(type => (
-                      <button key={type} type="button" onClick={() => toggleType(type)}
-                        className={`px-3 py-1 rounded-full text-xs font-semibold border transition-colors ${types.includes(type) ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-600 border-slate-300 hover:border-blue-400'}`}>
-                        {LABELS[type]}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )
-          })()}
         </div>
+
+        {/* Verhalten — compact toggle group */}
+        {(() => {
+          const refTypes: string[] = (() => { try { return JSON.parse(settings.reference_required_types) } catch { return [] } })()
+          const refOn = refTypes.length > 0
+          const ALL = ['truck', 'visitor', 'service']
+          const LABELS: Record<string, string> = { truck: 'LKW', visitor: 'Besucher', service: 'Dienstleister' }
+          function toggleRefMain() {
+            setSettings(s => ({ ...s, reference_required_types: refOn ? '[]' : JSON.stringify(ALL) }))
+          }
+          function toggleRefType(t: string) {
+            const next = refTypes.includes(t) ? refTypes.filter(x => x !== t) : [...refTypes, t]
+            setSettings(s => ({ ...s, reference_required_types: JSON.stringify(next) }))
+          }
+          return (
+            <div className="bg-slate-50 rounded-xl border border-slate-200 overflow-hidden">
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest px-4 pt-3 pb-2">Verhalten</p>
+              {/* Unterschrift */}
+              <div className="flex items-center gap-3 px-4 py-3 border-t border-slate-200">
+                <div
+                  onClick={() => setSettings(s => ({ ...s, signature_required: s.signature_required === 'true' ? 'false' : 'true' }))}
+                  className={`w-10 h-5 rounded-full transition-colors cursor-pointer flex items-center px-0.5 shrink-0 ${settings.signature_required === 'true' ? 'bg-blue-600' : 'bg-slate-300'}`}
+                >
+                  <div className={`w-4 h-4 bg-white rounded-full shadow transition-transform ${settings.signature_required === 'true' ? 'translate-x-5' : 'translate-x-0'}`} />
+                </div>
+                <span className="text-sm font-medium text-slate-700 flex-1">Unterschrift erforderlich</span>
+              </div>
+              {/* Referenznummer */}
+              <div className="border-t border-slate-200">
+                <div className="flex items-center gap-3 px-4 py-3">
+                  <div onClick={toggleRefMain}
+                    className={`w-10 h-5 rounded-full transition-colors cursor-pointer flex items-center px-0.5 shrink-0 ${refOn ? 'bg-blue-600' : 'bg-slate-300'}`}>
+                    <div className={`w-4 h-4 bg-white rounded-full shadow transition-transform ${refOn ? 'translate-x-5' : 'translate-x-0'}`} />
+                  </div>
+                  <span className="text-sm font-medium text-slate-700 flex-1">Referenznummer erforderlich</span>
+                  {refOn && (
+                    <div className="flex gap-1.5">
+                      {ALL.map(type => (
+                        <button key={type} type="button" onClick={() => toggleRefType(type)}
+                          className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border transition-colors ${refTypes.includes(type) ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-500 border-slate-300 hover:border-blue-400'}`}>
+                          {LABELS[type]}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )
+        })()}
       </div>
 
       {/* Felder konfigurieren */}

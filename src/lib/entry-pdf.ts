@@ -35,7 +35,7 @@ function drawRoundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: n
   ctx.closePath()
 }
 
-async function drawLabelCanvas(entry: Entry, companyName: string, logoUrl?: string): Promise<HTMLCanvasElement> {
+async function drawLabelCanvas(entry: Entry, companyName: string, logoUrl?: string, signatureData?: string | null): Promise<HTMLCanvasElement> {
   const SCALE = 2
   const W = 794, H = 1123
   const canvas = document.createElement('canvas')
@@ -110,7 +110,21 @@ async function drawLabelCanvas(entry: Entry, companyName: string, logoUrl?: stri
   row(bil('visitorType'), vtLabel)
   row(bil('language'), `${flag} ${langName}`)
   row(bil('briefing'), entry.briefing_accepted ? t.accepted : '—', entry.briefing_accepted)
-  row(bil('signature'), entry.has_signature ? t.yes : '—', entry.has_signature)
+  if (signatureData && entry.has_signature) {
+    const sigLabel = bil('signature')
+    const ll = wrapText(ctx, sigLabel, COL1 - 8)
+    ctx.font = 'bold 10px Arial, sans-serif'; ctx.fillStyle = '#64748b'
+    ll.forEach((l, i) => ctx.fillText(l.toUpperCase(), PAD, y + i * 13))
+    const sigImg = new Image()
+    await new Promise<void>(r => { sigImg.onload = () => r(); sigImg.onerror = () => r(); sigImg.src = signatureData })
+    const sigMaxW = IW - COL1 - 8, sigMaxH = 64
+    const ratio = Math.min(sigMaxW / (sigImg.naturalWidth || sigMaxW), sigMaxH / (sigImg.naturalHeight || sigMaxH))
+    const sigW = (sigImg.naturalWidth || sigMaxW) * ratio, sigH = (sigImg.naturalHeight || sigMaxH) * ratio
+    ctx.drawImage(sigImg, PAD + COL1, y, sigW, sigH)
+    y += Math.max(ROW_H, sigH + 8)
+  } else {
+    row(bil('signature'), entry.has_signature ? t.yes : '—', entry.has_signature)
+  }
   if (entry.assigned_contact) row(bil('assignedContact'), entry.assigned_contact)
 
   const noteDE = entry.staff_note || ''
@@ -151,8 +165,8 @@ async function drawLabelCanvas(entry: Entry, companyName: string, logoUrl?: stri
   return canvas
 }
 
-async function buildMergedPdf(entry: Entry, companyName: string, logoUrl?: string, companyPdfUrl?: string): Promise<Blob> {
-  const labelCanvas = await drawLabelCanvas(entry, companyName, logoUrl)
+async function buildMergedPdf(entry: Entry, companyName: string, logoUrl?: string, companyPdfUrl?: string, signatureData?: string | null): Promise<Blob> {
+  const labelCanvas = await drawLabelCanvas(entry, companyName, logoUrl, signatureData)
   const { PDFDocument } = await import('pdf-lib')
   const pdfDoc = await PDFDocument.create()
 
@@ -203,8 +217,8 @@ async function buildMergedPdf(entry: Entry, companyName: string, logoUrl?: strin
   return new Blob([new Uint8Array(await pdfDoc.save())], { type: 'application/pdf' })
 }
 
-export async function printEntry(entry: Entry, companyName: string, logoUrl?: string, companyPdfUrl?: string) {
-  const blob = await buildMergedPdf(entry, companyName, logoUrl, companyPdfUrl)
+export async function printEntry(entry: Entry, companyName: string, logoUrl?: string, companyPdfUrl?: string, signatureData?: string | null) {
+  const blob = await buildMergedPdf(entry, companyName, logoUrl, companyPdfUrl, signatureData)
   const blobUrl = URL.createObjectURL(blob)
   const iframe = document.createElement('iframe')
   iframe.style.cssText = 'position:fixed;left:-9999px;top:0;width:210mm;height:297mm;border:none'
@@ -221,8 +235,8 @@ export async function printEntry(entry: Entry, companyName: string, logoUrl?: st
   iframe.src = blobUrl
 }
 
-export async function downloadPdf(entry: Entry, companyName: string, logoUrl?: string, companyPdfUrl?: string) {
-  const blob = await buildMergedPdf(entry, companyName, logoUrl, companyPdfUrl)
+export async function downloadPdf(entry: Entry, companyName: string, logoUrl?: string, companyPdfUrl?: string, signatureData?: string | null) {
+  const blob = await buildMergedPdf(entry, companyName, logoUrl, companyPdfUrl, signatureData)
   const blobUrl = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = blobUrl

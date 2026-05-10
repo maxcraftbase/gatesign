@@ -86,7 +86,7 @@ export function EntryModal({ entry, companyName, logoUrl, companyPdfUrl, contact
               onClick={async () => {
                 setDownloading(true)
                 try {
-                  await downloadPdf({ ...entry, staff_note: note, staff_note_translated: translated, assigned_contact: assignedContact || null }, companyName, logoUrl, companyPdfUrl)
+                  await downloadPdf({ ...entry, staff_note: note, staff_note_translated: translated, assigned_contact: assignedContact || null }, companyName, logoUrl, companyPdfUrl, signatureData)
                 } finally { setDownloading(false) }
               }}
               className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-sm font-medium transition-colors disabled:opacity-50">
@@ -99,7 +99,7 @@ export function EntryModal({ entry, companyName, logoUrl, companyPdfUrl, contact
                 setPrinting(true)
                 try {
                   void fetch(`/api/admin/entries/${entry.id}/print`, { method: 'POST' })
-                  await printEntry({ ...entry, staff_note: note, staff_note_translated: translated, assigned_contact: assignedContact || null }, companyName, logoUrl, companyPdfUrl)
+                  await printEntry({ ...entry, staff_note: note, staff_note_translated: translated, assigned_contact: assignedContact || null }, companyName, logoUrl, companyPdfUrl, signatureData)
                 } finally { setPrinting(false) }
               }}
               className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-sm font-medium transition-colors disabled:opacity-50">

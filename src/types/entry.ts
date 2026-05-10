@@ -18,6 +18,7 @@ export interface Entry {
   assigned_contact: string | null
   terminal_id: string | null
   terminal_name: string | null
+  departed_at?: string | null
 }
 
 export const VISITOR_TYPE_LABELS: Record<string, { label: string; color: string }> = {

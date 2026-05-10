@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { Download, RefreshCw, FileText, Search } from 'lucide-react'
+import { Download, RefreshCw, FileText, Search, LogOut } from 'lucide-react'
 import { type Entry, VISITOR_TYPE_LABELS, LANG_FLAGS, formatDate } from '@/types/entry'
 import { EntryModal } from '@/components/admin/EntryModal'
 
@@ -22,6 +22,22 @@ export function AdminEntriesClient() {
   const [terminalFilter, setTerminalFilter] = useState('')
   const [terminals, setTerminals] = useState<{ id: string; name: string }[]>([])
   const [sort, setSort] = useState<{ col: string; dir: 'asc' | 'desc' }>({ col: 'created_at', dir: 'desc' })
+  const [checkingOut, setCheckingOut] = useState<string | null>(null)
+
+  async function handleCheckout(e: React.MouseEvent, id: string) {
+    e.stopPropagation()
+    setCheckingOut(id)
+    try {
+      const res = await fetch(`/api/admin/entries/${id}/checkout`, { method: 'PATCH' })
+      if (res.ok) {
+        const now = new Date().toISOString()
+        setEntries(prev => prev.map(entry => entry.id === id ? { ...entry, departed_at: now } : entry))
+        if (selectedEntry?.id === id) setSelectedEntry(e => e ? { ...e, departed_at: now } : e)
+      }
+    } catch { /* ignore */ } finally {
+      setCheckingOut(null)
+    }
+  }
 
   const loadEntries = useCallback((p: number, q: string, type: string, terminal: string, sortCol: string, sortDir: 'asc' | 'desc') => {
     setLoading(true)
@@ -170,6 +186,8 @@ export function AdminEntriesClient() {
             {entries.map(entry => {
               const typeInfo = entry.visitor_type ? VISITOR_TYPE_LABELS[entry.visitor_type] : null
               const borderColor = entry.visitor_type === 'truck' ? 'border-l-amber-400' : entry.visitor_type === 'visitor' ? 'border-l-blue-400' : entry.visitor_type === 'service' ? 'border-l-violet-400' : 'border-l-slate-200'
+              const showCheckout = (entry.visitor_type === 'visitor' || entry.visitor_type === 'service')
+              const isCheckedOut = !!entry.departed_at
               return (
                 <div key={entry.id}
                   onClick={() => setSelectedEntry(entry)}
@@ -194,8 +212,8 @@ export function AdminEntriesClient() {
                   {terminals.length > 1 && entry.terminal_name && (
                     <p className="mt-0.5 text-xs text-slate-400">{entry.terminal_name}</p>
                   )}
-                  {(entry.briefing_accepted || entry.staff_note) && (
-                    <div className="mt-2 flex items-center gap-2">
+                  <div className="mt-2 flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
                       {entry.briefing_accepted && (
                         <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 text-xs font-semibold px-2 py-0.5 rounded-full">✓ Belehrung</span>
                       )}
@@ -203,7 +221,23 @@ export function AdminEntriesClient() {
                         <span className="inline-flex items-center gap-1 text-blue-400 text-xs"><FileText className="w-3.5 h-3.5" />Notiz</span>
                       )}
                     </div>
-                  )}
+                    {showCheckout && (
+                      isCheckedOut ? (
+                        <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 text-xs font-semibold px-2 py-0.5 rounded-full whitespace-nowrap shrink-0">
+                          ✓ {new Date(entry.departed_at!).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      ) : (
+                        <button
+                          onClick={e => handleCheckout(e, entry.id)}
+                          disabled={checkingOut === entry.id}
+                          className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-lg border border-slate-200 text-slate-600 hover:text-red-600 hover:border-red-200 hover:bg-red-50 transition-colors disabled:opacity-50 shrink-0"
+                        >
+                          <LogOut className="w-3.5 h-3.5" />
+                          {checkingOut === entry.id ? 'Lädt…' : 'Abmelden'}
+                        </button>
+                      )
+                    )}
+                  </div>
                 </div>
               )
             })}
@@ -211,7 +245,7 @@ export function AdminEntriesClient() {
 
           {/* Desktop: Tabellen-Layout */}
           <div className="hidden sm:flex flex-col gap-2">
-            <div className="grid grid-cols-[100px_140px_80px_1fr_1fr_110px_120px_50px_70px_30px] gap-3 px-4 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">
+            <div className="grid grid-cols-[100px_140px_80px_1fr_1fr_110px_120px_50px_70px_30px_90px] gap-3 px-4 py-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">
               <span>Referenz</span>
               <button onClick={() => toggleSort('created_at')} className="flex items-center gap-0.5 hover:text-slate-700 transition-colors text-left">
                 Zeit<span className="ml-0.5">{sort.col === 'created_at' ? (sort.dir === 'desc' ? '↓' : '↑') : '↕'}</span>
@@ -228,13 +262,14 @@ export function AdminEntriesClient() {
               <span>Spr.</span>
               <span>Belehrung</span>
               <span></span>
+              <span>Abmeld.</span>
             </div>
 
             <div className="flex flex-col gap-1.5">
               {entries.map(entry => (
                 <div key={entry.id}
                   onClick={() => setSelectedEntry(entry)}
-                  className="grid grid-cols-[100px_140px_80px_1fr_1fr_110px_120px_50px_70px_30px] gap-3 items-center bg-white border border-slate-100 rounded-xl px-4 py-3 hover:border-blue-200 hover:shadow-sm transition-all cursor-pointer">
+                  className="grid grid-cols-[100px_140px_80px_1fr_1fr_110px_120px_50px_70px_30px_90px] gap-3 items-center bg-white border border-slate-100 rounded-xl px-4 py-3 hover:border-blue-200 hover:shadow-sm transition-all cursor-pointer">
                   <span className="font-mono text-xs text-slate-500 truncate">
                     {entry.reference_number ?? <span className="text-slate-300">—</span>}
                   </span>
@@ -264,6 +299,24 @@ export function AdminEntriesClient() {
                   </span>
                   <span className="flex items-center justify-center">
                     {entry.staff_note ? <FileText className="w-4 h-4 text-blue-400" aria-label="Notiz vorhanden" /> : null}
+                  </span>
+                  <span className="flex items-center" onClick={e => e.stopPropagation()}>
+                    {(entry.visitor_type === 'visitor' || entry.visitor_type === 'service') && (
+                      entry.departed_at ? (
+                        <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 text-xs font-semibold px-2 py-0.5 rounded-full whitespace-nowrap">
+                          ✓ {new Date(entry.departed_at).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      ) : (
+                        <button
+                          onClick={e => handleCheckout(e, entry.id)}
+                          disabled={checkingOut === entry.id}
+                          className="inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-lg border border-slate-200 text-slate-600 hover:text-red-600 hover:border-red-200 hover:bg-red-50 transition-colors disabled:opacity-50 whitespace-nowrap"
+                        >
+                          <LogOut className="w-3.5 h-3.5" />
+                          {checkingOut === entry.id ? 'Lädt…' : 'Abmelden'}
+                        </button>
+                      )
+                    )}
                   </span>
                 </div>
               ))}

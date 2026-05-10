@@ -36,7 +36,7 @@ export async function GET(req: NextRequest) {
 
     const params = new URLSearchParams({
       company_id: `eq.${ctx.company.id}`,
-      select: 'id,created_at,driver_name,company_name,license_plate,trailer_plate,phone,language,visitor_type,briefing_accepted,briefing_accepted_at,has_signature,reference_number,contact_person,staff_note,staff_note_translated,assigned_contact,terminal_id,terminals(name)',
+      select: 'id,created_at,departed_at,driver_name,company_name,license_plate,trailer_plate,phone,language,visitor_type,briefing_accepted,briefing_accepted_at,has_signature,reference_number,contact_person,staff_note,staff_note_translated,assigned_contact,terminal_id,terminals(name)',
       order: `${sortCol}.${sortDir}`,
       limit: String(limit),
       offset: String(offset),

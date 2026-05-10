@@ -36,6 +36,7 @@ export function InBuildingClient() {
   }, [])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     load()
     const interval = setInterval(load, 30_000)
     return () => clearInterval(interval)
@@ -54,6 +55,7 @@ export function InBuildingClient() {
   }
 
   const minutesInBuilding = (createdAt: string) => {
+    // eslint-disable-next-line react-hooks/purity
     const diff = Math.floor((Date.now() - new Date(createdAt).getTime()) / 60_000)
     if (diff < 60) return `${diff} Min.`
     const h = Math.floor(diff / 60)

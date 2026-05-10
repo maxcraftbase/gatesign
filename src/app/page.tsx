@@ -2,71 +2,162 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import {
+  Scale, Globe, ShieldAlert,
+  Settings, Tablet, CheckCircle2,
+  Check, MessageSquare,
+} from 'lucide-react'
 import { IsoSign } from '@/components/IsoSign'
 
 const mockEntries = [
-  { time: '05.05.26, 08:14', name: 'Tomasz Kowalski', company: 'DHL Express', plate: 'WA 4821 PL', phone: '+48 602 334 891', flag: '🇵🇱', ref: 'LFS-2291' },
-  { time: '05.05.26, 07:53', name: 'Stefan Müller',   company: 'DB Schenker',  plate: 'MH-ST 882',  phone: '+49 162 554 0033', flag: '🇩🇪', ref: 'SCH-8814' },
-  { time: '05.05.26, 07:31', name: 'Gheorghe Ionescu',company: 'Trans Ro SRL', plate: 'B 77 XYZ',   phone: '+40 721 998 112', flag: '🇷🇴', ref: '—' },
-  { time: '04.05.26, 16:44', name: 'Andriy Kovalenko',company: 'Netto GmbH',   plate: 'HA-AK 201',  phone: '+49 174 102 9943', flag: '🇺🇦', ref: 'NET-0041' },
-  { time: '04.05.26, 14:22', name: 'Mehmet Yilmaz',   company: 'GLS Germany',  plate: 'E-MY 5500',  phone: '+49 176 881 2207', flag: '🇹🇷', ref: 'GLS-7732' },
-  { time: '04.05.26, 11:09', name: 'Jan Novák',        company: 'Lidl Logistik',plate: 'PR 3341 C',  phone: '+420 777 234 456', flag: '🇨🇿', ref: 'LDL-0093' },
+  { ref: 'LFS-2291', time: '05.05.26, 08:14', type: 'truck',   name: 'Tomasz Kowalski',  company: 'DHL Express',   plate: 'WA 4821 PL', flag: '🇵🇱', hasNote: true  },
+  { ref: 'SCH-8814', time: '05.05.26, 07:53', type: 'truck',   name: 'Stefan Müller',    company: 'DB Schenker',   plate: 'MH-ST 882',  flag: '🇩🇪', hasNote: false },
+  { ref: '—',        time: '05.05.26, 07:31', type: 'visitor', name: 'Gheorghe Ionescu', company: 'Trans Ro SRL',  plate: 'B 77 XYZ',   flag: '🇷🇴', hasNote: false },
+  { ref: 'NET-0041', time: '04.05.26, 16:44', type: 'service', name: 'Andriy Kovalenko', company: 'Netto GmbH',    plate: 'HA-AK 201',  flag: '🇺🇦', hasNote: true  },
+  { ref: 'GLS-7732', time: '04.05.26, 14:22', type: 'truck',   name: 'Mehmet Yilmaz',   company: 'GLS Germany',   plate: 'E-MY 5500',  flag: '🇹🇷', hasNote: false },
+  { ref: 'LDL-0093', time: '04.05.26, 11:09', type: 'visitor', name: 'Jan Novák',        company: 'Lidl Logistik', plate: 'PR 3341 C',  flag: '🇨🇿', hasNote: false },
 ]
+
+const typeBadge = {
+  de: { truck: 'LKW', visitor: 'Besucher', service: 'Dienst.' },
+  en: { truck: 'Truck', visitor: 'Visitor', service: 'Contractor' },
+}
+const typeBadgeClass = {
+  truck:   'bg-amber-100 text-amber-800',
+  visitor: 'bg-blue-100 text-blue-800',
+  service: 'bg-violet-100 text-violet-800',
+}
 
 const content = {
   de: {
     nav: { login: 'Anmelden', register: 'Jetzt starten' },
     hero: {
       title: 'Digitales Check-in Terminal',
-      sub: 'Für Unternehmen mit Wareneingang und Lieferverkehr. Besucher und Fahrer einchecken, Sicherheitsbelehrung bestätigen und digital unterschreiben — in 10 Sprachen.',
+      sub: 'Für Produktions- und Logistikbetriebe. Besucher und Fahrer sicher einchecken, Sicherheitsunterweisungen rechtssicher dokumentieren — automatisch in der Muttersprache jedes Fahrers.',
       cta: 'Kostenlos testen',
       login: 'Bereits Kunde? Anmelden',
+    },
+    stats: [
+      { value: '10', label: 'Sprachen' },
+      { value: '28', label: 'Sicherheitsregeln' },
+      { value: '3', label: 'Besuchertypen' },
+      { value: '100%', label: 'Digital & nachweisbar' },
+    ],
+    legal: {
+      badge: 'Gesetzliche Pflicht',
+      title: 'Papier reicht nicht mehr — und Unwissenheit schützt nicht.',
+      sub: 'Das Arbeitsschutzgesetz verpflichtet jeden Betrieb, Besucher und externe Fahrer zu unterweisen — dokumentiert, verständlich und in einer Sprache, die sie verstehen. Wer das nicht nachweisen kann, haftet.',
+      items: [
+        {
+          title: '§ 12 ArbSchG & DGUV Vorschrift 1',
+          text: 'Sicherheitsunterweisung ist für alle Personen auf dem Betriebsgelände Pflicht — auch für LKW-Fahrer, Monteure und externe Dienstleister. Gilt auch für ausländische Fahrer und Subunternehmer (§ 823 BGB). Keine Ausnahme.',
+        },
+        {
+          title: 'Sprachpflicht: Verständlich ist Pflicht',
+          text: 'Eine Unterweisung auf Deutsch, die der polnische oder rumänische Fahrer nicht versteht, gilt rechtlich als nicht erfolgt — auch wenn er unterschrieben hat. Die Sprache des Empfängers entscheidet.',
+        },
+        {
+          title: 'Haftung ohne Nachweis',
+          text: 'BG-Regress bis 10 Mio. € (§ 110 SGB VII), Strafrecht § 229 StGB für verantwortliche Personen, mögliche Ablehnung der Betriebshaftpflicht wegen Obliegenheitsverletzung.',
+        },
+      ],
     },
     how: {
       title: 'So funktioniert GateSign',
       step: 'Schritt',
       steps: [
-        { icon: '⚙️', title: 'Einrichten', text: 'Sicherheitsregeln, Betriebszeiten und Belehrungstexte in wenigen Minuten konfigurieren.' },
-        { icon: '📱', title: 'Terminal aufstellen', text: 'Tablet oder Touchscreen am Eingang platzieren — als PWA, kein App-Store nötig.' },
-        { icon: '✅', title: 'Einchecken lassen', text: 'Besucher wählen Sprache, bestätigen Sicherheitsregeln, unterschreiben digital.' },
+        { title: 'Einrichten', text: 'Sicherheitsregeln, Betriebszeiten und Belehrungstexte in wenigen Minuten konfigurieren.' },
+        { title: 'Terminal aufstellen', text: 'Tablet oder Touchscreen am Eingang platzieren — als PWA, kein App-Store nötig.' },
+        { title: 'Einchecken lassen', text: 'Besucher wählen Sprache, bestätigen Sicherheitsregeln, unterschreiben digital.' },
       ],
-    },
-    features: {
-      title: 'Alles drin',
-      items: [
-        { icon: '🌍', text: '10 Sprachen (DE, EN, PL, RO, UA, TR, …)' },
-        { icon: '🦺', text: 'Sicherheitsregeln mit ISO-Symbolen' },
-        { icon: '📄', text: 'PDF-Belehrung je Besuchertyp' },
-        { icon: '✍️', text: 'Digitale Unterschrift' },
-        { icon: '📊', text: 'CSV-Export aller Check-ins' },
-        { icon: '🕐', text: 'Betriebszeiten-Anzeige in Fahrersprache' },
-      ],
-    },
-    pricing: {
-      title: 'Einfache Preisgestaltung',
-      price: '69',
-      period: 'pro Monat & Standort',
-      desc: 'Keine Einrichtungsgebühr. Keine Nutzungsabrechnung. Jederzeit kündbar.',
-      cta: 'Jetzt starten',
+      terminalSteps: ['Sprache wählen', 'Besuchertyp wählen', 'Daten eingeben', 'Belehrung bestätigen', 'Unterschreiben'],
     },
     briefing: {
       badge: 'Sicherheitsbelehrung',
       title: 'Individuelle Belehrung — in jeder Sprache',
       sub: 'Jeder Besucher sieht die Sicherheitsregeln in seiner eigenen Sprache. Sie legen fest, welche Regeln gelten — GateSign übersetzt automatisch.',
       points: [
-        { icon: '🦺', title: 'ISO-konforme Regeln', text: 'Wählen Sie aus einer Bibliothek mit 28 vordefinierten Regeln — Warnweste, Staplerverkehr, Zutrittsverbote und mehr.' },
-        { icon: '📄', title: 'PDF-Belehrung je Besuchertyp', text: 'Separate Dokumente für LKW-Fahrer, Besucher und Dienstleister — jeder bekommt genau das, was für ihn gilt.' },
-        { icon: '✍️', title: 'Digitale Unterschrift', text: 'Rechtssichere Bestätigung direkt am Terminal. Alle Unterschriften werden mit Zeitstempel gespeichert.' },
-        { icon: '🌍', title: '10 Sprachen', text: 'Deutsch, Englisch, Polnisch, Rumänisch, Ukrainisch, Türkisch, Tschechisch, Ungarisch, Bulgarisch, Russisch.' },
+        { title: 'ISO-konforme Regeln', text: 'Wählen Sie aus einer Bibliothek mit 28 vordefinierten Regeln — Warnweste, Staplerverkehr, Zutrittsverbote und mehr.' },
+        { title: 'PDF-Belehrung je Besuchertyp', text: 'Separate Dokumente für LKW-Fahrer, Besucher und Dienstleister — jeder bekommt genau das, was für ihn gilt.' },
+        { title: 'Digitale Unterschrift', text: 'Rechtssichere Bestätigung direkt am Terminal. Alle Unterschriften werden mit Zeitstempel gespeichert.' },
+        { title: '10 Sprachen', text: 'Deutsch, Englisch, Polnisch, Rumänisch, Ukrainisch, Türkisch, Tschechisch, Ungarisch, Bulgarisch, Russisch.' },
       ],
     },
     mockup: {
       title: 'Alle Check-ins auf einen Blick',
-      sub: 'Das Admin-Dashboard zeigt jeden Eintrag in Echtzeit — mit Sprache, Belehrungsstatus und Unterschrift.',
+      sub: 'Das Admin-Dashboard zeigt jeden Eintrag in Echtzeit — mit Besuchertyp, Belehrungsstatus und Notizen.',
       badge: 'Live-Vorschau',
-      cols: ['Zeit', 'Fahrer', 'Firma', 'Kennzeichen', 'Telefon', 'Sprache', 'Belehrung', 'Unterschrift', 'Referenz'],
-      accepted: 'Akzeptiert',
-      signed: 'Ja',
+      cols: ['Referenz', 'Zeit', 'Typ', 'Fahrer', 'Firma', 'Kennzeichen', 'Spr.', 'Belehrung', ''],
+      accepted: 'Ja',
+    },
+    dashboardFeatures: [
+      'Echtzeit-Aktualisierung alle 30 Sekunden',
+      'Suche nach Name, Firma, Kennzeichen',
+      'Filter nach Besuchertyp & Sortierung nach jeder Spalte',
+      'CSV-Export bis 10.000 Einträge (Excel-kompatibel)',
+      'Eintragsdetails: Notiz, Unterschrift, PDF-Download & Druck',
+      'Kontaktperson zuweisen pro Eintrag',
+    ],
+    featureBlocks: [
+      {
+        title: 'Terminal & Check-in',
+        items: [
+          '10 Sprachen — Fahrer wählt selbst',
+          '3 Besuchertypen: LKW, Besucher, Dienstleister',
+          'Digitale Unterschrift mit Zeitstempel',
+          'Kiosk-Modus: Vollbild, gesichert, kein App-Store',
+        ],
+      },
+      {
+        title: 'Belehrung & Dokumente',
+        items: [
+          '28 ISO-konforme Sicherheitsregeln',
+          'PDF-Belehrung je Besuchertyp',
+          'Firmen-PDF automatisch angehängt',
+          'Eigene Hinweise mit KI-Übersetzung',
+        ],
+      },
+      {
+        title: 'Verwaltung & Team',
+        items: [
+          'Wer ist im Haus? — Echtzeit-Anwesenheitsliste',
+          'Dashboard mit Suche, Filter & Sortierung',
+          'Team-Management: Nutzer einladen & Rollen vergeben',
+          'Audit-Log: alle Aktionen lückenlos protokolliert',
+        ],
+      },
+      {
+        title: 'Automatisierung',
+        items: [
+          'Täglicher Compliance-Agent: prüft fehlende Unterweisungen',
+          'Wöchentliche Analyse: Top-Firmen, Spitzenzeiten',
+          'Tägliche Digest-E-Mail mit CSV-Anhang',
+          'Betriebszeiten-Anzeige in Fahrersprache',
+        ],
+      },
+    ],
+    industries: {
+      title: 'Passend für',
+      items: [
+        { text: 'Produktion & Fertigung', highlight: true },
+        { text: 'Logistik & Spedition', highlight: true },
+        { text: 'Maschinenbau', highlight: false },
+        { text: 'Baugewerbe', highlight: false },
+        { text: 'Großhandel & Lager', highlight: false },
+        { text: 'Chemie & Pharma', highlight: false },
+      ],
+    },
+    pricing: {
+      title: 'Einfache Preisgestaltung',
+      desc: 'Keine Einrichtungsgebühr · Keine Nutzungsabrechnung · Jederzeit kündbar',
+      cta: 'Jetzt starten',
+      contact: 'Kontakt aufnehmen',
+      onRequest: 'Auf Anfrage',
+      tiers: [
+        { label: '1 Terminal', price: '49', period: 'pro Monat', desc: 'Ideal für einen Standort mit einem Eingang.', highlight: false },
+        { label: 'Bis 3 Terminals', price: '99', period: 'pro Monat', desc: 'Mehrere Eingänge oder Standorte — ein Paketpreis.', highlight: true },
+        { label: 'Unbegrenzt', price: null, period: 'Individuelles Angebot', desc: 'Für Konzerne und Betriebe mit vielen Standorten.', highlight: false },
+      ],
     },
     footer: {
       rights: '© 2025 Alpha Consult GmbH · GateSign',
@@ -78,55 +169,131 @@ const content = {
     nav: { login: 'Log in', register: 'Get started' },
     hero: {
       title: 'Digital Check-in Terminal',
-      sub: 'For businesses with inbound deliveries and logistics traffic. Visitors and drivers check in, confirm safety briefings and sign digitally — in 10 languages.',
+      sub: 'For production and logistics companies. Check in visitors and drivers securely, document safety briefings compliantly — automatically in each driver\'s native language.',
       cta: 'Try for free',
       login: 'Already a customer? Log in',
+    },
+    stats: [
+      { value: '10', label: 'Languages' },
+      { value: '28', label: 'Safety rules' },
+      { value: '3', label: 'Visitor types' },
+      { value: '100%', label: 'Digital & documented' },
+    ],
+    legal: {
+      badge: 'Legal Requirement',
+      title: 'Paper is no longer enough — and ignorance is no defence.',
+      sub: 'Occupational health law requires every business to brief visitors and external drivers — documented, comprehensible, and in a language they understand. Those who cannot prove it are liable.',
+      items: [
+        {
+          title: '§ 12 ArbSchG & DGUV Regulation 1',
+          text: 'Safety briefings are mandatory for all persons on company premises — including truck drivers, engineers and external contractors. Applies to foreign drivers and subcontractors too (§ 823 BGB). No exceptions.',
+        },
+        {
+          title: 'Language requirement: comprehensible means native language',
+          text: 'A briefing in German that a Polish or Romanian driver cannot understand is legally treated as no briefing at all — even if they signed. The recipient\'s language is what counts.',
+        },
+        {
+          title: 'Liability without proof',
+          text: 'BG recourse up to €10 million (§ 110 SGB VII), criminal liability § 229 StGB for responsible persons, possible rejection by employer\'s liability insurance.',
+        },
+      ],
     },
     how: {
       title: 'How GateSign works',
       step: 'Step',
       steps: [
-        { icon: '⚙️', title: 'Set up', text: 'Configure safety rules, opening hours and briefing texts in minutes.' },
-        { icon: '📱', title: 'Place terminal', text: 'Mount a tablet or touchscreen at your entrance — as a PWA, no app store needed.' },
-        { icon: '✅', title: 'Let visitors check in', text: 'Visitors choose their language, confirm safety rules and sign digitally.' },
+        { title: 'Set up', text: 'Configure safety rules, opening hours and briefing texts in minutes.' },
+        { title: 'Place terminal', text: 'Mount a tablet or touchscreen at your entrance — as a PWA, no app store needed.' },
+        { title: 'Let visitors check in', text: 'Visitors choose their language, confirm safety rules and sign digitally.' },
       ],
-    },
-    features: {
-      title: 'Everything included',
-      items: [
-        { icon: '🌍', text: '10 languages (DE, EN, PL, RO, UA, TR, …)' },
-        { icon: '🦺', text: 'Safety rules with ISO symbols' },
-        { icon: '📄', text: 'PDF briefing per visitor type' },
-        { icon: '✍️', text: 'Digital signature' },
-        { icon: '📊', text: 'CSV export of all check-ins' },
-        { icon: '🕐', text: 'Opening hours in the driver\'s language' },
-      ],
-    },
-    pricing: {
-      title: 'Simple pricing',
-      price: '69',
-      period: 'per month & location',
-      desc: 'No setup fee. No usage billing. Cancel anytime.',
-      cta: 'Get started',
+      terminalSteps: ['Choose language', 'Choose visitor type', 'Enter details', 'Confirm briefing', 'Sign'],
     },
     briefing: {
       badge: 'Safety Briefing',
       title: 'Individual briefing — in every language',
       sub: 'Every visitor sees the safety rules in their own language. You decide which rules apply — GateSign translates automatically.',
       points: [
-        { icon: '🦺', title: 'ISO-compliant rules', text: 'Choose from a library of 28 predefined rules — high-vis vest, forklift traffic, no-entry zones and more.' },
-        { icon: '📄', title: 'PDF briefing per visitor type', text: 'Separate documents for truck drivers, visitors and contractors — everyone gets exactly what applies to them.' },
-        { icon: '✍️', title: 'Digital signature', text: 'Legally sound confirmation directly at the terminal. All signatures are stored with a timestamp.' },
-        { icon: '🌍', title: '10 languages', text: 'German, English, Polish, Romanian, Ukrainian, Turkish, Czech, Hungarian, Bulgarian, Russian.' },
+        { title: 'ISO-compliant rules', text: 'Choose from a library of 28 predefined rules — high-vis vest, forklift traffic, no-entry zones and more.' },
+        { title: 'PDF briefing per visitor type', text: 'Separate documents for truck drivers, visitors and contractors — everyone gets exactly what applies to them.' },
+        { title: 'Digital signature', text: 'Legally sound confirmation directly at the terminal. All signatures are stored with a timestamp.' },
+        { title: '10 languages', text: 'German, English, Polish, Romanian, Ukrainian, Turkish, Czech, Hungarian, Bulgarian, Russian.' },
       ],
     },
     mockup: {
       title: 'All check-ins at a glance',
-      sub: 'The admin dashboard shows every entry in real time — with language, briefing status and signature.',
+      sub: 'The admin dashboard shows every entry in real time — with visitor type, briefing status and notes.',
       badge: 'Live preview',
-      cols: ['Time', 'Driver', 'Company', 'Plate', 'Phone', 'Language', 'Briefing', 'Signature', 'Reference'],
-      accepted: 'Accepted',
-      signed: 'Yes',
+      cols: ['Reference', 'Time', 'Type', 'Driver', 'Company', 'Plate', 'Lang.', 'Briefing', ''],
+      accepted: 'Yes',
+    },
+    dashboardFeatures: [
+      'Real-time updates every 30 seconds',
+      'Search by name, company or licence plate',
+      'Filter by visitor type & sort by any column',
+      'CSV export up to 10,000 entries (Excel-compatible)',
+      'Entry details: notes, signature, PDF download & print',
+      'Assign a contact person per entry',
+    ],
+    featureBlocks: [
+      {
+        title: 'Terminal & Check-in',
+        items: [
+          '10 languages — visitor chooses',
+          '3 visitor types: truck, visitor, contractor',
+          'Digital signature with timestamp',
+          'Kiosk mode: fullscreen, secured, no app store',
+        ],
+      },
+      {
+        title: 'Briefings & Documents',
+        items: [
+          '28 ISO-compliant safety rules',
+          'PDF briefing per visitor type',
+          'Company PDF automatically attached',
+          'Custom hints with AI translation',
+        ],
+      },
+      {
+        title: 'Management & Team',
+        items: [
+          'Who\'s on site? — real-time presence list',
+          'Dashboard with search, filter & sorting',
+          'Team management: invite users & assign roles',
+          'Audit log: every action fully documented',
+        ],
+      },
+      {
+        title: 'Automation',
+        items: [
+          'Daily compliance agent: checks missing briefings',
+          'Weekly analysis: top companies, peak hours',
+          'Daily digest email with CSV attachment',
+          'Opening hours displayed in driver\'s language',
+        ],
+      },
+    ],
+    industries: {
+      title: 'Built for',
+      items: [
+        { text: 'Production & Manufacturing', highlight: true },
+        { text: 'Logistics & Haulage', highlight: true },
+        { text: 'Mechanical Engineering', highlight: false },
+        { text: 'Construction', highlight: false },
+        { text: 'Wholesale & Warehousing', highlight: false },
+        { text: 'Chemical & Pharma', highlight: false },
+      ],
+    },
+    pricing: {
+      title: 'Simple pricing',
+      desc: 'No setup fee · No usage billing · Cancel anytime',
+      cta: 'Get started',
+      contact: 'Contact us',
+      onRequest: 'On request',
+      tiers: [
+        { label: '1 Terminal', price: '49', period: 'per month', desc: 'Ideal for one location with a single entrance.', highlight: false },
+        { label: 'Up to 3 Terminals', price: '99', period: 'per month', desc: 'Multiple entrances or locations — one flat rate.', highlight: true },
+        { label: 'Unlimited', price: null, period: 'Custom quote', desc: 'For enterprises and businesses with many locations.', highlight: false },
+      ],
     },
     footer: {
       rights: '© 2025 Alpha Consult GmbH · GateSign',
@@ -136,12 +303,26 @@ const content = {
   },
 }
 
+const legalIcons = [
+  <Scale key="scale" className="w-5 h-5 text-amber-700" strokeWidth={1.5} />,
+  <Globe key="globe" className="w-5 h-5 text-amber-700" strokeWidth={1.5} />,
+  <ShieldAlert key="shield" className="w-5 h-5 text-amber-700" strokeWidth={1.5} />,
+]
+
+const howIcons = [
+  <Settings key="settings" className="w-5 h-5 text-slate-500" strokeWidth={1.5} />,
+  <Tablet key="tablet" className="w-5 h-5 text-slate-500" strokeWidth={1.5} />,
+  <CheckCircle2 key="check" className="w-5 h-5 text-slate-500" strokeWidth={1.5} />,
+]
+
 export default function LandingPage() {
   const [lang, setLang] = useState<'de' | 'en'>('de')
   const t = content[lang]
+  const badges = typeBadge[lang]
 
   return (
     <div className="min-h-screen bg-white text-slate-900 font-sans">
+
       {/* Nav */}
       <nav className="sticky top-0 z-50 bg-white/90 backdrop-blur border-b border-slate-100">
         <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
@@ -164,30 +345,112 @@ export default function LandingPage() {
         </div>
       </nav>
 
-      {/* Hero */}
-      <section className="max-w-5xl mx-auto px-6 pt-20 pb-20 text-center">
-        <h1 className="text-5xl font-bold tracking-tight leading-tight mb-5">
-          {t.hero.title}
-        </h1>
-        <p className="text-xl text-slate-500 max-w-2xl mx-auto mb-10 leading-relaxed">
-          {t.hero.sub}
-        </p>
-        <div className="flex flex-col sm:flex-row gap-3 justify-center">
-          <Link href="/register"
-            className="inline-block bg-slate-900 text-white text-base font-semibold px-8 py-4 rounded-xl hover:bg-slate-700 transition-colors">
-            {t.hero.cta} →
-          </Link>
-          <Link href="/login"
-            className="inline-block text-slate-500 text-base font-medium px-8 py-4 rounded-xl hover:text-slate-900 hover:bg-slate-50 transition-colors">
-            {t.hero.login}
-          </Link>
+      {/* Hero — fills viewport height so stats strip lands at scroll break */}
+      <section className="flex flex-col text-center"
+        style={{ minHeight: 'calc(100vh - 64px)' }}>
+        {/* Hero content — centered in remaining space above stats */}
+        <div className="flex-1 flex flex-col items-center justify-center px-6 py-16">
+          <div className="max-w-3xl w-full">
+            <h1 className="text-5xl font-bold tracking-tight leading-tight mb-6">
+              {t.hero.title}
+            </h1>
+            <p className="text-xl text-slate-500 max-w-2xl mx-auto mb-12 leading-relaxed">
+              {t.hero.sub}
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Link href="/register"
+                className="inline-block bg-slate-900 text-white text-base font-semibold px-8 py-4 rounded-xl hover:bg-slate-700 transition-colors">
+                {t.hero.cta} →
+              </Link>
+              <Link href="/login"
+                className="inline-block text-slate-500 text-base font-medium px-8 py-4 rounded-xl hover:text-slate-900 hover:bg-slate-50 transition-colors">
+                {t.hero.login}
+              </Link>
+            </div>
+          </div>
+        </div>
+
+        {/* Stats Strip — anchored to bottom of viewport */}
+        <div className="bg-slate-900">
+          <div className="max-w-5xl mx-auto px-6 py-10 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+            {t.stats.map((s, i) => (
+              <div key={i}>
+                <div className="text-4xl font-bold text-white mb-1">{s.value}</div>
+                <div className="text-sm text-slate-400 font-medium">{s.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Legal Section */}
+      <section className="bg-amber-50 py-20">
+        <div className="max-w-5xl mx-auto px-6">
+          <div className="text-center mb-10">
+            <span className="inline-block text-xs font-semibold bg-amber-100 text-amber-700 px-3 py-1 rounded-full mb-4 uppercase tracking-wide">
+              {t.legal.badge}
+            </span>
+            <h2 className="text-3xl font-bold mb-4">{t.legal.title}</h2>
+            <p className="text-slate-500 max-w-2xl mx-auto leading-relaxed">{t.legal.sub}</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {t.legal.items.map((item, i) => (
+              <div key={i} className="bg-white border border-amber-200 rounded-2xl p-6">
+                <div className="w-9 h-9 rounded-lg bg-amber-100 flex items-center justify-center mb-4">
+                  {legalIcons[i]}
+                </div>
+                <h3 className="font-bold text-slate-900 mb-2 leading-snug">{item.title}</h3>
+                <p className="text-sm text-slate-500 leading-relaxed">{item.text}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* How it works */}
+      <section className="bg-slate-50 py-20">
+        <div className="max-w-5xl mx-auto px-6">
+          <h2 className="text-2xl font-bold text-center mb-12">{t.how.title}</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-14">
+            {t.how.steps.map((step, i) => (
+              <div key={i} className="text-center">
+                <div className="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center mx-auto mb-4 shadow-sm">
+                  {howIcons[i]}
+                </div>
+                <div className="text-xs font-semibold text-slate-400 mb-1 uppercase tracking-wide">{t.how.step} {i + 1}</div>
+                <h3 className="text-base font-bold mb-2">{step.title}</h3>
+                <p className="text-slate-500 text-sm leading-relaxed">{step.text}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Terminal step indicators */}
+          <div className="bg-white border border-slate-200 rounded-2xl px-6 py-6 shadow-sm">
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide text-center mb-5">
+              {lang === 'de' ? 'Ablauf am Terminal' : 'Terminal flow'}
+            </p>
+            <div className="flex items-center justify-between gap-2">
+              {t.how.terminalSteps.map((step, i) => (
+                <div key={i} className="flex items-center flex-1 last:flex-none">
+                  <div className="flex flex-col items-center flex-1">
+                    <div className="w-8 h-8 rounded-full bg-slate-900 text-white text-xs font-bold flex items-center justify-center mb-2 flex-shrink-0">
+                      {i + 1}
+                    </div>
+                    <span className="text-xs font-medium text-slate-600 text-center leading-tight">{step}</span>
+                  </div>
+                  {i < t.how.terminalSteps.length - 1 && (
+                    <div className="w-6 h-px bg-slate-200 flex-shrink-0 mb-4" />
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </section>
 
       {/* Safety Briefing Section */}
       <section className="max-w-5xl mx-auto px-6 py-20">
         <div className="flex flex-col lg:flex-row gap-12 items-center">
-          {/* Left: text */}
           <div className="flex-1">
             <span className="inline-block text-xs font-semibold bg-amber-100 text-amber-700 px-3 py-1 rounded-full mb-4 uppercase tracking-wide">
               {t.briefing.badge}
@@ -197,7 +460,9 @@ export default function LandingPage() {
             <div className="space-y-5">
               {t.briefing.points.map((p, i) => (
                 <div key={i} className="flex gap-4">
-                  <span className="text-2xl flex-shrink-0 mt-0.5">{p.icon}</span>
+                  <div className="w-5 h-5 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <Check className="w-3 h-3 text-emerald-600" strokeWidth={3} />
+                  </div>
                   <div>
                     <p className="font-semibold text-slate-900 mb-0.5">{p.title}</p>
                     <p className="text-sm text-slate-500 leading-relaxed">{p.text}</p>
@@ -206,8 +471,6 @@ export default function LandingPage() {
               ))}
             </div>
           </div>
-
-          {/* Right: visual */}
           <div className="flex-1 w-full max-w-sm mx-auto lg:max-w-none">
             <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-lg">
               <p className="text-xs text-slate-400 font-semibold uppercase tracking-wide mb-4">
@@ -215,7 +478,7 @@ export default function LandingPage() {
               </p>
               <div className="grid grid-cols-2 gap-3">
                 {[
-                  { code: 'M015', signType: 'mandatory' as const, icon: '🦺', de: 'Warnweste tragen', en: 'High-vis vest required' },
+                  { code: 'M015', signType: 'mandatory' as const, de: 'Warnweste tragen', en: 'High-vis vest required' },
                   { code: 'W014', signType: 'warning' as const, de: 'Staplerverkehr', en: 'Forklift traffic' },
                   { code: 'P004', signType: 'prohibition' as const, de: 'Zutritt verboten', en: 'No unauthorised entry' },
                   { code: 'W001', signType: 'warning' as const, de: 'Am Fahrzeug bleiben', en: 'Stay at vehicle' },
@@ -252,8 +515,8 @@ export default function LandingPage() {
             <p className="text-slate-500 text-sm max-w-lg mx-auto">{t.mockup.sub}</p>
           </div>
 
-          {/* Browser chrome */}
-          <div className="rounded-2xl overflow-hidden shadow-2xl border border-slate-200">
+          <div className="rounded-2xl overflow-hidden shadow-2xl border border-slate-200 mb-10">
+            {/* Browser chrome */}
             <div className="bg-slate-100 px-4 py-3 flex items-center gap-3 border-b border-slate-200">
               <div className="flex gap-1.5">
                 <div className="w-3 h-3 rounded-full bg-red-400" />
@@ -264,6 +527,7 @@ export default function LandingPage() {
                 gatesign.de/ihre-firma/admin
               </div>
             </div>
+            {/* App nav */}
             <div className="bg-white border-b border-slate-100 px-6 h-12 flex items-center justify-between">
               <div className="flex items-center gap-6">
                 <span className="font-bold text-slate-900 text-sm">GateSign</span>
@@ -281,10 +545,11 @@ export default function LandingPage() {
                 <span className="text-xs text-slate-400">{lang === 'de' ? 'Abmelden' : 'Log out'}</span>
               </div>
             </div>
+            {/* Table */}
             <div className="bg-white">
-              <div className="px-6 py-5 flex items-center justify-between border-b border-slate-50">
+              <div className="px-6 py-4 flex items-center justify-between border-b border-slate-50">
                 <div>
-                  <h3 className="font-bold text-slate-900 text-base">
+                  <h3 className="font-bold text-slate-900 text-sm">
                     {lang === 'de' ? 'Check-in Einträge' : 'Check-in Entries'}
                   </h3>
                   <p className="text-xs text-slate-400 mt-0.5">
@@ -292,11 +557,11 @@ export default function LandingPage() {
                   </p>
                 </div>
                 <div className="flex gap-2">
-                  <button className="text-xs border border-slate-200 text-slate-500 px-3 py-2 rounded-lg pointer-events-none">
+                  <button className="text-xs border border-slate-200 text-slate-500 px-3 py-1.5 rounded-lg pointer-events-none">
                     ↻ {lang === 'de' ? 'Aktualisieren' : 'Refresh'}
                   </button>
-                  <button className="text-xs bg-slate-900 text-white px-3 py-2 rounded-lg pointer-events-none">
-                    ↓ CSV Export
+                  <button className="text-xs bg-slate-900 text-white px-3 py-1.5 rounded-lg pointer-events-none">
+                    ↓ CSV
                   </button>
                 </div>
               </div>
@@ -304,8 +569,8 @@ export default function LandingPage() {
                 <table className="w-full text-xs">
                   <thead>
                     <tr className="border-b border-slate-100">
-                      {t.mockup.cols.map(col => (
-                        <th key={col} className="text-left px-4 py-3 text-slate-400 font-semibold uppercase tracking-wide whitespace-nowrap">
+                      {t.mockup.cols.map((col, ci) => (
+                        <th key={ci} className="text-left px-4 py-3 text-slate-400 font-semibold uppercase tracking-wide whitespace-nowrap">
                           {col}
                         </th>
                       ))}
@@ -314,13 +579,18 @@ export default function LandingPage() {
                   <tbody>
                     {mockEntries.map((row, i) => (
                       <tr key={i} className="border-b border-slate-50 last:border-b-0 hover:bg-slate-50/50">
+                        <td className="px-4 py-3 text-slate-400 font-mono whitespace-nowrap">{row.ref}</td>
                         <td className="px-4 py-3 text-slate-400 whitespace-nowrap">{row.time}</td>
+                        <td className="px-4 py-3">
+                          <span className={`inline-block text-xs font-semibold px-2 py-0.5 rounded-md whitespace-nowrap ${typeBadgeClass[row.type as keyof typeof typeBadgeClass]}`}>
+                            {badges[row.type as keyof typeof badges]}
+                          </span>
+                        </td>
                         <td className="px-4 py-3 font-medium text-slate-900 whitespace-nowrap">{row.name}</td>
                         <td className="px-4 py-3 text-slate-600 whitespace-nowrap">{row.company}</td>
                         <td className="px-4 py-3">
                           <span className="font-mono bg-slate-100 text-slate-700 px-2 py-0.5 rounded text-xs">{row.plate}</span>
                         </td>
-                        <td className="px-4 py-3 text-slate-500 whitespace-nowrap">{row.phone}</td>
                         <td className="px-4 py-3 text-base">{row.flag}</td>
                         <td className="px-4 py-3">
                           <span className="inline-flex items-center gap-1 text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap">
@@ -328,9 +598,10 @@ export default function LandingPage() {
                           </span>
                         </td>
                         <td className="px-4 py-3">
-                          <span className="text-emerald-700 text-xs font-medium whitespace-nowrap">✓ {t.mockup.signed}</span>
+                          {row.hasNote && (
+                            <MessageSquare className="w-3.5 h-3.5 text-slate-400" />
+                          )}
                         </td>
-                        <td className="px-4 py-3 text-slate-400 font-mono text-xs">{row.ref}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -338,56 +609,99 @@ export default function LandingPage() {
               </div>
             </div>
           </div>
+
+          {/* Dashboard feature list */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 max-w-4xl mx-auto">
+            {t.dashboardFeatures.map((f, i) => (
+              <div key={i} className="flex items-start gap-3 bg-white rounded-xl px-4 py-3 border border-slate-200">
+                <Check className="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5" strokeWidth={2.5} />
+                <span className="text-sm text-slate-600 leading-snug">{f}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
-      {/* Divider */}
-      <div className="border-t border-slate-100" />
-
-      {/* How it works */}
+      {/* Feature Blocks */}
       <section className="max-w-5xl mx-auto px-6 py-20">
-        <h2 className="text-2xl font-bold text-center mb-12">{t.how.title}</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {t.how.steps.map((step, i) => (
-            <div key={i} className="text-center">
-              <div className="text-4xl mb-4">{step.icon}</div>
-              <div className="text-sm font-semibold text-slate-400 mb-1">{t.how.step} {i + 1}</div>
-              <h3 className="text-lg font-bold mb-2">{step.title}</h3>
-              <p className="text-slate-500 text-sm leading-relaxed">{step.text}</p>
+        <h2 className="text-2xl font-bold text-center mb-12">
+          {lang === 'de' ? 'Alles drin — vom Terminal bis zur Automatisierung' : 'Everything included — from terminal to automation'}
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          {t.featureBlocks.map((block, bi) => (
+            <div key={bi} className="bg-slate-50 border border-slate-200 rounded-2xl p-6">
+              <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-4">{block.title}</p>
+              <div className="space-y-2">
+                {block.items.map((item, ii) => (
+                  <div key={ii} className="flex items-center gap-3 bg-white rounded-xl px-4 py-3 border border-slate-100">
+                    <Check className="w-4 h-4 text-emerald-600 flex-shrink-0" strokeWidth={2.5} />
+                    <span className="text-sm text-slate-700 font-medium">{item}</span>
+                  </div>
+                ))}
+              </div>
             </div>
           ))}
         </div>
       </section>
 
-      {/* Divider */}
-      <div className="border-t border-slate-100" />
-
-      {/* Features */}
-      <section className="max-w-5xl mx-auto px-6 py-20 bg-slate-50 rounded-3xl my-8">
-        <h2 className="text-2xl font-bold text-center mb-10">{t.features.title}</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 max-w-3xl mx-auto">
-          {t.features.items.map((item, i) => (
-            <div key={i} className="flex items-center gap-3 bg-white rounded-xl px-5 py-4 border border-slate-100">
-              <span className="text-2xl flex-shrink-0">{item.icon}</span>
-              <span className="text-sm text-slate-700 font-medium">{item.text}</span>
-            </div>
-          ))}
+      {/* Industries */}
+      <section className="bg-slate-50 py-16">
+        <div className="max-w-5xl mx-auto px-6 text-center">
+          <h2 className="text-2xl font-bold mb-8">{t.industries.title}</h2>
+          <div className="flex flex-wrap justify-center gap-3">
+            {t.industries.items.map((item, i) => (
+              <div key={i} className="rounded-full px-5 py-2.5 border bg-white border-slate-200 text-slate-700">
+                <span className="text-sm font-semibold">{item.text}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
       {/* Pricing */}
       <section className="max-w-5xl mx-auto px-6 py-20 text-center">
-        <h2 className="text-2xl font-bold mb-10">{t.pricing.title}</h2>
-        <div className="inline-block bg-white border border-slate-200 rounded-2xl shadow-sm p-10 max-w-sm w-full">
-          <div className="flex items-baseline justify-center gap-1 mb-2">
-            <span className="text-5xl font-bold">€{t.pricing.price}</span>
-          </div>
-          <p className="text-slate-400 text-sm mb-6">{t.pricing.period}</p>
-          <p className="text-slate-500 text-sm mb-8 leading-relaxed">{t.pricing.desc}</p>
-          <Link href="/register"
-            className="block w-full bg-slate-900 text-white font-semibold py-4 rounded-xl hover:bg-slate-700 transition-colors">
-            {t.pricing.cta}
-          </Link>
+        <h2 className="text-2xl font-bold mb-4">{t.pricing.title}</h2>
+        <p className="text-sm text-slate-400 mb-10">{t.pricing.desc}</p>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 max-w-3xl mx-auto">
+          {t.pricing.tiers.map((tier, i) => (
+            <div key={i} className={`rounded-2xl p-8 border flex flex-col items-center text-center ${
+              tier.highlight
+                ? 'bg-slate-900 border-slate-900 text-white'
+                : 'bg-white border-slate-200'
+            }`}>
+              <div className={`text-sm font-bold mb-3 ${tier.highlight ? 'text-slate-300' : 'text-slate-700'}`}>
+                {tier.label}
+              </div>
+              {tier.price ? (
+                <div className={`text-5xl font-bold mb-1 ${tier.highlight ? 'text-white' : 'text-slate-900'}`}>
+                  €{tier.price}
+                </div>
+              ) : (
+                <div className={`text-2xl font-bold mb-1 mt-2 ${tier.highlight ? 'text-white' : 'text-slate-900'}`}>
+                  {t.pricing.onRequest}
+                </div>
+              )}
+              <div className="text-sm text-slate-400 mb-5">{tier.period}</div>
+              <p className={`text-sm leading-relaxed mb-6 flex-1 ${tier.highlight ? 'text-slate-300' : 'text-slate-500'}`}>
+                {tier.desc}
+              </p>
+              {tier.price ? (
+                <Link href="/register"
+                  className={`block w-full font-semibold py-3 rounded-xl transition-colors text-sm ${
+                    tier.highlight
+                      ? 'bg-white text-slate-900 hover:bg-slate-100'
+                      : 'bg-slate-900 text-white hover:bg-slate-700'
+                  }`}>
+                  {t.pricing.cta}
+                </Link>
+              ) : (
+                <a href="mailto:info@gatesign.de"
+                  className="block w-full font-semibold py-3 rounded-xl transition-colors text-sm bg-slate-900 text-white hover:bg-slate-700">
+                  {t.pricing.contact}
+                </a>
+              )}
+            </div>
+          ))}
         </div>
       </section>
 

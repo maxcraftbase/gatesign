@@ -23,6 +23,7 @@ export function AdminNav({ slug, role, userName, companyName, terminals = [] }: 
 
   const navItems = [
     { href: base, label: 'Einträge', active: pathname === base, mobileVisible: true },
+    { href: `${base}/in-building`, label: 'Im Haus', active: pathname.startsWith(`${base}/in-building`), mobileVisible: true },
     ...(role === 'admin' ? [
       { href: `${base}/settings`, label: 'Admin', active: isInSettings, mobileVisible: false },
     ] : []),

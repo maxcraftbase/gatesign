@@ -121,8 +121,8 @@ export function AdminEntriesClient() {
         </div>
       </div>
 
-      <div className="flex gap-3 mb-4">
-        <div className="relative flex-1">
+      <div className="flex flex-col gap-2 mb-4">
+        <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
           <input
             type="search"
@@ -141,7 +141,7 @@ export function AdminEntriesClient() {
           ))}
           {terminals.length > 1 && (
             <>
-              <div className="w-px bg-slate-200 mx-1 self-stretch" />
+              <div className="w-px bg-slate-200 mx-1 self-stretch hidden sm:block" />
               {[{ id: '', name: 'Alle Terminals' }, ...terminals].map(t => (
                 <button key={t.id} onClick={() => setTerminalFilter(t.id)}
                   className={`px-3 py-2 rounded-xl border text-sm font-medium transition-colors whitespace-nowrap ${terminalFilter === t.id ? 'bg-indigo-600 border-indigo-600 text-white' : 'bg-white border-slate-200 text-slate-600 hover:border-slate-400'}`}>
@@ -167,42 +167,46 @@ export function AdminEntriesClient() {
         <>
           {/* Mobile: Karten-Liste */}
           <div className="flex flex-col gap-2 sm:hidden">
-            {entries.map(entry => (
-              <div key={entry.id}
-                onClick={() => setSelectedEntry(entry)}
-                className="bg-white border border-slate-100 rounded-xl px-4 py-4 hover:border-blue-200 hover:shadow-sm transition-all cursor-pointer active:bg-slate-50">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-center gap-2 min-w-0">
-                    {entry.visitor_type && VISITOR_TYPE_LABELS[entry.visitor_type] ? (
-                      <span className={`inline-flex items-center shrink-0 text-xs font-semibold px-2 py-0.5 rounded-full ${VISITOR_TYPE_LABELS[entry.visitor_type].color}`}>
-                        {VISITOR_TYPE_LABELS[entry.visitor_type].label}
-                      </span>
-                    ) : null}
-                    <span className="font-semibold text-slate-900 text-sm truncate">{entry.driver_name}</span>
+            {entries.map(entry => {
+              const typeInfo = entry.visitor_type ? VISITOR_TYPE_LABELS[entry.visitor_type] : null
+              const borderColor = entry.visitor_type === 'truck' ? 'border-l-amber-400' : entry.visitor_type === 'visitor' ? 'border-l-blue-400' : entry.visitor_type === 'service' ? 'border-l-violet-400' : 'border-l-slate-200'
+              return (
+                <div key={entry.id}
+                  onClick={() => setSelectedEntry(entry)}
+                  className={`bg-white border border-slate-100 border-l-4 ${borderColor} rounded-xl px-4 py-4 active:bg-slate-50 transition-colors cursor-pointer`}>
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      {typeInfo && (
+                        <span className={`inline-flex items-center shrink-0 text-xs font-semibold px-2 py-0.5 rounded-full ${typeInfo.color}`}>
+                          {typeInfo.label}
+                        </span>
+                      )}
+                      <span className="font-bold text-slate-900 text-base truncate">{entry.driver_name}</span>
+                    </div>
+                    <span className="text-xs text-slate-400 whitespace-nowrap shrink-0">{formatDate(entry.created_at)}</span>
                   </div>
-                  <span className="text-xs text-slate-400 whitespace-nowrap shrink-0">{formatDate(entry.created_at)}</span>
-                </div>
-                <div className="mt-1.5 flex items-center gap-2 flex-wrap">
-                  <span className="text-sm text-slate-600 truncate">{entry.company_name}</span>
-                  {entry.license_plate && (
-                    <span className="font-mono text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded text-xs">{entry.license_plate}</span>
-                  )}
+                  <div className="mt-1 flex items-center gap-2 flex-wrap pl-0">
+                    {entry.company_name && <span className="text-sm text-slate-500 truncate">{entry.company_name}</span>}
+                    {entry.license_plate && (
+                      <span className="font-mono text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded text-xs shrink-0">{entry.license_plate}</span>
+                    )}
+                  </div>
                   {terminals.length > 1 && entry.terminal_name && (
-                    <span className="text-xs text-slate-400">{entry.terminal_name}</span>
+                    <p className="mt-0.5 text-xs text-slate-400">{entry.terminal_name}</p>
+                  )}
+                  {(entry.briefing_accepted || entry.staff_note) && (
+                    <div className="mt-2 flex items-center gap-2">
+                      {entry.briefing_accepted && (
+                        <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 text-xs font-semibold px-2 py-0.5 rounded-full">✓ Belehrung</span>
+                      )}
+                      {entry.staff_note && (
+                        <span className="inline-flex items-center gap-1 text-blue-400 text-xs"><FileText className="w-3.5 h-3.5" />Notiz</span>
+                      )}
+                    </div>
                   )}
                 </div>
-                {(entry.briefing_accepted || entry.staff_note) && (
-                  <div className="mt-2 flex items-center gap-2">
-                    {entry.briefing_accepted && (
-                      <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 text-xs font-semibold px-2 py-0.5 rounded-full">✓ Belehrung</span>
-                    )}
-                    {entry.staff_note && (
-                      <span className="inline-flex items-center gap-1 text-blue-400 text-xs"><FileText className="w-3.5 h-3.5" />Notiz</span>
-                    )}
-                  </div>
-                )}
-              </div>
-            ))}
+              )
+            })}
           </div>
 
           {/* Desktop: Tabellen-Layout */}

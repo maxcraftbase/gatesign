@@ -22,9 +22,9 @@ export function AdminNav({ slug, role, userName, companyName, terminals = [] }: 
   const isInSettings = pathname.startsWith(`${base}/settings`) || pathname.startsWith(`${base}/users`) || pathname.startsWith(`${base}/audit`)
 
   const navItems = [
-    { href: base, label: 'Einträge', active: pathname === base },
+    { href: base, label: 'Einträge', active: pathname === base, mobileVisible: true },
     ...(role === 'admin' ? [
-      { href: `${base}/settings`, label: 'Admin', active: isInSettings },
+      { href: `${base}/settings`, label: 'Admin', active: isInSettings, mobileVisible: false },
     ] : []),
   ]
 
@@ -59,7 +59,8 @@ export function AdminNav({ slug, role, userName, companyName, terminals = [] }: 
                   'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
                   item.active
                     ? 'bg-slate-900 text-white'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100',
+                  !item.mobileVisible && 'hidden sm:inline-flex'
                 )}
               >
                 {item.label}

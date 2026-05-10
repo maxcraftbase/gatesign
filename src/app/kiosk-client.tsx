@@ -45,6 +45,15 @@ export function KioskClient({ slug, terminalSlug, terminalName: initialTerminalN
   const [ruleVisitorTypes, setRuleVisitorTypes] = useState<Record<string, string[]>>({})
   const [terminalName, setTerminalName] = useState(initialTerminalName ?? '')
   const [allowedVisitorTypes, setAllowedVisitorTypes] = useState<string[]>(['truck', 'visitor', 'service'])
+  // Field config: show/required per visitor type
+  const [plateShowTypes, setPlateShowTypes] = useState<string[]>(['truck', 'visitor', 'service'])
+  const [plateRequiredTypes, setPlateRequiredTypes] = useState<string[]>(['truck', 'visitor', 'service'])
+  const [companyShowTypes, setCompanyShowTypes] = useState<string[]>(['truck', 'visitor', 'service'])
+  const [companyRequiredTypes, setCompanyRequiredTypes] = useState<string[]>(['truck', 'visitor', 'service'])
+  const [phoneShowTypes, setPhoneShowTypes] = useState<string[]>(['truck', 'visitor', 'service'])
+  const [phoneRequiredTypes, setPhoneRequiredTypes] = useState<string[]>([])
+  const [contactPersonShowTypes, setContactPersonShowTypes] = useState<string[]>(['visitor', 'service'])
+  const [contactPersonRequiredTypes, setContactPersonRequiredTypes] = useState<string[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [adminModalOpen, setAdminModalOpen] = useState(false)
@@ -120,6 +129,15 @@ export function KioskClient({ slug, terminalSlug, terminalName: initialTerminalN
         if (data.allowed_visitor_types) {
           try { setAllowedVisitorTypes(JSON.parse(data.allowed_visitor_types)) } catch { /* ignore */ }
         }
+        const tryParseArr = (v: unknown) => { try { return JSON.parse(v as string) as string[] } catch { return null } }
+        if (data.plate_show_types)              { const p = tryParseArr(data.plate_show_types);              if (p) setPlateShowTypes(p) }
+        if (data.plate_required_types)          { const p = tryParseArr(data.plate_required_types);          if (p) setPlateRequiredTypes(p) }
+        if (data.company_show_types)            { const p = tryParseArr(data.company_show_types);            if (p) setCompanyShowTypes(p) }
+        if (data.company_required_types)        { const p = tryParseArr(data.company_required_types);        if (p) setCompanyRequiredTypes(p) }
+        if (data.phone_show_types)              { const p = tryParseArr(data.phone_show_types);              if (p) setPhoneShowTypes(p) }
+        if (data.phone_required_types)          { const p = tryParseArr(data.phone_required_types);          if (p) setPhoneRequiredTypes(p) }
+        if (data.contact_person_show_types)     { const p = tryParseArr(data.contact_person_show_types);     if (p) setContactPersonShowTypes(p) }
+        if (data.contact_person_required_types) { const p = tryParseArr(data.contact_person_required_types); if (p) setContactPersonRequiredTypes(p) }
         const isValidUrl = (v: unknown) => typeof v === 'string' && v.startsWith('http')
         const urls: Record<string, string> = {}
         for (const key of ['truck', 'visitor', 'service']) {
@@ -257,6 +275,12 @@ export function KioskClient({ slug, terminalSlug, terminalName: initialTerminalN
           referenceRequiredTypes={referenceRequiredTypes}
           activeRules={activeSafetyRules} ruleVisitorTypes={ruleVisitorTypes}
           customHints={customHintsTranslations[lang] ?? customHints} hintTypes={customHintsTypes}
+          fieldConfig={{
+            plate:         { show: plateShowTypes.includes(visitorType),         required: plateRequiredTypes.includes(visitorType) },
+            company:       { show: companyShowTypes.includes(visitorType),       required: companyRequiredTypes.includes(visitorType) },
+            phone:         { show: phoneShowTypes.includes(visitorType),         required: phoneRequiredTypes.includes(visitorType) },
+            contactPerson: { show: contactPersonShowTypes.includes(visitorType), required: contactPersonRequiredTypes.includes(visitorType) },
+          }}
           onConfirm={handleBriefingConfirm} onBack={() => setStep(2)} />
       )}
       {step === 5 && <SuccessScreen lang={lang} onReset={handleReset} />}

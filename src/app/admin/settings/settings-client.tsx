@@ -40,6 +40,15 @@ interface Settings {
   briefing_pdf_service: string
   settings_password: string
   contact_persons: string
+  // Configurable field visibility/required per visitor type
+  plate_show_types: string
+  plate_required_types: string
+  company_show_types: string
+  company_required_types: string
+  phone_show_types: string
+  phone_required_types: string
+  contact_person_show_types: string
+  contact_person_required_types: string
 }
 
 function DayRow({ label, closedKey, hoursKey, settings, setSettings }: {
@@ -105,6 +114,14 @@ export function AdminSettingsClient() {
     briefing_pdf_service: '',
     settings_password: '',
     contact_persons: '[]',
+    plate_show_types: '["truck","visitor","service"]',
+    plate_required_types: '["truck","visitor","service"]',
+    company_show_types: '["truck","visitor","service"]',
+    company_required_types: '["truck","visitor","service"]',
+    phone_show_types: '["truck","visitor","service"]',
+    phone_required_types: '[]',
+    contact_person_show_types: '["visitor","service"]',
+    contact_person_required_types: '[]',
   })
   const [newHint, setNewHint] = useState('')
   const [loading, setLoading] = useState(true)
@@ -477,6 +494,95 @@ export function AdminSettingsClient() {
           })()}
         </div>
       </div>
+
+      {/* Felder konfigurieren */}
+      {(() => {
+        const ALL = ['truck', 'visitor', 'service'] as const
+        type VType = typeof ALL[number]
+        const TYPE_LABELS: Record<VType, string> = { truck: 'LKW', visitor: 'Besucher', service: 'Service' }
+
+        // state: 'hidden' | 'optional' | 'required'
+        function getState(showKey: keyof Settings, reqKey: keyof Settings, type: VType): 'hidden' | 'optional' | 'required' {
+          const show: VType[] = (() => { try { return JSON.parse(settings[showKey] as string) } catch { return [] } })()
+          const req: VType[] = (() => { try { return JSON.parse(settings[reqKey] as string) } catch { return [] } })()
+          if (req.includes(type)) return 'required'
+          if (show.includes(type)) return 'optional'
+          return 'hidden'
+        }
+
+        function cycleState(showKey: keyof Settings, reqKey: keyof Settings, type: VType) {
+          const current = getState(showKey, reqKey, type)
+          const show: VType[] = (() => { try { return JSON.parse(settings[showKey] as string) } catch { return [] } })()
+          const req: VType[] = (() => { try { return JSON.parse(settings[reqKey] as string) } catch { return [] } })()
+          let newShow: VType[], newReq: VType[]
+          if (current === 'hidden') {
+            // hidden → optional
+            newShow = show.includes(type) ? show : [...show, type]
+            newReq = req.filter(t => t !== type)
+          } else if (current === 'optional') {
+            // optional → required
+            newShow = show.includes(type) ? show : [...show, type]
+            newReq = req.includes(type) ? req : [...req, type]
+          } else {
+            // required → hidden
+            newShow = show.filter(t => t !== type)
+            newReq = req.filter(t => t !== type)
+          }
+          setSettings(s => ({ ...s, [showKey]: JSON.stringify(newShow), [reqKey]: JSON.stringify(newReq) } as Settings))
+        }
+
+        const FIELD_ROWS: { label: string; showKey: keyof Settings; reqKey: keyof Settings }[] = [
+          { label: 'Kennzeichen', showKey: 'plate_show_types', reqKey: 'plate_required_types' },
+          { label: 'Firma',       showKey: 'company_show_types', reqKey: 'company_required_types' },
+          { label: 'Telefon',     showKey: 'phone_show_types', reqKey: 'phone_required_types' },
+          { label: 'Ansprechpartner', showKey: 'contact_person_show_types', reqKey: 'contact_person_required_types' },
+        ]
+
+        return (
+          <div className="bg-white rounded-2xl border border-slate-100 p-6 mb-6">
+            <h2 className="text-lg font-bold text-slate-900 mb-1">Felder konfigurieren</h2>
+            <p className="text-sm text-slate-500 mb-5">Pro Besuchertyp festlegen, welche Felder angezeigt und welche Pflichtfelder sind.</p>
+            <div className="flex flex-col gap-1 mb-3">
+              <div className="grid grid-cols-[140px_1fr] gap-3 items-center px-1">
+                <span />
+                <div className="flex gap-2">
+                  {ALL.map(t => (
+                    <span key={t} className="flex-1 text-center text-xs font-semibold text-slate-400 uppercase tracking-wide">{TYPE_LABELS[t]}</span>
+                  ))}
+                </div>
+              </div>
+              {FIELD_ROWS.map(({ label, showKey, reqKey }) => (
+                <div key={showKey} className="grid grid-cols-[140px_1fr] gap-3 items-center bg-slate-50 rounded-xl px-3 py-2.5">
+                  <span className="text-sm font-semibold text-slate-700">{label}</span>
+                  <div className="flex gap-2">
+                    {ALL.map(type => {
+                      const state = getState(showKey, reqKey, type)
+                      return (
+                        <button
+                          key={type}
+                          type="button"
+                          onClick={() => cycleState(showKey, reqKey, type)}
+                          className={`flex-1 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
+                            state === 'required'
+                              ? 'bg-blue-600 border-blue-600 text-white'
+                              : state === 'optional'
+                              ? 'bg-white border-blue-400 text-blue-600'
+                              : 'bg-white border-slate-200 text-slate-400'
+                          }`}
+                          title={state === 'required' ? 'Pflichtfeld' : state === 'optional' ? 'Optional' : 'Ausgeblendet'}
+                        >
+                          {state === 'required' ? '● Pflicht' : state === 'optional' ? '◑ Optional' : '○ Aus'}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <p className="text-xs text-slate-400">Klick zykliert: Ausgeblendet → Optional → Pflichtfeld → Ausgeblendet</p>
+          </div>
+        )
+      })()}
 
       {/* Betriebszeiten */}
       <div className="bg-white rounded-2xl border border-slate-100 p-6 mb-6">

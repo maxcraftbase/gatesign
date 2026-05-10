@@ -16,6 +16,20 @@ export interface CheckInFormData {
   contactPerson: string
 }
 
+interface FieldCfg { show: boolean; required: boolean }
+interface FieldConfigs {
+  plate: FieldCfg
+  company: FieldCfg
+  phone: FieldCfg
+  contactPerson: FieldCfg
+}
+const DEFAULT_FIELD_CONFIGS: FieldConfigs = {
+  plate:         { show: true, required: true },
+  company:       { show: true, required: true },
+  phone:         { show: true, required: false },
+  contactPerson: { show: true, required: false },
+}
+
 export function CombinedFormStep({
   lang,
   visitorType,
@@ -28,6 +42,7 @@ export function CombinedFormStep({
   ruleVisitorTypes,
   customHints,
   hintTypes,
+  fieldConfig = DEFAULT_FIELD_CONFIGS,
   onConfirm,
   onBack,
 }: {
@@ -42,6 +57,7 @@ export function CombinedFormStep({
   ruleVisitorTypes: Record<string, string[]>
   customHints: string[]
   hintTypes: string[][]
+  fieldConfig?: FieldConfigs
   onConfirm: (signatureData: string | null) => void
   onBack: () => void
 }) {
@@ -55,10 +71,11 @@ export function CombinedFormStep({
   const referenceRequired = referenceRequiredTypes.includes(visitorType)
 
   function handleConfirm() {
-    if (!formData.name.trim() || !formData.company.trim() || !formData.plate.trim()) {
-      setError(t.required_fields)
-      return
-    }
+    if (!formData.name.trim()) { setError(t.required_fields); return }
+    if (fieldConfig.company.required && !formData.company.trim()) { setError(t.required_fields); return }
+    if (fieldConfig.plate.required && !formData.plate.trim()) { setError(t.required_fields); return }
+    if (fieldConfig.phone.required && !formData.phone.trim()) { setError(t.required_fields); return }
+    if (fieldConfig.contactPerson.required && !formData.contactPerson.trim()) { setError(t.required_fields); return }
     if (referenceRequired && !formData.reference.trim()) {
       setError(t.required_fields)
       return
@@ -85,22 +102,36 @@ export function CombinedFormStep({
       <div className="bg-white rounded-2xl shadow-sm p-6 max-w-2xl mx-auto w-full mb-4">
         <h2 className="text-3xl font-bold text-slate-900 mb-6">{t.form_title}</h2>
         <div className="flex flex-col gap-5">
+          {/* Name — always required */}
           <div>
             <label className={labelCls}>{t.field_name} <span className="text-red-500">*</span></label>
             <input className={inputCls} placeholder={t.field_name_placeholder}
               value={formData.name} onChange={e => onChange({ ...formData, name: e.target.value })} autoComplete="off" />
           </div>
-          <div>
-            <label className={labelCls}>{t.field_company} <span className="text-red-500">*</span></label>
-            <input className={inputCls} placeholder={t.field_company_placeholder}
-              value={formData.company} onChange={e => onChange({ ...formData, company: e.target.value })} autoComplete="off" />
-          </div>
-          <div>
-            <label className={labelCls}>{t.field_plate} <span className="text-red-500">*</span></label>
-            <input className={inputCls} placeholder={t.field_plate_placeholder}
-              value={formData.plate} onChange={e => onChange({ ...formData, plate: e.target.value.toUpperCase() })}
-              autoComplete="off" autoCapitalize="characters" />
-          </div>
+          {/* Company — configurable */}
+          {fieldConfig.company.show && (
+            <div>
+              <label className={labelCls}>
+                {t.field_company}
+                {fieldConfig.company.required && <span className="text-red-500 ml-1">*</span>}
+              </label>
+              <input className={inputCls} placeholder={t.field_company_placeholder}
+                value={formData.company} onChange={e => onChange({ ...formData, company: e.target.value })} autoComplete="off" />
+            </div>
+          )}
+          {/* License plate — configurable */}
+          {fieldConfig.plate.show && (
+            <div>
+              <label className={labelCls}>
+                {t.field_plate}
+                {fieldConfig.plate.required && <span className="text-red-500 ml-1">*</span>}
+              </label>
+              <input className={inputCls} placeholder={t.field_plate_placeholder}
+                value={formData.plate} onChange={e => onChange({ ...formData, plate: e.target.value.toUpperCase() })}
+                autoComplete="off" autoCapitalize="characters" />
+            </div>
+          )}
+          {/* Trailer plate — truck only, always optional */}
           {visitorType === 'truck' && (
             <div>
               <label className={labelCls}>{t.field_trailer_plate}</label>
@@ -109,12 +140,19 @@ export function CombinedFormStep({
                 autoComplete="off" autoCapitalize="characters" />
             </div>
           )}
-          <div>
-            <label className={labelCls}>{t.field_phone}</label>
-            <input className={inputCls} placeholder={t.field_phone_placeholder}
-              value={formData.phone} onChange={e => onChange({ ...formData, phone: e.target.value })}
-              type="tel" autoComplete="off" />
-          </div>
+          {/* Phone — configurable */}
+          {fieldConfig.phone.show && (
+            <div>
+              <label className={labelCls}>
+                {t.field_phone}
+                {fieldConfig.phone.required && <span className="text-red-500 ml-1">*</span>}
+              </label>
+              <input className={inputCls} placeholder={t.field_phone_placeholder}
+                value={formData.phone} onChange={e => onChange({ ...formData, phone: e.target.value })}
+                type="tel" autoComplete="off" />
+            </div>
+          )}
+          {/* Reference — truck always shown + when required */}
           {(visitorType === 'truck' || referenceRequired) && (
             <div>
               <label className={labelCls}>
@@ -126,9 +164,13 @@ export function CombinedFormStep({
                 autoComplete="off" />
             </div>
           )}
-          {(visitorType === 'visitor' || visitorType === 'service') && (
+          {/* Contact person — configurable */}
+          {fieldConfig.contactPerson.show && (
             <div>
-              <label className={labelCls}>{t.field_contact_person}</label>
+              <label className={labelCls}>
+                {t.field_contact_person}
+                {fieldConfig.contactPerson.required && <span className="text-red-500 ml-1">*</span>}
+              </label>
               <input className={inputCls} placeholder={t.field_contact_placeholder}
                 value={formData.contactPerson} onChange={e => onChange({ ...formData, contactPerson: e.target.value })}
                 autoComplete="off" />

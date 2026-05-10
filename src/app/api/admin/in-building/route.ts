@@ -14,7 +14,7 @@ export async function GET() {
     const params = new URLSearchParams({
       company_id: `eq.${ctx.company.id}`,
       departed_at: 'is.null',
-      created_at: `gte.${encodeURIComponent(todayStart.toISOString())}`,
+      created_at: `gte.${todayStart.toISOString()}`,
       select: 'id,created_at,driver_name,company_name,license_plate,language,visitor_type,reference_number,contact_person',
       order: 'created_at.desc',
     })

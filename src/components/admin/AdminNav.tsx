@@ -78,7 +78,7 @@ export function AdminNav({ slug, role, userName, companyName, terminals = [] }: 
           {activeTerminals.length <= 1 ? (
             <Link href={`/${slug}/${activeTerminals[0]?.slug ?? ''}`}
               className="text-sm font-medium text-slate-700 border border-slate-300 rounded-lg px-3 py-1.5 hover:bg-slate-50 hover:border-slate-400 transition-colors">
-              ← Terminal starten
+              ←<span className="hidden sm:inline"> Terminal starten</span>
             </Link>
           ) : (
             <div className="relative" ref={dropdownRef}>
@@ -86,7 +86,7 @@ export function AdminNav({ slug, role, userName, companyName, terminals = [] }: 
                 onClick={() => setDropdownOpen(o => !o)}
                 className="flex items-center gap-1.5 text-sm font-medium text-slate-700 border border-slate-300 rounded-lg px-3 py-1.5 hover:bg-slate-50 hover:border-slate-400 transition-colors"
               >
-                ← Terminal starten
+                ←<span className="hidden sm:inline"> Terminal starten</span>
                 <ChevronDown className={clsx('w-3.5 h-3.5 transition-transform', dropdownOpen && 'rotate-180')} />
               </button>
               {dropdownOpen && (

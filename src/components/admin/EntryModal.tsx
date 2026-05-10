@@ -91,7 +91,7 @@ export function EntryModal({ entry, companyName, logoUrl, companyPdfUrl, contact
               }}
               className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-sm font-medium transition-colors disabled:opacity-50">
               <Download className="w-4 h-4" />
-              {downloading ? 'Wird erstellt…' : 'PDF'}
+              <span className="hidden sm:inline">{downloading ? 'Wird erstellt…' : 'PDF'}</span>
             </button>
             <button
               disabled={printing}
@@ -104,7 +104,7 @@ export function EntryModal({ entry, companyName, logoUrl, companyPdfUrl, contact
               }}
               className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50 text-sm font-medium transition-colors disabled:opacity-50">
               <Printer className="w-4 h-4" />
-              {printing ? 'Wird erstellt…' : 'Drucken'}
+              <span className="hidden sm:inline">{printing ? 'Wird erstellt…' : 'Drucken'}</span>
             </button>
             <button onClick={onClose} className="p-2 rounded-xl text-slate-400 hover:bg-slate-100 transition-colors">
               <X className="w-5 h-5" />
@@ -112,7 +112,7 @@ export function EntryModal({ entry, companyName, logoUrl, companyPdfUrl, contact
           </div>
         </div>
 
-        <div className="px-6 py-5 grid grid-cols-2 gap-x-8 gap-y-3 border-b border-slate-100">
+        <div className="px-6 py-5 grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3 border-b border-slate-100">
           {entry.reference_number && (
             <div className="col-span-2">
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-0.5">Referenz</p>

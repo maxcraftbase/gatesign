@@ -43,6 +43,7 @@ export function CombinedFormStep({
   customHints,
   hintTypes,
   fieldConfig = DEFAULT_FIELD_CONFIGS,
+  uppercaseTypes = [],
   onConfirm,
   onBack,
 }: {
@@ -58,6 +59,7 @@ export function CombinedFormStep({
   customHints: string[]
   hintTypes: string[][]
   fieldConfig?: FieldConfigs
+  uppercaseTypes?: string[]
   onConfirm: (signatureData: string | null) => void
   onBack: () => void
 }) {
@@ -69,6 +71,8 @@ export function CombinedFormStep({
   const handleSign = useCallback(() => setHasSigned(true), [])
 
   const referenceRequired = referenceRequiredTypes.includes(visitorType)
+  const isUppercase = uppercaseTypes.includes(visitorType)
+  const applyCase = (v: string) => isUppercase ? v.toUpperCase() : v
 
   function handleConfirm() {
     if (!formData.name.trim()) { setError(t.required_fields); return }
@@ -106,7 +110,8 @@ export function CombinedFormStep({
           <div>
             <label className={labelCls}>{t.field_name} <span className="text-red-500">*</span></label>
             <input className={inputCls} placeholder={t.field_name_placeholder}
-              value={formData.name} onChange={e => onChange({ ...formData, name: e.target.value })} autoComplete="off" />
+              value={formData.name} onChange={e => onChange({ ...formData, name: applyCase(e.target.value) })}
+              autoComplete="off" autoCapitalize={isUppercase ? 'characters' : 'words'} />
           </div>
           {/* Company — configurable */}
           {fieldConfig.company.show && (
@@ -116,7 +121,8 @@ export function CombinedFormStep({
                 {fieldConfig.company.required && <span className="text-red-500 ml-1">*</span>}
               </label>
               <input className={inputCls} placeholder={t.field_company_placeholder}
-                value={formData.company} onChange={e => onChange({ ...formData, company: e.target.value })} autoComplete="off" />
+                value={formData.company} onChange={e => onChange({ ...formData, company: applyCase(e.target.value) })}
+                autoComplete="off" autoCapitalize={isUppercase ? 'characters' : 'words'} />
             </div>
           )}
           {/* License plate — configurable */}
@@ -148,8 +154,8 @@ export function CombinedFormStep({
                 {fieldConfig.phone.required && <span className="text-red-500 ml-1">*</span>}
               </label>
               <input className={inputCls} placeholder={t.field_phone_placeholder}
-                value={formData.phone} onChange={e => onChange({ ...formData, phone: e.target.value })}
-                type="tel" autoComplete="off" />
+                value={formData.phone} onChange={e => onChange({ ...formData, phone: applyCase(e.target.value) })}
+                type="tel" autoComplete="off" autoCapitalize={isUppercase ? 'characters' : 'off'} />
             </div>
           )}
           {/* Reference — truck always shown + when required */}
@@ -160,8 +166,8 @@ export function CombinedFormStep({
                 {referenceRequired && <span className="text-red-500 ml-1">*</span>}
               </label>
               <input className={inputCls} placeholder={t.field_reference_placeholder}
-                value={formData.reference} onChange={e => onChange({ ...formData, reference: e.target.value })}
-                autoComplete="off" />
+                value={formData.reference} onChange={e => onChange({ ...formData, reference: applyCase(e.target.value) })}
+                autoComplete="off" autoCapitalize={isUppercase ? 'characters' : 'off'} />
             </div>
           )}
           {/* Contact person — configurable */}
@@ -172,8 +178,8 @@ export function CombinedFormStep({
                 {fieldConfig.contactPerson.required && <span className="text-red-500 ml-1">*</span>}
               </label>
               <input className={inputCls} placeholder={t.field_contact_placeholder}
-                value={formData.contactPerson} onChange={e => onChange({ ...formData, contactPerson: e.target.value })}
-                autoComplete="off" />
+                value={formData.contactPerson} onChange={e => onChange({ ...formData, contactPerson: applyCase(e.target.value) })}
+                autoComplete="off" autoCapitalize={isUppercase ? 'characters' : 'words'} />
             </div>
           )}
           {error && (

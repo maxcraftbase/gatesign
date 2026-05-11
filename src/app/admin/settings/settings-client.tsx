@@ -50,6 +50,7 @@ interface Settings {
   phone_required_types: string
   contact_person_show_types: string
   contact_person_required_types: string
+  uppercase_types: string
 }
 
 function DayRow({ label, closedKey, hoursKey, settings, setSettings }: {
@@ -124,6 +125,7 @@ export function AdminSettingsClient() {
     phone_required_types: '[]',
     contact_person_show_types: '["visitor","service"]',
     contact_person_required_types: '[]',
+    uppercase_types: '[]',
   })
   const [newHint, setNewHint] = useState('')
   const [loading, setLoading] = useState(true)
@@ -511,6 +513,7 @@ export function AdminSettingsClient() {
         const TOGGLE_ROWS: { label: string; key: keyof Settings }[] = [
           { label: 'Unterschrift',   key: 'signature_required_types' },
           { label: 'Referenznummer', key: 'reference_required_types' },
+          { label: 'Großschreibung', key: 'uppercase_types' },
         ]
 
         return (

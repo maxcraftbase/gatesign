@@ -54,6 +54,7 @@ export function KioskClient({ slug, terminalSlug, terminalName: initialTerminalN
   const [phoneRequiredTypes, setPhoneRequiredTypes] = useState<string[]>([])
   const [contactPersonShowTypes, setContactPersonShowTypes] = useState<string[]>(['visitor', 'service'])
   const [contactPersonRequiredTypes, setContactPersonRequiredTypes] = useState<string[]>([])
+  const [uppercaseTypes, setUppercaseTypes] = useState<string[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [adminModalOpen, setAdminModalOpen] = useState(false)
@@ -143,6 +144,7 @@ export function KioskClient({ slug, terminalSlug, terminalName: initialTerminalN
         if (data.phone_required_types)          { const p = tryParseArr(data.phone_required_types);          if (p) setPhoneRequiredTypes(p) }
         if (data.contact_person_show_types)     { const p = tryParseArr(data.contact_person_show_types);     if (p) setContactPersonShowTypes(p) }
         if (data.contact_person_required_types) { const p = tryParseArr(data.contact_person_required_types); if (p) setContactPersonRequiredTypes(p) }
+        if (data.uppercase_types)               { const p = tryParseArr(data.uppercase_types);               if (p) setUppercaseTypes(p) }
         const isValidUrl = (v: unknown) => typeof v === 'string' && v.startsWith('http')
         const urls: Record<string, string> = {}
         for (const key of ['truck', 'visitor', 'service']) {
@@ -286,6 +288,7 @@ export function KioskClient({ slug, terminalSlug, terminalName: initialTerminalN
             phone:         { show: phoneShowTypes.includes(visitorType),         required: phoneRequiredTypes.includes(visitorType) },
             contactPerson: { show: contactPersonShowTypes.includes(visitorType), required: contactPersonRequiredTypes.includes(visitorType) },
           }}
+          uppercaseTypes={uppercaseTypes}
           onConfirm={handleBriefingConfirm} onBack={() => setStep(2)} />
       )}
       {step === 5 && <SuccessScreen lang={lang} onReset={handleReset} />}

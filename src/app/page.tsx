@@ -5,19 +5,23 @@ import Link from 'next/link'
 import {
   Scale, Globe, ShieldAlert,
   Settings, Tablet, CheckCircle2,
-  Check, MessageSquare,
+  Check,
   Factory, Truck, Cog, Building2, Package, Microscope,
   ShieldCheck, Server, ChevronDown, X,
+  Printer, Eye, UserCheck, Wifi, Network,
+  Languages, PenLine, FileText, Download, Search, StickyNote,
+  Mail, Users, Lock, Smartphone, RefreshCw, LayoutDashboard,
+  Home, ClipboardList, LogOut,
 } from 'lucide-react'
 import { IsoSign } from '@/components/IsoSign'
 
 const mockEntries = [
-  { ref: 'LFS-2291', time: '05.05.26, 08:14', type: 'truck',   name: 'Tomasz Kowalski',  company: 'Nordwest Logistik',  plate: 'WA 4821 PL', flag: '🇵🇱', hasNote: true  },
-  { ref: 'SCH-8814', time: '05.05.26, 07:53', type: 'truck',   name: 'Stefan Müller',    company: 'Hansa Transport',    plate: 'MH-ST 882',  flag: '🇩🇪', hasNote: false },
-  { ref: '—',        time: '05.05.26, 07:31', type: 'visitor', name: 'Gheorghe Ionescu', company: 'Trans Ro SRL',       plate: 'B 77 XYZ',   flag: '🇷🇴', hasNote: false },
-  { ref: 'NET-0041', time: '04.05.26, 16:44', type: 'service', name: 'Andriy Kovalenko', company: 'Bauer Servicetechnik', plate: 'HA-AK 201',  flag: '🇺🇦', hasNote: true  },
-  { ref: 'GLS-7732', time: '04.05.26, 14:22', type: 'truck',   name: 'Mehmet Yilmaz',    company: 'Süd-Spedition',      plate: 'E-MY 5500',  flag: '🇹🇷', hasNote: false },
-  { ref: 'LDL-0093', time: '04.05.26, 11:09', type: 'visitor', name: 'Jan Novák',        company: 'CZ-Logistik s.r.o.', plate: 'PR 3341 C',  flag: '🇨🇿', hasNote: false },
+  { ref: 'LFS-2291', time: '05.05.26, 08:14', type: 'truck',   name: 'Tomasz Kowalski',  company: 'Nordwest Logistik',    plate: 'WA 4821 PL', flag: '🇵🇱', terminal: 'LKW Annahme',     checkout: null    as null | 'open' | string },
+  { ref: 'SCH-8814', time: '05.05.26, 07:53', type: 'truck',   name: 'Stefan Müller',    company: 'Hansa Transport',      plate: 'MH-ST 882',  flag: '🇩🇪', terminal: 'LKW Annahme',     checkout: null    as null | 'open' | string },
+  { ref: '—',        time: '05.05.26, 07:31', type: 'visitor', name: 'Gheorghe Ionescu', company: 'Trans Ro SRL',         plate: 'B 77 XYZ',   flag: '🇷🇴', terminal: 'Besucher Eingang', checkout: 'open'  as null | 'open' | string },
+  { ref: 'NET-0041', time: '04.05.26, 16:44', type: 'service', name: 'Andriy Kovalenko', company: 'Bauer Servicetechnik', plate: 'HA-AK 201',  flag: '🇺🇦', terminal: 'LKW Annahme',     checkout: '15:50' as null | 'open' | string },
+  { ref: 'GLS-7732', time: '04.05.26, 14:22', type: 'truck',   name: 'Mehmet Yilmaz',    company: 'Süd-Spedition',        plate: 'E-MY 5500',  flag: '🇹🇷', terminal: 'LKW Annahme',     checkout: null    as null | 'open' | string },
+  { ref: 'LDL-0093', time: '04.05.26, 11:09', type: 'visitor', name: 'Jan Novák',        company: 'CZ-Logistik s.r.o.',   plate: 'PR 3341 C',  flag: '🇨🇿', terminal: 'Besucher Eingang', checkout: '16:53' as null | 'open' | string },
 ]
 
 const typeBadge = {
@@ -52,6 +56,57 @@ const content = {
       text: 'Entwickelt für Produktion, Logistik und Maschinenbau — in Deutschland, Österreich und der Schweiz.',
       industries: ['Produktion', 'Logistik', 'Maschinenbau', 'Baugewerbe', 'Großhandel'],
       dsgvo: ['DSGVO-konform', 'Server in der EU', 'AVV auf Anfrage'],
+    },
+    products: {
+      badge: 'Was drin ist',
+      title: 'Vier Bausteine, eine Lösung',
+      sub: 'GateSign deckt den kompletten Besucher-Ablauf ab — von der digitalen Belehrung am Terminal bis zur Anwesenheits-Übersicht in der Werksleitung.',
+      cardLink: 'Mehr erfahren →',
+      cards: [
+        {
+          title: 'Sicherheitsbelehrung',
+          desc: 'ISO-konforme Regeln in 10 Sprachen, digital unterschrieben, je Besuchertyp anders.',
+          anchor: '#sicherheitsbelehrung',
+        },
+        {
+          title: 'Live-Anwesenheit',
+          desc: 'Echtzeit-Übersicht, wer gerade auf dem Gelände ist — wichtig im Notfall.',
+          anchor: '#anwesenheit',
+        },
+        {
+          title: 'Admin-Dashboard',
+          desc: 'Alle Check-ins auf einen Blick, mit Filter, CSV-Export und revisionssicherem Audit-Log.',
+          anchor: '#dashboard',
+        },
+        {
+          title: 'Besucherkarten-Drucker',
+          desc: 'Optionales Hardware-Bundle: Karte mit Nummer wird automatisch gedruckt — sichtbarer Ausweis im Werk.',
+          anchor: '#drucker',
+          tag: 'Add-on',
+        },
+      ],
+    },
+    featuresAll: {
+      badge: 'Funktionsumfang',
+      title: 'Alles, was Sie brauchen',
+      sub: 'Über die Kern-Bausteine hinaus erfüllt GateSign Anforderungen aus Compliance, IT und Tagesgeschäft.',
+      items: [
+        '10 Sprachen mit automatischer Übersetzung',
+        '28 ISO-Sicherheitsregeln + eigene Regeln',
+        'Digitale Unterschrift mit Zeitstempel',
+        'PDF-Belehrung je Besuchertyp',
+        'CSV-Export bis 10.000 Einträge',
+        'Suche, Filter und Sortierung',
+        'Kontaktperson pro Eintrag hinterlegen',
+        'Notizen pro Check-in',
+        'Täglicher Compliance-Digest per E-Mail',
+        'Multi-Standort und Multi-Terminal',
+        'Team-Management mit Rollen',
+        'Revisionssicheres Audit-Log',
+        'DSGVO-konform, EU-Server, AVV auf Anfrage',
+        'PWA — kein App-Store, kein IT-Setup',
+        'Live-Update der Anwesenheitsliste alle 30 s',
+      ],
     },
     stats: [
       { value: '10', label: 'Sprachen — kein Fahrer ohne Verständnis' },
@@ -117,18 +172,76 @@ const content = {
       updatedAgo: 'Aktualisiert vor 12 Sekunden',
       sinceLabel: 'seit',
     },
+    addon: {
+      badge: 'Add-on',
+      title: 'Sichtbarkeit & Sicherheit im Werk',
+      sub: 'Optionaler Etikettendrucker am Terminal. Bei jedem Check-in wird automatisch eine Besucherkarte mit großer Nummer, Name und Ansprechpartner gedruckt — passend zur Ausweishülle. Mitarbeiter erkennen sofort, wer registrierter Besucher ist.',
+      stepsLabel: 'Ablauf',
+      steps: [
+        { title: 'Drucken', text: 'Beim Check-in druckt das Bundle automatisch eine Karte mit fortlaufender Tagesnummer und allen Besucherdaten.' },
+        { title: 'Tragen', text: 'Der Besucher steckt die Karte in eine Ausweishülle und trägt sie sichtbar — Lanyard und Clip sind im Lieferumfang.' },
+        { title: 'Checkout', text: 'Beim Verlassen tippt der Besucher seine Nummer am Terminal ein. Vergessener Checkout: Auto-Checkout zum Tagesende.' },
+      ],
+      reasonsTitle: 'Warum sich das Add-on lohnt',
+      reasons: [
+        { title: 'Sofort erkennbar', text: 'Mitarbeiter sehen auf einen Blick, wer ein registrierter Besucher ist und wer nicht zum Betrieb gehört.' },
+        { title: 'Evakuierung sicher', text: 'Im Notfall stimmen Anwesenheitsliste und sichtbar getragene Karten überein — niemand wird vergessen.' },
+        { title: 'Ohne Empfangspersonal', text: 'Der Ausweis wird automatisch erstellt — kein händisches Beschriften, keine Plastikkarten-Verwaltung.' },
+      ],
+      bundlesTitle: 'Zwei Bundle-Stufen',
+      bundles: [
+        {
+          name: 'GateSign Print',
+          tagline: 'Kompakt-Drucker im Bundle',
+          desc: 'Für Empfang und Büros mit stabilem WLAN.',
+          features: ['Etikettenformat ca. 88 × 55 mm', 'Schwarz + Rot, 300 dpi', 'USB + WLAN', 'Inkl. Startrolle und Ausweishüllen'],
+        },
+        {
+          name: 'GateSign Print Pro',
+          tagline: 'Industrie-Drucker mit Ethernet',
+          desc: 'Für Werk, Lager und mehrere Standorte mit Netzwerk-Anschluss.',
+          features: ['Etikettenformat ca. 88 × 55 mm', 'Schwarz + Rot, 300 dpi', 'USB + WLAN + Ethernet + Bluetooth', 'Status-Display am Drucker'],
+        },
+      ],
+      pricingNote: 'Preis auf Anfrage. Hardware, Software-Add-on und Verbrauchsmaterial im Bundle.',
+      cta: 'Angebot anfordern',
+      cardMock: {
+        label: 'Besucherkarte',
+        company: 'Ihr Firmenlogo',
+        numberLabel: 'Besuchernr.',
+        nameLabel: 'Name',
+        nameValue: 'Tomasz Kowalski',
+        firmLabel: 'Firma',
+        firmValue: 'Nordwest Logistik',
+        hostLabel: 'Ansprechpartner',
+        hostValue: 'A. Schneider',
+        dateLabel: 'Check-in',
+        dateValue: '19.05.26 · 08:14',
+      },
+    },
     mockup: {
       title: 'Alle Check-ins auf einen Blick',
-      sub: 'Das Admin-Dashboard zeigt jeden Eintrag in Echtzeit — mit Besuchertyp, Belehrungsstatus und Notizen.',
+      sub: 'Das Admin-Dashboard zeigt jeden Eintrag in Echtzeit — mit Besuchertyp, Terminal-Zuordnung, Belehrungsstatus und Abmeldung.',
       badge: 'Live-Vorschau',
-      cols: ['Referenz', 'Zeit', 'Typ', 'Fahrer', 'Firma', 'Kennzeichen', 'Spr.', 'Belehrung', ''],
+      cols: ['Referenz', 'Zeit', 'Typ', 'Fahrer', 'Firma', 'Kennzeichen', 'Terminal', 'Spr.', 'Belehrung', 'Abmeld.'],
       accepted: 'Ja',
       entries: 'Einträge gesamt',
       entriesTitle: 'Check-in Einträge',
       refresh: 'Aktualisieren',
-      settings: 'Einstellungen',
-      terminal: '← Check-In Terminal',
+      csvExport: 'CSV Export',
+      navEntries: 'Einträge',
+      navInBuilding: 'Im Haus',
+      navSettings: 'Einstellungen',
+      navCompany: 'Demo GmbH',
+      navTerminal: 'Terminal',
       logout: 'Abmelden',
+      searchPlaceholder: 'Suche nach Name, Referenz oder Firma…',
+      filterAll: 'Alle',
+      filterTruck: 'LKW',
+      filterVisitor: 'Besucher',
+      filterService: 'Dienst',
+      filterAllTerminals: 'Alle Terminals',
+      entryCheckout: 'Abmelden',
     },
     dashboardFeatures: [
       'Echtzeit-Aktualisierung alle 30 Sekunden',
@@ -147,6 +260,8 @@ const content = {
       contact: 'Kontakt aufnehmen',
       onRequest: 'Auf Anfrage',
       included: 'Enthalten:',
+      addonNote: 'Optional: Besucherkarten-Drucker als Bundle',
+      addonLink: 'Zum Add-on →',
       tiers: [
         {
           label: 'Starter',
@@ -215,6 +330,10 @@ const content = {
           a: 'Nein. GateSign läuft als PWA auf jedem modernen Tablet oder Touchscreen-Bildschirm — kein App-Store, keine IT-Abteilung nötig. Ein handelsübliches Android- oder iPad-Tablet genügt.',
         },
         {
+          q: 'Wie funktioniert das Drucker-Add-on?',
+          a: 'Optional liefern wir einen Etikettendrucker im Bundle. Bei jedem Check-in druckt das Terminal automatisch eine Besucherkarte mit großer Nummer, Name und Ansprechpartner. Der Besucher trägt die Karte in einer Ausweishülle und checkt sich beim Verlassen per Nummer-Eingabe am Terminal aus. Vergessene Checkouts werden zum Tagesende automatisch geschlossen.',
+        },
+        {
           q: 'Was passiert nach den 30 Tagen?',
           a: 'Sie entscheiden. Kündigen Sie jederzeit — Ihre Daten bleiben 30 Tage nach Kündigung exportierbar. Keine automatische Verlängerung ohne Ihre Zustimmung.',
         },
@@ -269,6 +388,57 @@ const content = {
       text: 'Built for production, logistics and mechanical engineering — in Germany, Austria and Switzerland.',
       industries: ['Production', 'Logistics', 'Engineering', 'Construction', 'Wholesale'],
       dsgvo: ['GDPR-compliant', 'EU servers', 'DPA available'],
+    },
+    products: {
+      badge: 'What you get',
+      title: 'Four building blocks, one solution',
+      sub: 'GateSign covers the entire visitor flow — from the digital briefing at the terminal to the live presence list for plant management.',
+      cardLink: 'Learn more →',
+      cards: [
+        {
+          title: 'Safety briefing',
+          desc: 'ISO-compliant rules in 10 languages, signed digitally, separate per visitor type.',
+          anchor: '#sicherheitsbelehrung',
+        },
+        {
+          title: 'Live presence',
+          desc: 'Real-time overview of who is currently on site — critical in an emergency.',
+          anchor: '#anwesenheit',
+        },
+        {
+          title: 'Admin dashboard',
+          desc: 'All check-ins at a glance, with filters, CSV export and a tamper-proof audit log.',
+          anchor: '#dashboard',
+        },
+        {
+          title: 'Visitor-card printer',
+          desc: 'Optional hardware bundle: numbered card is printed automatically — visible badge on site.',
+          anchor: '#drucker',
+          tag: 'Add-on',
+        },
+      ],
+    },
+    featuresAll: {
+      badge: 'Feature set',
+      title: 'Everything you need',
+      sub: 'Beyond the core building blocks, GateSign meets requirements from compliance, IT and day-to-day operations.',
+      items: [
+        '10 languages with automatic translation',
+        '28 ISO safety rules + your own rules',
+        'Digital signature with timestamp',
+        'PDF briefing per visitor type',
+        'CSV export up to 10,000 entries',
+        'Search, filter and sorting',
+        'Contact person per entry',
+        'Notes on every check-in',
+        'Daily compliance digest by email',
+        'Multi-site and multi-terminal',
+        'Team management with roles',
+        'Tamper-proof audit log',
+        'GDPR-compliant, EU servers, DPA available',
+        'PWA — no app store, no IT setup',
+        'Live presence updates every 30 s',
+      ],
     },
     stats: [
       { value: '10', label: 'Languages — no driver left without understanding' },
@@ -334,18 +504,76 @@ const content = {
       updatedAgo: 'Updated 12 seconds ago',
       sinceLabel: 'since',
     },
+    addon: {
+      badge: 'Add-on',
+      title: 'Visibility & safety on site',
+      sub: 'Optional badge printer at the terminal. On every check-in, a visitor card is printed automatically — with a large number, name and host. Staff can tell registered visitors apart from anyone else at a glance.',
+      stepsLabel: 'How it works',
+      steps: [
+        { title: 'Print', text: 'At check-in, the bundle prints a card automatically — running daily number plus all visitor details.' },
+        { title: 'Wear', text: 'The visitor slips the card into a badge holder and wears it visibly — lanyard and clip are included.' },
+        { title: 'Check out', text: 'On leaving, the visitor enters their number at the terminal. Forgotten check-outs auto-close at end of day.' },
+      ],
+      reasonsTitle: 'Why the add-on pays off',
+      reasons: [
+        { title: 'Instantly recognisable', text: 'Staff see at a glance who is a registered visitor and who does not belong on the premises.' },
+        { title: 'Evacuation-ready', text: 'In an emergency, the on-site list and visibly worn cards match — no one gets missed.' },
+        { title: 'No reception required', text: 'The badge is created automatically — no manual labelling, no plastic-card management.' },
+      ],
+      bundlesTitle: 'Two bundle tiers',
+      bundles: [
+        {
+          name: 'GateSign Print',
+          tagline: 'Compact printer bundle',
+          desc: 'For reception desks and offices with reliable Wi-Fi.',
+          features: ['Label size approx. 88 × 55 mm', 'Black + red, 300 dpi', 'USB + Wi-Fi', 'Includes starter roll and badge holders'],
+        },
+        {
+          name: 'GateSign Print Pro',
+          tagline: 'Industrial printer with Ethernet',
+          desc: 'For plants, warehouses and multi-site setups with wired network.',
+          features: ['Label size approx. 88 × 55 mm', 'Black + red, 300 dpi', 'USB + Wi-Fi + Ethernet + Bluetooth', 'Status display on the printer'],
+        },
+      ],
+      pricingNote: 'Pricing on request. Hardware, software add-on and consumables in one bundle.',
+      cta: 'Request a quote',
+      cardMock: {
+        label: 'Visitor card',
+        company: 'Your company logo',
+        numberLabel: 'Visitor no.',
+        nameLabel: 'Name',
+        nameValue: 'Tomasz Kowalski',
+        firmLabel: 'Company',
+        firmValue: 'Nordwest Logistik',
+        hostLabel: 'Host',
+        hostValue: 'A. Schneider',
+        dateLabel: 'Check-in',
+        dateValue: '19.05.26 · 08:14',
+      },
+    },
     mockup: {
       title: 'All check-ins at a glance',
-      sub: 'The admin dashboard shows every entry in real time — with visitor type, briefing status and notes.',
+      sub: 'The admin dashboard shows every entry in real time — with visitor type, terminal, briefing status and check-out.',
       badge: 'Live preview',
-      cols: ['Reference', 'Time', 'Type', 'Driver', 'Company', 'Plate', 'Lang.', 'Briefing', ''],
+      cols: ['Reference', 'Time', 'Type', 'Driver', 'Company', 'Plate', 'Terminal', 'Lang.', 'Briefing', 'Check-out'],
       accepted: 'Yes',
       entries: 'entries total',
       entriesTitle: 'Check-in Entries',
       refresh: 'Refresh',
-      settings: 'Settings',
-      terminal: '← Check-In Terminal',
+      csvExport: 'CSV export',
+      navEntries: 'Entries',
+      navInBuilding: 'On site',
+      navSettings: 'Settings',
+      navCompany: 'Demo Ltd.',
+      navTerminal: 'Terminal',
       logout: 'Log out',
+      searchPlaceholder: 'Search by name, reference or company…',
+      filterAll: 'All',
+      filterTruck: 'Truck',
+      filterVisitor: 'Visitor',
+      filterService: 'Contractor',
+      filterAllTerminals: 'All terminals',
+      entryCheckout: 'Check out',
     },
     dashboardFeatures: [
       'Real-time updates every 30 seconds',
@@ -364,6 +592,8 @@ const content = {
       contact: 'Contact us',
       onRequest: 'On request',
       included: 'Included:',
+      addonNote: 'Optional: visitor-card printer bundle',
+      addonLink: 'See add-on →',
       tiers: [
         {
           label: 'Starter',
@@ -430,6 +660,10 @@ const content = {
         {
           q: 'Do I need special hardware?',
           a: 'No. GateSign runs as a PWA on any modern tablet or touchscreen — no app store, no IT department required. A standard Android or iPad tablet is all you need.',
+        },
+        {
+          q: 'How does the printer add-on work?',
+          a: 'We optionally provide a label printer as part of the bundle. On every check-in, the terminal prints a visitor card with a large number, name and host. The visitor wears the card in a holder and checks out at the terminal by entering the number. Forgotten check-outs are closed automatically at the end of the day.',
         },
         {
           q: 'What happens after the 30-day trial?',
@@ -550,6 +784,61 @@ function TerminalMockup({ lang }: { lang: 'de' | 'en' }) {
       </div>
       {/* Glow shadow */}
       <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-48 h-8 bg-slate-900/20 blur-xl rounded-full" />
+    </div>
+  )
+}
+
+type AddonCard = (typeof content)['de']['addon']['cardMock']
+
+function PrinterCardMockup({ card }: { card: AddonCard }) {
+  return (
+    <div className="relative">
+      {/* Card body — Querformat 88 × 55 mm (Visitenkartenformat) */}
+      <div
+        className="bg-white border border-slate-200 rounded-xl shadow-2xl w-80 sm:w-96 rotate-[-3deg] hover:rotate-0 transition-transform duration-500"
+        style={{ aspectRatio: '88 / 55' }}
+      >
+        <div className="h-full p-4 flex flex-col">
+          {/* Header: Logo + Label */}
+          <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+            <div className="h-5 w-20 bg-slate-100 rounded flex items-center justify-center">
+              <span className="text-[8px] text-slate-400 uppercase tracking-wider truncate">{card.company}</span>
+            </div>
+            <span className="text-[8px] text-slate-300 uppercase tracking-widest font-semibold">{card.label}</span>
+          </div>
+
+          {/* Body: Nummer links, Daten rechts */}
+          <div className="flex-1 flex items-center gap-4 py-2 min-h-0">
+            <div className="flex-shrink-0 flex flex-col items-center justify-center pr-4 border-r border-slate-100">
+              <p className="text-[8px] text-slate-400 uppercase tracking-widest font-semibold mb-0.5">{card.numberLabel}</p>
+              <p className="text-5xl font-black text-red-600 tabular-nums leading-none">762</p>
+            </div>
+            <div className="flex-1 min-w-0 space-y-1.5">
+              <div>
+                <p className="text-[8px] text-slate-400 uppercase tracking-wider">{card.nameLabel}</p>
+                <p className="text-sm font-bold text-slate-900 leading-tight truncate">{card.nameValue}</p>
+              </div>
+              <div>
+                <p className="text-[8px] text-slate-400 uppercase tracking-wider">{card.firmLabel}</p>
+                <p className="text-xs text-slate-700 leading-tight truncate">{card.firmValue}</p>
+              </div>
+              <div>
+                <p className="text-[8px] text-slate-400 uppercase tracking-wider">{card.hostLabel}</p>
+                <p className="text-xs text-slate-700 leading-tight truncate">{card.hostValue}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Footer: Datum */}
+          <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
+            <p className="text-[9px] text-slate-400 uppercase tracking-wider">{card.dateLabel}</p>
+            <p className="text-[10px] text-slate-600 tabular-nums">{card.dateValue}</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Soft shadow under card */}
+      <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 w-56 h-6 bg-slate-900/15 blur-2xl rounded-full" />
     </div>
   )
 }
@@ -855,32 +1144,96 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Legal Section */}
-      <section className="bg-amber-50 py-20">
+      {/* Products — Kernbausteine */}
+      <section className="bg-white py-20">
         <div className="max-w-5xl mx-auto px-6">
-          <div className="text-center mb-10">
-            <span className="inline-block text-xs font-semibold bg-amber-100 text-amber-700 px-3 py-1 rounded-full mb-4 uppercase tracking-wide">
-              {t.legal.badge}
+          <div className="text-center mb-12">
+            <span className="inline-block text-xs font-semibold bg-slate-100 text-slate-600 px-3 py-1 rounded-full mb-4 uppercase tracking-wide">
+              {t.products.badge}
             </span>
-            <h2 className="text-3xl font-bold mb-4">{t.legal.title}</h2>
-            <p className="text-slate-500 max-w-2xl mx-auto leading-relaxed">{t.legal.sub}</p>
+            <h2 className="text-3xl font-bold mb-4 leading-tight">{t.products.title}</h2>
+            <p className="text-slate-500 max-w-2xl mx-auto leading-relaxed">{t.products.sub}</p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            {t.legal.items.map((item, i) => (
-              <div key={i} className="bg-white border border-amber-200 rounded-2xl p-6">
-                <div className="w-9 h-9 rounded-lg bg-amber-100 flex items-center justify-center mb-4">
-                  {legalIcons[i]}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+            {[
+              { icon: <ShieldCheck      className="w-5 h-5 text-slate-700" strokeWidth={1.75} />, card: t.products.cards[0] },
+              { icon: <Eye              className="w-5 h-5 text-slate-700" strokeWidth={1.75} />, card: t.products.cards[1] },
+              { icon: <LayoutDashboard  className="w-5 h-5 text-slate-700" strokeWidth={1.75} />, card: t.products.cards[2] },
+              { icon: <Printer          className="w-5 h-5 text-slate-700" strokeWidth={1.75} />, card: t.products.cards[3] },
+            ].map((p, i) => (
+              <a
+                key={i}
+                href={p.card.anchor}
+                className="group bg-white border border-slate-200 rounded-2xl p-6 hover:border-slate-900 hover:shadow-md transition-all flex flex-col"
+              >
+                <div className="flex items-center gap-2 mb-4">
+                  <div className="w-10 h-10 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center">
+                    {p.icon}
+                  </div>
+                  {(p.card as { tag?: string }).tag && (
+                    <span className="text-[10px] font-semibold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                      {(p.card as { tag?: string }).tag}
+                    </span>
+                  )}
                 </div>
-                <h3 className="font-bold text-slate-900 mb-2 leading-snug">{item.title}</h3>
-                <p className="text-sm text-slate-500 leading-relaxed">{item.text}</p>
-              </div>
+                <h3 className="font-bold text-slate-900 mb-2 leading-snug">{p.card.title}</h3>
+                <p className="text-sm text-slate-500 leading-relaxed flex-1">{p.card.desc}</p>
+                <span className="text-sm font-semibold text-slate-900 mt-4 group-hover:underline">
+                  {t.products.cardLink}
+                </span>
+              </a>
             ))}
           </div>
         </div>
       </section>
 
+      {/* How it works */}
+      <section className="bg-slate-50 py-20">
+        <div className="max-w-5xl mx-auto px-6">
+          <h2 className="text-2xl font-bold text-center mb-12">{t.how.title}</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-10">
+            {t.how.steps.map((step, i) => (
+              <div key={i} className="bg-white border border-slate-200 rounded-2xl p-6">
+                <div className="flex items-center gap-3 mb-5">
+                  <div className="w-8 h-8 rounded-lg bg-slate-900 text-white text-sm font-bold flex items-center justify-center flex-shrink-0">
+                    {i + 1}
+                  </div>
+                  <div className="w-8 h-8 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-center">
+                    {howIcons[i]}
+                  </div>
+                </div>
+                <h3 className="text-base font-bold mb-2">{step.title}</h3>
+                <p className="text-slate-500 text-sm leading-relaxed">{step.text}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Terminal step flow */}
+          <div className="bg-white border border-slate-200 rounded-2xl px-6 py-6 shadow-sm">
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide text-center mb-5">
+              {t.how.terminalLabel}
+            </p>
+            <div className="flex items-center justify-between gap-2">
+              {t.how.terminalSteps.map((step, i) => (
+                <div key={i} className="flex items-center flex-1 last:flex-none">
+                  <div className="flex flex-col items-center flex-1">
+                    <div className="w-8 h-8 rounded-full bg-slate-900 text-white text-xs font-bold flex items-center justify-center mb-2 flex-shrink-0">
+                      {i + 1}
+                    </div>
+                    <span className="text-xs font-medium text-slate-600 text-center leading-tight">{step}</span>
+                  </div>
+                  {i < t.how.terminalSteps.length - 1 && (
+                    <div className="w-6 h-px bg-slate-200 flex-shrink-0 mb-4" />
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Safety Briefing Section */}
-      <section className="max-w-5xl mx-auto px-6 py-20">
+      <section id="sicherheitsbelehrung" className="max-w-5xl mx-auto px-6 py-20">
         <div className="flex flex-col lg:flex-row gap-12 items-center">
           <div className="flex-1">
             <span className="inline-block text-xs font-semibold bg-amber-100 text-amber-700 px-3 py-1 rounded-full mb-4 uppercase tracking-wide">
@@ -933,167 +1286,8 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* How it works */}
-      <section className="bg-slate-50 py-20">
-        <div className="max-w-5xl mx-auto px-6">
-          <h2 className="text-2xl font-bold text-center mb-12">{t.how.title}</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-10">
-            {t.how.steps.map((step, i) => (
-              <div key={i} className="bg-white border border-slate-200 rounded-2xl p-6">
-                <div className="flex items-center gap-3 mb-5">
-                  <div className="w-8 h-8 rounded-lg bg-slate-900 text-white text-sm font-bold flex items-center justify-center flex-shrink-0">
-                    {i + 1}
-                  </div>
-                  <div className="w-8 h-8 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-center">
-                    {howIcons[i]}
-                  </div>
-                </div>
-                <h3 className="text-base font-bold mb-2">{step.title}</h3>
-                <p className="text-slate-500 text-sm leading-relaxed">{step.text}</p>
-              </div>
-            ))}
-          </div>
-
-          {/* Terminal step flow */}
-          <div className="bg-white border border-slate-200 rounded-2xl px-6 py-6 shadow-sm">
-            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide text-center mb-5">
-              {t.how.terminalLabel}
-            </p>
-            <div className="flex items-center justify-between gap-2">
-              {t.how.terminalSteps.map((step, i) => (
-                <div key={i} className="flex items-center flex-1 last:flex-none">
-                  <div className="flex flex-col items-center flex-1">
-                    <div className="w-8 h-8 rounded-full bg-slate-900 text-white text-xs font-bold flex items-center justify-center mb-2 flex-shrink-0">
-                      {i + 1}
-                    </div>
-                    <span className="text-xs font-medium text-slate-600 text-center leading-tight">{step}</span>
-                  </div>
-                  {i < t.how.terminalSteps.length - 1 && (
-                    <div className="w-6 h-px bg-slate-200 flex-shrink-0 mb-4" />
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Dashboard Mockup */}
-      <section className="bg-slate-50 py-20">
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="text-center mb-10">
-            <span className="inline-block text-xs font-semibold bg-slate-900 text-white px-3 py-1 rounded-full mb-4 uppercase tracking-wide">
-              {t.mockup.badge}
-            </span>
-            <h2 className="text-2xl font-bold mb-3">{t.mockup.title}</h2>
-            <p className="text-slate-500 text-sm max-w-lg mx-auto">{t.mockup.sub}</p>
-          </div>
-
-          <div className="rounded-2xl overflow-hidden shadow-2xl border border-slate-200 mb-10">
-            {/* Browser chrome */}
-            <div className="bg-slate-100 px-4 py-3 flex items-center gap-3 border-b border-slate-200">
-              <div className="flex gap-1.5">
-                <div className="w-3 h-3 rounded-full bg-red-400" />
-                <div className="w-3 h-3 rounded-full bg-amber-400" />
-                <div className="w-3 h-3 rounded-full bg-green-400" />
-              </div>
-              <div className="flex-1 bg-white rounded-md px-3 py-1 text-xs text-slate-400 font-mono">
-                gatesign.de/ihre-firma/admin
-              </div>
-            </div>
-            {/* App nav */}
-            <div className="bg-white border-b border-slate-100 px-6 h-12 flex items-center justify-between">
-              <div className="flex items-center gap-6">
-                <span className="font-bold text-slate-900 text-sm">GateSign</span>
-                <div className="flex gap-1">
-                  <span className="bg-slate-900 text-white text-xs font-semibold px-3 py-1.5 rounded-lg">
-                    {t.mockup.entriesTitle}
-                  </span>
-                  <span className="text-slate-500 text-xs font-medium px-3 py-1.5 rounded-lg">
-                    {t.mockup.settings}
-                  </span>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <span className="text-xs text-slate-400">{t.mockup.terminal}</span>
-                <span className="text-xs text-slate-400">{t.mockup.logout}</span>
-              </div>
-            </div>
-            {/* Table */}
-            <div className="bg-white">
-              <div className="px-6 py-4 flex items-center justify-between border-b border-slate-50">
-                <div>
-                  <h3 className="font-bold text-slate-900 text-sm">{t.mockup.entriesTitle}</h3>
-                  <p className="text-xs text-slate-400 mt-0.5">{mockEntries.length} {t.mockup.entries}</p>
-                </div>
-                <div className="flex gap-2">
-                  <button className="text-xs border border-slate-200 text-slate-500 px-3 py-1.5 rounded-lg pointer-events-none">
-                    ↻ {t.mockup.refresh}
-                  </button>
-                  <button className="text-xs bg-slate-900 text-white px-3 py-1.5 rounded-lg pointer-events-none">
-                    ↓ CSV
-                  </button>
-                </div>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-xs">
-                  <thead>
-                    <tr className="border-b border-slate-100">
-                      {t.mockup.cols.map((col, ci) => (
-                        <th key={ci} className="text-left px-4 py-3 text-slate-400 font-semibold uppercase tracking-wide whitespace-nowrap">
-                          {col}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {mockEntries.map((row, i) => (
-                      <tr key={i} className="border-b border-slate-50 last:border-b-0 hover:bg-slate-50/50">
-                        <td className="px-4 py-3 text-slate-400 font-mono whitespace-nowrap">{row.ref}</td>
-                        <td className="px-4 py-3 text-slate-400 whitespace-nowrap">{row.time}</td>
-                        <td className="px-4 py-3">
-                          <span className={`inline-block text-xs font-semibold px-2 py-0.5 rounded-md whitespace-nowrap ${typeBadgeClass[row.type as keyof typeof typeBadgeClass]}`}>
-                            {badges[row.type as keyof typeof badges]}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 font-medium text-slate-900 whitespace-nowrap">{row.name}</td>
-                        <td className="px-4 py-3 text-slate-600 whitespace-nowrap">{row.company}</td>
-                        <td className="px-4 py-3">
-                          <span className="font-mono bg-slate-100 text-slate-700 px-2 py-0.5 rounded text-xs">{row.plate}</span>
-                        </td>
-                        <td className="px-4 py-3 text-base">{row.flag}</td>
-                        <td className="px-4 py-3">
-                          <span className="inline-flex items-center gap-1 text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap">
-                            ✓ {t.mockup.accepted}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3">
-                          {row.hasNote && (
-                            <MessageSquare className="w-3.5 h-3.5 text-slate-400" />
-                          )}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-
-          {/* Dashboard feature list */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 max-w-4xl mx-auto">
-            {t.dashboardFeatures.map((f, i) => (
-              <div key={i} className="flex items-start gap-3 bg-white rounded-xl px-4 py-3 border border-slate-200">
-                <Check className="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5" strokeWidth={2.5} />
-                <span className="text-sm text-slate-600 leading-snug">{f}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* Im Haus — Anwesenheit */}
-      <section className="max-w-5xl mx-auto px-6 py-20">
+      <section id="anwesenheit" className="max-w-5xl mx-auto px-6 py-20">
         <div className="flex flex-col lg:flex-row-reverse gap-12 items-center">
           {/* Mockup */}
           <div className="flex-1 w-full max-w-sm mx-auto lg:max-w-none">
@@ -1148,6 +1342,332 @@ export default function LandingPage() {
                 </div>
               ))}
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Dashboard Mockup */}
+      <section id="dashboard" className="bg-slate-50 py-20">
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="text-center mb-10">
+            <span className="inline-block text-xs font-semibold bg-slate-900 text-white px-3 py-1 rounded-full mb-4 uppercase tracking-wide">
+              {t.mockup.badge}
+            </span>
+            <h2 className="text-2xl font-bold mb-3">{t.mockup.title}</h2>
+            <p className="text-slate-500 text-sm max-w-lg mx-auto">{t.mockup.sub}</p>
+          </div>
+
+          <div className="rounded-2xl overflow-hidden shadow-2xl border border-slate-200 mb-10">
+            {/* Browser chrome */}
+            <div className="bg-slate-100 px-4 py-3 flex items-center gap-3 border-b border-slate-200">
+              <div className="flex gap-1.5">
+                <div className="w-3 h-3 rounded-full bg-red-400" />
+                <div className="w-3 h-3 rounded-full bg-amber-400" />
+                <div className="w-3 h-3 rounded-full bg-green-400" />
+              </div>
+              <div className="flex-1 bg-white rounded-md px-3 py-1 text-xs text-slate-400 font-mono">
+                gatesign.de/ihre-firma/admin
+              </div>
+            </div>
+            {/* App nav */}
+            <div className="bg-white border-b border-slate-100 px-6 h-14 flex items-center justify-between">
+              <div className="flex items-center gap-6">
+                <span className="font-bold text-slate-900 text-sm">GateSign</span>
+                <div className="flex gap-1">
+                  <span className="inline-flex items-center gap-1.5 bg-slate-900 text-white text-xs font-semibold px-3 py-1.5 rounded-lg">
+                    <ClipboardList className="w-3.5 h-3.5" strokeWidth={2} />
+                    {t.mockup.navEntries}
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 text-slate-500 text-xs font-medium px-3 py-1.5 rounded-lg">
+                    <Home className="w-3.5 h-3.5" strokeWidth={2} />
+                    {t.mockup.navInBuilding}
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 text-slate-500 text-xs font-medium px-3 py-1.5 rounded-lg">
+                    <Settings className="w-3.5 h-3.5" strokeWidth={2} />
+                    {t.mockup.navSettings}
+                  </span>
+                </div>
+              </div>
+              <div className="flex items-center gap-4">
+                <span className="text-xs text-slate-500 font-medium">{t.mockup.navCompany}</span>
+                <span className="inline-flex items-center gap-1.5 text-xs text-slate-700 bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5">
+                  <Tablet className="w-3.5 h-3.5" strokeWidth={2} />
+                  {t.mockup.navTerminal}
+                  <ChevronDown className="w-3 h-3" strokeWidth={2} />
+                </span>
+                <span className="inline-flex items-center gap-1.5 text-xs text-slate-400">
+                  <LogOut className="w-3.5 h-3.5" strokeWidth={2} />
+                  {t.mockup.logout}
+                </span>
+              </div>
+            </div>
+            {/* Table */}
+            <div className="bg-white">
+              <div className="px-6 py-5 flex items-center justify-between border-b border-slate-50">
+                <div>
+                  <h3 className="font-bold text-slate-900 text-base">{t.mockup.entriesTitle}</h3>
+                  <p className="text-xs text-slate-400 mt-0.5">{mockEntries.length} {t.mockup.entries}</p>
+                </div>
+                <div className="flex gap-2">
+                  <button className="inline-flex items-center gap-1.5 text-xs border border-slate-200 text-slate-600 px-3 py-2 rounded-lg pointer-events-none font-medium">
+                    <RefreshCw className="w-3.5 h-3.5" strokeWidth={2} />
+                    {t.mockup.refresh}
+                  </button>
+                  <button className="inline-flex items-center gap-1.5 text-xs bg-slate-900 text-white px-3 py-2 rounded-lg pointer-events-none font-medium">
+                    <Download className="w-3.5 h-3.5" strokeWidth={2} />
+                    {t.mockup.csvExport}
+                  </button>
+                </div>
+              </div>
+
+              {/* Search bar */}
+              <div className="px-6 pt-4">
+                <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-lg px-3 py-2">
+                  <Search className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" strokeWidth={2} />
+                  <span className="text-xs text-slate-400">{t.mockup.searchPlaceholder}</span>
+                </div>
+              </div>
+
+              {/* Filter tabs */}
+              <div className="px-6 pt-3 pb-4 flex flex-wrap items-center gap-2">
+                <span className="bg-slate-900 text-white text-[11px] font-semibold px-3 py-1 rounded-full">{t.mockup.filterAll}</span>
+                <span className="border border-slate-200 text-slate-600 text-[11px] font-medium px-3 py-1 rounded-full">{t.mockup.filterTruck}</span>
+                <span className="border border-slate-200 text-slate-600 text-[11px] font-medium px-3 py-1 rounded-full">{t.mockup.filterVisitor}</span>
+                <span className="border border-slate-200 text-slate-600 text-[11px] font-medium px-3 py-1 rounded-full">{t.mockup.filterService}</span>
+                <span className="ml-4 bg-violet-600 text-white text-[11px] font-semibold px-3 py-1 rounded-full">{t.mockup.filterAllTerminals}</span>
+                <span className="border border-slate-200 text-slate-600 text-[11px] font-medium px-3 py-1 rounded-full">LKW Annahme</span>
+                <span className="border border-slate-200 text-slate-600 text-[11px] font-medium px-3 py-1 rounded-full">Besucher Eingang</span>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="border-y border-slate-100 bg-slate-50/50">
+                      {t.mockup.cols.map((col, ci) => (
+                        <th key={ci} className="text-left px-4 py-3 text-slate-400 font-semibold uppercase tracking-wide whitespace-nowrap text-[10px]">
+                          {col}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {mockEntries.map((row, i) => (
+                      <tr key={i} className="border-b border-slate-50 last:border-b-0 hover:bg-slate-50/50">
+                        <td className="px-4 py-3 text-slate-400 font-mono whitespace-nowrap">{row.ref}</td>
+                        <td className="px-4 py-3 text-slate-400 whitespace-nowrap">{row.time}</td>
+                        <td className="px-4 py-3">
+                          <span className={`inline-block text-xs font-semibold px-2 py-0.5 rounded-md whitespace-nowrap ${typeBadgeClass[row.type as keyof typeof typeBadgeClass]}`}>
+                            {badges[row.type as keyof typeof badges]}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 font-medium text-slate-900 whitespace-nowrap">{row.name}</td>
+                        <td className="px-4 py-3 text-slate-600 whitespace-nowrap">{row.company}</td>
+                        <td className="px-4 py-3">
+                          <span className="font-mono bg-slate-100 text-slate-700 px-2 py-0.5 rounded text-xs">{row.plate}</span>
+                        </td>
+                        <td className="px-4 py-3 text-slate-500 whitespace-nowrap">{row.terminal}</td>
+                        <td className="px-4 py-3 text-base">{row.flag}</td>
+                        <td className="px-4 py-3">
+                          <span className="inline-flex items-center gap-1 text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full text-xs font-medium whitespace-nowrap">
+                            <Check className="w-3 h-3" strokeWidth={3} />
+                            {t.mockup.accepted}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          {row.checkout === 'open' ? (
+                            <span className="inline-flex items-center gap-1 text-slate-700 border border-slate-200 px-2 py-0.5 rounded-md text-xs font-medium">
+                              <LogOut className="w-3 h-3" strokeWidth={2} />
+                              {t.mockup.entryCheckout}
+                            </span>
+                          ) : row.checkout && row.checkout !== 'open' ? (
+                            <span className="inline-flex items-center gap-1 text-emerald-700 text-xs font-medium tabular-nums">
+                              <Check className="w-3 h-3" strokeWidth={3} />
+                              {row.checkout}
+                            </span>
+                          ) : (
+                            <span className="text-slate-300">—</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          {/* Dashboard feature list */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 max-w-4xl mx-auto">
+            {t.dashboardFeatures.map((f, i) => (
+              <div key={i} className="flex items-start gap-3 bg-white rounded-xl px-4 py-3 border border-slate-200">
+                <Check className="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5" strokeWidth={2.5} />
+                <span className="text-sm text-slate-600 leading-snug">{f}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Add-on: Besucherkarten-Drucker */}
+      <section id="drucker" className="bg-white py-20 border-t border-slate-100">
+        <div className="max-w-5xl mx-auto px-6">
+          {/* Header */}
+          <div className="text-center mb-14">
+            <span className="inline-flex items-center gap-1.5 text-xs font-semibold bg-amber-100 text-amber-700 px-3 py-1 rounded-full mb-4 uppercase tracking-wide">
+              <Printer className="w-3.5 h-3.5" strokeWidth={2} />
+              {t.addon.badge}
+            </span>
+            <h2 className="text-3xl font-bold mb-4 leading-tight">{t.addon.title}</h2>
+            <p className="text-slate-500 max-w-2xl mx-auto leading-relaxed">{t.addon.sub}</p>
+          </div>
+
+          {/* Steps + Card mockup */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center mb-16">
+            <div>
+              <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-6">
+                {t.addon.stepsLabel}
+              </p>
+              <div className="space-y-6">
+                {t.addon.steps.map((step, i) => (
+                  <div key={i} className="flex gap-4">
+                    <div className="w-9 h-9 rounded-full bg-slate-900 text-white text-sm font-bold flex items-center justify-center flex-shrink-0">
+                      {i + 1}
+                    </div>
+                    <div className="flex-1 pt-1">
+                      <p className="font-semibold text-slate-900 mb-1">{step.title}</p>
+                      <p className="text-sm text-slate-500 leading-relaxed">{step.text}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="flex justify-center py-6 lg:py-0">
+              <PrinterCardMockup card={t.addon.cardMock} />
+            </div>
+          </div>
+
+          {/* Reasons grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-16">
+            {[
+              { icon: <Eye className="w-5 h-5 text-slate-700" strokeWidth={1.75} />, item: t.addon.reasons[0] },
+              { icon: <ShieldCheck className="w-5 h-5 text-slate-700" strokeWidth={1.75} />, item: t.addon.reasons[1] },
+              { icon: <UserCheck className="w-5 h-5 text-slate-700" strokeWidth={1.75} />, item: t.addon.reasons[2] },
+            ].map((r, i) => (
+              <div key={i} className="bg-white border border-slate-200 rounded-2xl p-6">
+                <div className="w-10 h-10 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center mb-4">
+                  {r.icon}
+                </div>
+                <h3 className="font-bold text-slate-900 mb-2 leading-snug">{r.item.title}</h3>
+                <p className="text-sm text-slate-500 leading-relaxed">{r.item.text}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Bundle tiers */}
+          <div>
+            <h3 className="text-xl font-bold text-center mb-8">{t.addon.bundlesTitle}</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 max-w-3xl mx-auto">
+              {[
+                { icon: <Wifi    className="w-5 h-5 text-slate-700" strokeWidth={1.75} />, bundle: t.addon.bundles[0] },
+                { icon: <Network className="w-5 h-5 text-slate-700" strokeWidth={1.75} />, bundle: t.addon.bundles[1] },
+              ].map((b, i) => (
+                <div key={i} className="bg-slate-50 border border-slate-200 rounded-2xl p-6 flex flex-col">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 rounded-lg bg-white border border-slate-200 flex items-center justify-center flex-shrink-0">
+                      {b.icon}
+                    </div>
+                    <div>
+                      <p className="font-bold text-slate-900 leading-tight">{b.bundle.name}</p>
+                      <p className="text-xs text-slate-500">{b.bundle.tagline}</p>
+                    </div>
+                  </div>
+                  <p className="text-sm text-slate-500 leading-relaxed mb-4">{b.bundle.desc}</p>
+                  <ul className="space-y-2">
+                    {b.bundle.features.map((f, fi) => (
+                      <li key={fi} className="flex items-start gap-2">
+                        <Check className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0 mt-1" strokeWidth={2.5} />
+                        <span className="text-sm text-slate-700 leading-snug">{f}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* CTA */}
+          <div className="text-center mt-12">
+            <p className="text-sm text-slate-400 mb-5">{t.addon.pricingNote}</p>
+            <button
+              type="button"
+              onClick={openDemo}
+              className="inline-block bg-slate-900 text-white text-base font-semibold px-8 py-4 rounded-xl hover:bg-slate-700 transition-colors"
+            >
+              {t.addon.cta} →
+            </button>
+          </div>
+        </div>
+      </section>
+
+      {/* Alle Features */}
+      <section className="bg-slate-50 py-20">
+        <div className="max-w-5xl mx-auto px-6">
+          <div className="text-center mb-12">
+            <span className="inline-block text-xs font-semibold bg-slate-100 text-slate-600 px-3 py-1 rounded-full mb-4 uppercase tracking-wide">
+              {t.featuresAll.badge}
+            </span>
+            <h2 className="text-3xl font-bold mb-4 leading-tight">{t.featuresAll.title}</h2>
+            <p className="text-slate-500 max-w-2xl mx-auto leading-relaxed">{t.featuresAll.sub}</p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {[
+              <Languages   key="i0"  className="w-4 h-4 text-slate-600" strokeWidth={1.75} />,
+              <ShieldCheck key="i1"  className="w-4 h-4 text-slate-600" strokeWidth={1.75} />,
+              <PenLine     key="i2"  className="w-4 h-4 text-slate-600" strokeWidth={1.75} />,
+              <FileText    key="i3"  className="w-4 h-4 text-slate-600" strokeWidth={1.75} />,
+              <Download    key="i4"  className="w-4 h-4 text-slate-600" strokeWidth={1.75} />,
+              <Search      key="i5"  className="w-4 h-4 text-slate-600" strokeWidth={1.75} />,
+              <UserCheck   key="i6"  className="w-4 h-4 text-slate-600" strokeWidth={1.75} />,
+              <StickyNote  key="i7"  className="w-4 h-4 text-slate-600" strokeWidth={1.75} />,
+              <Mail        key="i8"  className="w-4 h-4 text-slate-600" strokeWidth={1.75} />,
+              <Building2   key="i9"  className="w-4 h-4 text-slate-600" strokeWidth={1.75} />,
+              <Users       key="i10" className="w-4 h-4 text-slate-600" strokeWidth={1.75} />,
+              <Lock        key="i11" className="w-4 h-4 text-slate-600" strokeWidth={1.75} />,
+              <Server      key="i12" className="w-4 h-4 text-slate-600" strokeWidth={1.75} />,
+              <Smartphone  key="i13" className="w-4 h-4 text-slate-600" strokeWidth={1.75} />,
+              <RefreshCw   key="i14" className="w-4 h-4 text-slate-600" strokeWidth={1.75} />,
+            ].map((icon, i) => (
+              <div key={i} className="bg-white border border-slate-200 rounded-xl px-4 py-3 flex items-center gap-3">
+                <div className="w-8 h-8 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center flex-shrink-0">
+                  {icon}
+                </div>
+                <span className="text-sm text-slate-700 leading-snug">{t.featuresAll.items[i]}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Legal Section — Gesetzliche Pflicht */}
+      <section className="bg-amber-50 py-20">
+        <div className="max-w-5xl mx-auto px-6">
+          <div className="text-center mb-10">
+            <span className="inline-block text-xs font-semibold bg-amber-100 text-amber-700 px-3 py-1 rounded-full mb-4 uppercase tracking-wide">
+              {t.legal.badge}
+            </span>
+            <h2 className="text-3xl font-bold mb-4">{t.legal.title}</h2>
+            <p className="text-slate-500 max-w-2xl mx-auto leading-relaxed">{t.legal.sub}</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+            {t.legal.items.map((item, i) => (
+              <div key={i} className="bg-white border border-amber-200 rounded-2xl p-6">
+                <div className="w-9 h-9 rounded-lg bg-amber-100 flex items-center justify-center mb-4">
+                  {legalIcons[i]}
+                </div>
+                <h3 className="font-bold text-slate-900 mb-2 leading-snug">{item.title}</h3>
+                <p className="text-sm text-slate-500 leading-relaxed">{item.text}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -1242,6 +1762,20 @@ export default function LandingPage() {
                 )}
               </div>
             ))}
+          </div>
+
+          {/* Add-on hint */}
+          <div className="mt-10 inline-flex items-center gap-3 bg-white border border-slate-200 rounded-full pl-4 pr-2 py-2 shadow-sm">
+            <div className="w-7 h-7 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
+              <Printer className="w-3.5 h-3.5 text-amber-700" strokeWidth={2} />
+            </div>
+            <span className="text-sm text-slate-600">{t.pricing.addonNote}</span>
+            <a
+              href="#drucker"
+              className="text-sm font-semibold text-slate-900 bg-slate-100 hover:bg-slate-200 transition-colors px-3 py-1 rounded-full"
+            >
+              {t.pricing.addonLink}
+            </a>
           </div>
         </div>
       </section>

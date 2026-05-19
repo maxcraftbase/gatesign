@@ -66,6 +66,8 @@ export const translations: Record<Language, {
   info_closed: string
   info_hint_refnr: string
   info_hint_docs: string
+  privacy_notice_title: string
+  privacy_notice_body: string
 }> = {
   de: {
     step_language: 'Sprache',
@@ -112,6 +114,8 @@ export const translations: Record<Language, {
     info_closed: 'Geschlossen',
     info_hint_refnr: 'Referenznummer bereit halten',
     info_hint_docs: 'Fahrzeugpapiere bereit halten',
+    privacy_notice_title: 'Datenschutzhinweis',
+    privacy_notice_body: 'Ihre Angaben (Name, Kennzeichen, Unterschrift) werden zur Sicherheits- und Zutrittsdokumentation nach Art. 6 Abs. 1 lit. c und f DSGVO verarbeitet. Speicherdauer: maximal 2 Jahre. Verantwortlich ist der Betreiber dieser Anlage.',
   },
   en: {
     step_language: 'Language',
@@ -158,6 +162,8 @@ export const translations: Record<Language, {
     info_closed: 'Closed',
     info_hint_refnr: 'Keep reference number ready',
     info_hint_docs: 'Keep vehicle documents ready',
+    privacy_notice_title: 'Privacy notice',
+    privacy_notice_body: 'Your details (name, license plate, signature) are processed for security and access documentation under Art. 6 (1) (c) and (f) GDPR. Retention period: maximum 2 years. The operator of this facility is the data controller.',
   },
   pl: {
     step_language: 'Język',
@@ -204,6 +210,8 @@ export const translations: Record<Language, {
     info_closed: 'Zamknięte',
     info_hint_refnr: 'Przygotuj numer referencyjny',
     info_hint_docs: 'Przygotuj dokumenty pojazdu',
+    privacy_notice_title: 'Informacja o ochronie danych',
+    privacy_notice_body: 'Pańskie dane (imię i nazwisko, numer rejestracyjny, podpis) są przetwarzane w celu dokumentacji bezpieczeństwa i kontroli dostępu zgodnie z art. 6 ust. 1 lit. c i f RODO. Okres przechowywania: maksymalnie 2 lata. Administratorem danych jest operator obiektu.',
   },
   ro: {
     step_language: 'Limbă',
@@ -250,6 +258,8 @@ export const translations: Record<Language, {
     info_closed: 'Închis',
     info_hint_refnr: 'Pregătiți numărul de referință',
     info_hint_docs: 'Pregătiți documentele vehiculului',
+    privacy_notice_title: 'Notă privind protecția datelor',
+    privacy_notice_body: 'Datele dvs. (nume, număr de înmatriculare, semnătură) sunt prelucrate pentru documentarea securității și controlul accesului conform art. 6 alin. (1) lit. (c) și (f) RGPD. Perioadă de păstrare: maximum 2 ani. Operatorul acestei facilități este responsabilul cu prelucrarea.',
   },
   cs: {
     step_language: 'Jazyk',
@@ -296,6 +306,8 @@ export const translations: Record<Language, {
     info_closed: 'Zavřeno',
     info_hint_refnr: 'Připravte referenční číslo',
     info_hint_docs: 'Připravte doklady vozidla',
+    privacy_notice_title: 'Informace o ochraně osobních údajů',
+    privacy_notice_body: 'Vaše údaje (jméno, registrační značka, podpis) jsou zpracovávány za účelem dokumentace bezpečnosti a kontroly přístupu podle čl. 6 odst. 1 písm. c) a f) GDPR. Doba uchovávání: maximálně 2 roky. Správcem údajů je provozovatel tohoto zařízení.',
   },
   hu: {
     step_language: 'Nyelv',
@@ -342,6 +354,8 @@ export const translations: Record<Language, {
     info_closed: 'Zárva',
     info_hint_refnr: 'Tartsa kész a referenciaszámot',
     info_hint_docs: 'Tartsa kész a járműdokumentumokat',
+    privacy_notice_title: 'Adatvédelmi tájékoztató',
+    privacy_notice_body: 'Az Ön adatait (név, rendszám, aláírás) biztonsági és belépés-dokumentációs célból kezeljük a GDPR 6. cikk (1) bek. c) és f) pontja alapján. Megőrzési idő: legfeljebb 2 év. Az adatkezelő ezen létesítmény üzemeltetője.',
   },
   bg: {
     step_language: 'Език',
@@ -388,6 +402,8 @@ export const translations: Record<Language, {
     info_closed: 'Затворено',
     info_hint_refnr: 'Пригответе референтния номер',
     info_hint_docs: 'Пригответе документите на МПС',
+    privacy_notice_title: 'Информация за защита на данните',
+    privacy_notice_body: 'Вашите данни (име, регистрационен номер, подпис) се обработват за документиране на сигурността и контрол на достъпа съгласно чл. 6, ал. 1, букви в) и е) от ОРЗД. Срок на съхранение: максимум 2 години. Администратор е операторът на този обект.',
   },
   uk: {
     step_language: 'Мова',
@@ -434,6 +450,8 @@ export const translations: Record<Language, {
     info_closed: 'Зачинено',
     info_hint_refnr: 'Тримайте референс-номер напоготові',
     info_hint_docs: 'Тримайте документи авто напоготові',
+    privacy_notice_title: 'Повідомлення про захист даних',
+    privacy_notice_body: 'Ваші дані (ім’я, номерний знак, підпис) обробляються з метою документування безпеки та контролю доступу відповідно до ст. 6 (1) (c) і (f) GDPR. Термін зберігання: максимум 2 роки. Контролером даних є оператор цього об’єкта.',
   },
   ru: {
     step_language: 'Язык',
@@ -480,6 +498,8 @@ export const translations: Record<Language, {
     info_closed: 'Закрыто',
     info_hint_refnr: 'Держите референс-номер наготове',
     info_hint_docs: 'Держите документы на авто наготове',
+    privacy_notice_title: 'Уведомление о защите данных',
+    privacy_notice_body: 'Ваши данные (имя, номерной знак, подпись) обрабатываются для документирования безопасности и контроля доступа в соответствии со ст. 6 (1) (c) и (f) GDPR. Срок хранения: максимум 2 года. Контролером данных является оператор этого объекта.',
   },
   tr: {
     step_language: 'Dil',
@@ -526,5 +546,7 @@ export const translations: Record<Language, {
     info_closed: 'Kapalı',
     info_hint_refnr: 'Referans numarasını hazır bulundurun',
     info_hint_docs: 'Araç belgelerini hazır bulundurun',
+    privacy_notice_title: 'Veri koruma bildirimi',
+    privacy_notice_body: 'Bilgileriniz (ad, plaka, imza) güvenlik ve erişim belgelendirmesi amacıyla GDPR Madde 6 (1) (c) ve (f) uyarınca işlenmektedir. Saklama süresi: en fazla 2 yıl. Sorumlu veri kontrolörü, bu tesisin işletmecisidir.',
   },
 }

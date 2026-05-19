@@ -47,8 +47,8 @@ const content = {
   de: {
     nav: { login: 'Anmelden', register: 'Jetzt starten', demo: 'Demo anfragen' },
     hero: {
-      title: 'Sicherheitsbelehrung digital — in 10 Minuten eingerichtet.',
-      sub: 'Für Werkleiter und Sicherheitsbeauftragte: GateSign dokumentiert jeden Check-in rechtssicher — in der Sprache des Fahrers, ohne Papier, ohne Rückfragen.',
+      title: 'Rechtssicherer Check-in — am Empfang und am Werkstor.',
+      sub: 'GateSign Reception begrüßt Besucher und Servicekräfte. GateSign Logistik dokumentiert LKW-Fahrer und Lieferungen. Beides in einer Lösung — DSGVO-konform, in 10 Sprachen, ohne Empfangspersonal.',
       cta: '30 Tage kostenlos testen',
       demo: 'Demo anfragen',
     },
@@ -57,10 +57,42 @@ const content = {
       industries: ['Produktion', 'Logistik', 'Maschinenbau', 'Baugewerbe', 'Großhandel'],
       dsgvo: ['DSGVO-konform', 'Server in der EU', 'AVV auf Anfrage'],
     },
+    modules: {
+      badge: 'Zwei Module',
+      title: 'Für zwei Eingänge gebaut',
+      sub: 'GateSign deckt zwei klar getrennte Anwendungsfälle ab — und beides läuft auf derselben Plattform.',
+      ctaLink: '→',
+      logistics: {
+        brand: 'Logistik',
+        title: 'Werkstor & Wareneingang',
+        sub: 'Für LKW-Fahrer, Spediteure und externe Lieferungen.',
+        points: [
+          'Sicherheitsbelehrung in 10 Sprachen — auch für ausländische Fahrer',
+          'Kennzeichen, Trailer, Referenz- und Lade-Nummer',
+          '§ 12 ArbSchG und DGUV 1 dokumentiert',
+          'Kein Personal am Tor nötig — Selbst-Check-in am Terminal',
+        ],
+        cta: 'Mehr zu Logistik',
+        anchor: '#sicherheitsbelehrung',
+      },
+      reception: {
+        brand: 'Reception',
+        title: 'Besucher & Empfangsbereich',
+        sub: 'Für Gäste, Kunden, Servicekräfte und Fremdfirmen.',
+        points: [
+          'Empfang ohne Empfangspersonal — automatischer Check-in',
+          'Ansprechpartner direkt zuweisen, automatische Benachrichtigung',
+          'Optional: Besucherkarten-Drucker als Add-on',
+          'Live-Anwesenheit für Brandschutz und Evakuierung',
+        ],
+        cta: 'Mehr zu Reception',
+        anchor: '#anwesenheit',
+      },
+    },
     products: {
       badge: 'Was drin ist',
       title: 'Vier Bausteine, eine Lösung',
-      sub: 'GateSign deckt den kompletten Besucher-Ablauf ab — von der digitalen Belehrung am Terminal bis zur Anwesenheits-Übersicht in der Werksleitung.',
+      sub: 'Diese vier Bausteine nutzen Sie in beiden Modulen — Logistik wie Reception.',
       cardLink: 'Mehr erfahren →',
       cards: [
         {
@@ -253,15 +285,18 @@ const content = {
     ],
     pricing: {
       title: 'Einfache Preisgestaltung',
-      desc: 'Keine Einrichtungsgebühr · 30 Tage kostenlos · Jederzeit kündbar',
+      desc: 'Ein Preis — Reception und Logistik sind beide enthalten. Keine Einrichtungsgebühr · 30 Tage kostenlos · Jederzeit kündbar.',
       trial: '30 Tage kostenlos',
       support: 'Inkl. E-Mail-Support & Einrichtungshilfe',
       cta: 'Jetzt starten',
       contact: 'Kontakt aufnehmen',
       onRequest: 'Auf Anfrage',
       included: 'Enthalten:',
-      addonNote: 'Optional: Besucherkarten-Drucker als Bundle',
-      addonLink: 'Zum Add-on →',
+      addonBadge: 'Hardware Add-on',
+      addonTitle: 'Besucherkarten-Drucker',
+      addonSub: 'Optional zu jedem Plan dazubuchbar. Drucker als Leihgerät, Verbrauchsmaterial und Software-Modul im Bundle.',
+      addonPriceHint: 'Preis auf Anfrage',
+      addonMore: 'Mehr Details',
       tiers: [
         {
           label: 'Starter',
@@ -330,6 +365,10 @@ const content = {
           a: 'Nein. GateSign läuft als PWA auf jedem modernen Tablet oder Touchscreen-Bildschirm — kein App-Store, keine IT-Abteilung nötig. Ein handelsübliches Android- oder iPad-Tablet genügt.',
         },
         {
+          q: 'Brauche ich beide Module — Logistik und Reception?',
+          a: 'Nein. Sie können nur Logistik (LKW-Anmeldung) oder nur Reception (Besucherempfang) nutzen — oder beide kombinieren. Die Konfiguration erfolgt im Admin-Bereich pro Besuchertyp. Der Preis bleibt gleich, beide Module sind im Abo enthalten.',
+        },
+        {
           q: 'Wie funktioniert das Drucker-Add-on?',
           a: 'Optional liefern wir einen Etikettendrucker im Bundle. Bei jedem Check-in druckt das Terminal automatisch eine Besucherkarte mit großer Nummer, Name und Ansprechpartner. Der Besucher trägt die Karte in einer Ausweishülle und checkt sich beim Verlassen per Nummer-Eingabe am Terminal aus. Vergessene Checkouts werden zum Tagesende automatisch geschlossen.',
         },
@@ -379,8 +418,8 @@ const content = {
   en: {
     nav: { login: 'Log in', register: 'Get started', demo: 'Request demo' },
     hero: {
-      title: 'Digital safety briefings — set up in 10 minutes.',
-      sub: 'For plant managers and safety officers: GateSign documents every check-in legally — in the driver\'s own language, with no paperwork and no follow-up calls.',
+      title: 'Compliant check-in — at reception and at the gate.',
+      sub: 'GateSign Reception welcomes guests and service staff. GateSign Logistics documents truck drivers and deliveries. Both in one solution — GDPR-compliant, 10 languages, no front-desk staff required.',
       cta: 'Try free for 30 days',
       demo: 'Request a demo',
     },
@@ -389,10 +428,42 @@ const content = {
       industries: ['Production', 'Logistics', 'Engineering', 'Construction', 'Wholesale'],
       dsgvo: ['GDPR-compliant', 'EU servers', 'DPA available'],
     },
+    modules: {
+      badge: 'Two modules',
+      title: 'Built for two entrances',
+      sub: 'GateSign covers two clearly separated use cases — both running on the same platform.',
+      ctaLink: '→',
+      logistics: {
+        brand: 'Logistics',
+        title: 'Gate & goods receiving',
+        sub: 'For truck drivers, hauliers and external deliveries.',
+        points: [
+          'Safety briefing in 10 languages — also for foreign drivers',
+          'Licence plate, trailer, reference and load number',
+          'Documented per § 12 ArbSchG and DGUV 1',
+          'No staff needed at the gate — self check-in at the terminal',
+        ],
+        cta: 'More on Logistics',
+        anchor: '#sicherheitsbelehrung',
+      },
+      reception: {
+        brand: 'Reception',
+        title: 'Visitors & front desk',
+        sub: 'For guests, customers, service staff and external contractors.',
+        points: [
+          'Reception without front-desk staff — automatic check-in',
+          'Assign host directly, automatic notification',
+          'Optional: visitor-card printer as an add-on',
+          'Live presence list for fire safety and evacuation',
+        ],
+        cta: 'More on Reception',
+        anchor: '#anwesenheit',
+      },
+    },
     products: {
       badge: 'What you get',
       title: 'Four building blocks, one solution',
-      sub: 'GateSign covers the entire visitor flow — from the digital briefing at the terminal to the live presence list for plant management.',
+      sub: 'These four building blocks are used in both modules — Logistics and Reception.',
       cardLink: 'Learn more →',
       cards: [
         {
@@ -585,15 +656,18 @@ const content = {
     ],
     pricing: {
       title: 'Simple pricing',
-      desc: 'No setup fee · 30 days free · Cancel anytime',
+      desc: 'One price — Reception and Logistics are both included. No setup fee · 30 days free · Cancel anytime.',
       trial: '30 days free',
       support: 'Incl. email support & onboarding help',
       cta: 'Get started',
       contact: 'Contact us',
       onRequest: 'On request',
       included: 'Included:',
-      addonNote: 'Optional: visitor-card printer bundle',
-      addonLink: 'See add-on →',
+      addonBadge: 'Hardware add-on',
+      addonTitle: 'Visitor-card printer',
+      addonSub: 'Optional with any plan. Printer as a rental, consumables and software module included in the bundle.',
+      addonPriceHint: 'Pricing on request',
+      addonMore: 'Details',
       tiers: [
         {
           label: 'Starter',
@@ -660,6 +734,10 @@ const content = {
         {
           q: 'Do I need special hardware?',
           a: 'No. GateSign runs as a PWA on any modern tablet or touchscreen — no app store, no IT department required. A standard Android or iPad tablet is all you need.',
+        },
+        {
+          q: 'Do I need both modules — Logistics and Reception?',
+          a: 'No. You can use only Logistics (truck check-in), only Reception (visitor check-in), or combine both. Configuration happens in the admin area per visitor type. The price stays the same — both modules are included in the subscription.',
         },
         {
           q: 'How does the printer add-on work?',
@@ -1144,6 +1222,56 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Zwei Module — Logistik + Reception */}
+      <section className="bg-slate-50 py-20 border-y border-slate-100">
+        <div className="max-w-5xl mx-auto px-6">
+          <div className="text-center mb-12">
+            <span className="inline-block text-xs font-semibold bg-slate-900 text-white px-3 py-1 rounded-full mb-4 uppercase tracking-wide">
+              {t.modules.badge}
+            </span>
+            <h2 className="text-3xl font-bold mb-4 leading-tight">{t.modules.title}</h2>
+            <p className="text-slate-500 max-w-2xl mx-auto leading-relaxed">{t.modules.sub}</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {[
+              { icon: <Building2 className="w-6 h-6 text-slate-700" strokeWidth={1.75} />, mod: t.modules.reception },
+              { icon: <Truck     className="w-6 h-6 text-slate-700" strokeWidth={1.75} />, mod: t.modules.logistics },
+            ].map((m, i) => (
+              <div key={i} className="bg-white border border-slate-200 rounded-2xl p-7 flex flex-col">
+                <div className="flex items-center gap-3 mb-5">
+                  <div className="w-12 h-12 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center">
+                    {m.icon}
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-widest">GateSign</p>
+                    <p className="text-lg font-bold text-slate-900 leading-tight">{m.mod.brand}</p>
+                  </div>
+                </div>
+                <h3 className="text-xl font-bold text-slate-900 mb-2 leading-snug">{m.mod.title}</h3>
+                <p className="text-sm text-slate-500 leading-relaxed mb-5">{m.mod.sub}</p>
+                <ul className="space-y-3 mb-6 flex-1">
+                  {m.mod.points.map((point, pi) => (
+                    <li key={pi} className="flex items-start gap-3">
+                      <div className="w-5 h-5 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <Check className="w-3 h-3 text-emerald-600" strokeWidth={3} />
+                      </div>
+                      <span className="text-sm text-slate-700 leading-snug">{point}</span>
+                    </li>
+                  ))}
+                </ul>
+                <a
+                  href={m.mod.anchor}
+                  className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-900 hover:text-slate-700 transition-colors"
+                >
+                  {m.mod.cta}
+                  <span aria-hidden>→</span>
+                </a>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Products — Kernbausteine */}
       <section className="bg-white py-20">
         <div className="max-w-5xl mx-auto px-6">
@@ -1452,7 +1580,7 @@ export default function LandingPage() {
                   </thead>
                   <tbody>
                     {mockEntries.map((row, i) => (
-                      <tr key={i} className="border-b border-slate-50 last:border-b-0 hover:bg-slate-50/50">
+                      <tr key={i} className="border-b border-slate-50 last:border-b-0">
                         <td className="px-4 py-3 text-slate-400 font-mono whitespace-nowrap">{row.ref}</td>
                         <td className="px-4 py-3 text-slate-400 whitespace-nowrap">{row.time}</td>
                         <td className="px-4 py-3">
@@ -1563,40 +1691,8 @@ export default function LandingPage() {
             ))}
           </div>
 
-          {/* Bundle tiers */}
-          <div>
-            <h3 className="text-xl font-bold text-center mb-8">{t.addon.bundlesTitle}</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 max-w-3xl mx-auto">
-              {[
-                { icon: <Wifi    className="w-5 h-5 text-slate-700" strokeWidth={1.75} />, bundle: t.addon.bundles[0] },
-                { icon: <Network className="w-5 h-5 text-slate-700" strokeWidth={1.75} />, bundle: t.addon.bundles[1] },
-              ].map((b, i) => (
-                <div key={i} className="bg-slate-50 border border-slate-200 rounded-2xl p-6 flex flex-col">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-10 h-10 rounded-lg bg-white border border-slate-200 flex items-center justify-center flex-shrink-0">
-                      {b.icon}
-                    </div>
-                    <div>
-                      <p className="font-bold text-slate-900 leading-tight">{b.bundle.name}</p>
-                      <p className="text-xs text-slate-500">{b.bundle.tagline}</p>
-                    </div>
-                  </div>
-                  <p className="text-sm text-slate-500 leading-relaxed mb-4">{b.bundle.desc}</p>
-                  <ul className="space-y-2">
-                    {b.bundle.features.map((f, fi) => (
-                      <li key={fi} className="flex items-start gap-2">
-                        <Check className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0 mt-1" strokeWidth={2.5} />
-                        <span className="text-sm text-slate-700 leading-snug">{f}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-            </div>
-          </div>
-
           {/* CTA */}
-          <div className="text-center mt-12">
+          <div className="text-center mt-4">
             <p className="text-sm text-slate-400 mb-5">{t.addon.pricingNote}</p>
             <button
               type="button"
@@ -1764,18 +1860,48 @@ export default function LandingPage() {
             ))}
           </div>
 
-          {/* Add-on hint */}
-          <div className="mt-10 inline-flex items-center gap-3 bg-white border border-slate-200 rounded-full pl-4 pr-2 py-2 shadow-sm">
-            <div className="w-7 h-7 rounded-full bg-amber-100 flex items-center justify-center flex-shrink-0">
-              <Printer className="w-3.5 h-3.5 text-amber-700" strokeWidth={2} />
+          {/* Hardware Add-on — Drucker-Bundles */}
+          <div className="mt-16 pt-12 border-t border-slate-200">
+            <div className="text-center mb-8">
+              <span className="inline-flex items-center gap-1.5 text-xs font-semibold bg-amber-100 text-amber-700 px-3 py-1 rounded-full mb-3 uppercase tracking-wide">
+                <Printer className="w-3.5 h-3.5" strokeWidth={2} />
+                {t.pricing.addonBadge}
+              </span>
+              <h3 className="text-2xl font-bold text-slate-900 mb-2">{t.pricing.addonTitle}</h3>
+              <p className="text-sm text-slate-500 max-w-xl mx-auto leading-relaxed">{t.pricing.addonSub}</p>
             </div>
-            <span className="text-sm text-slate-600">{t.pricing.addonNote}</span>
-            <a
-              href="#drucker"
-              className="text-sm font-semibold text-slate-900 bg-slate-100 hover:bg-slate-200 transition-colors px-3 py-1 rounded-full"
-            >
-              {t.pricing.addonLink}
-            </a>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5 max-w-3xl mx-auto text-left">
+              {[
+                { icon: <Wifi    className="w-5 h-5 text-slate-700" strokeWidth={1.75} />, bundle: t.addon.bundles[0] },
+                { icon: <Network className="w-5 h-5 text-slate-700" strokeWidth={1.75} />, bundle: t.addon.bundles[1] },
+              ].map((b, i) => (
+                <div key={i} className="bg-white border border-slate-200 rounded-2xl p-6 flex flex-col">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-10 h-10 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-center flex-shrink-0">
+                      {b.icon}
+                    </div>
+                    <div>
+                      <p className="font-bold text-slate-900 leading-tight">{b.bundle.name}</p>
+                      <p className="text-xs text-slate-500">{b.bundle.tagline}</p>
+                    </div>
+                  </div>
+                  <ul className="space-y-2 mb-5 flex-1">
+                    {b.bundle.features.map((f, fi) => (
+                      <li key={fi} className="flex items-start gap-2">
+                        <Check className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0 mt-1" strokeWidth={2.5} />
+                        <span className="text-sm text-slate-700 leading-snug">{f}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="flex items-center justify-between pt-4 border-t border-slate-100">
+                    <span className="text-sm font-semibold text-slate-900">{t.pricing.addonPriceHint}</span>
+                    <a href="#drucker" className="inline-flex items-center gap-1 text-sm font-semibold text-slate-700 hover:text-slate-900 transition-colors">
+                      {t.pricing.addonMore} <span aria-hidden>→</span>
+                    </a>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </section>

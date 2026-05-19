@@ -1,14 +1,40 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { generateSlug, createCompanyWithDefaults } from '@/lib/company'
 import { sendEmail } from '@/lib/brevo'
-import { supabaseUrl, anonKey } from '@/lib/supabase-server'
+import { supabaseUrl, anonKey, serviceKey } from '@/lib/supabase-server'
+import { buildAvvPdf } from '@/lib/avv-pdf'
+
+const TERMS_VERSION = '2026-05'
 
 export async function POST(req: NextRequest) {
   try {
-    const { email, password, companyName } = await req.json()
+    const body = await req.json()
+    const {
+      email, password, companyName,
+      companyAddress, companyRegisterNo,
+      signerName, signerRole,
+      termsAccepted, avvAccepted, avvVersion,
+      signatureData,
+    } = body
+
     if (!email || !password || !companyName) {
-      return NextResponse.json({ error: 'Alle Felder sind erforderlich.' }, { status: 400 })
+      return NextResponse.json({ error: 'Alle Basisfelder sind erforderlich.' }, { status: 400 })
     }
+    if (!companyAddress || !signerName || !signerRole) {
+      return NextResponse.json({ error: 'Firmenanschrift und Daten der unterzeichnenden Person sind erforderlich.' }, { status: 400 })
+    }
+    if (!termsAccepted || !avvAccepted) {
+      return NextResponse.json({ error: 'Datenschutz/Nutzungsbedingungen und AVV müssen akzeptiert werden.' }, { status: 400 })
+    }
+    if (!signatureData || !signatureData.startsWith('data:image/png;base64,')) {
+      return NextResponse.json({ error: 'Gültige Signatur erforderlich.' }, { status: 400 })
+    }
+
+    const ip =
+      req.headers.get('x-forwarded-for')?.split(',')[0].trim()
+      ?? req.headers.get('x-real-ip')
+      ?? null
+    const userAgent = req.headers.get('user-agent') ?? null
 
     // 1. Sign up user
     const signupRes = await fetch(`${supabaseUrl}/auth/v1/signup`, {
@@ -34,16 +60,81 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Firma konnte nicht erstellt werden.' }, { status: 500 })
     }
 
-    // 3. Set auth cookie (same format as login route)
+    // 3. Write terms + AVV signature data using service key
+    const signedAt = new Date()
+    const avvFields = {
+      terms_accepted_at: signedAt.toISOString(),
+      terms_accepted_ip: ip,
+      terms_version: TERMS_VERSION,
+      avv_version: avvVersion ?? null,
+      avv_signed_at: signedAt.toISOString(),
+      avv_signer_name: signerName,
+      avv_signer_role: signerRole,
+      avv_company_address: companyAddress,
+      avv_company_register_no: companyRegisterNo ?? null,
+      avv_signature_data: signatureData,
+      avv_signature_ip: ip,
+      avv_signature_user_agent: userAgent,
+    }
+    const patchRes = await fetch(
+      `${supabaseUrl}/rest/v1/companies?id=eq.${company.id}`,
+      {
+        method: 'PATCH',
+        headers: {
+          apikey: serviceKey,
+          Authorization: `Bearer ${serviceKey}`,
+          'Content-Type': 'application/json',
+          Prefer: 'return=minimal',
+        },
+        body: JSON.stringify(avvFields),
+      }
+    )
+    if (!patchRes.ok) {
+      console.error('[register] failed to save AVV fields:', await patchRes.text())
+      // Don't fail the registration — log to Sentry would be nice but signature got accepted
+    }
+
+    // 4. Audit log: terms + AVV acceptance
+    try {
+      await fetch(`${supabaseUrl}/rest/v1/audit_log`, {
+        method: 'POST',
+        headers: {
+          apikey: serviceKey,
+          Authorization: `Bearer ${serviceKey}`,
+          'Content-Type': 'application/json',
+          Prefer: 'return=minimal',
+        },
+        body: JSON.stringify([
+          { company_id: company.id, user_email: email, action: 'terms_accepted', details: { version: TERMS_VERSION, ip } },
+          { company_id: company.id, user_email: email, action: 'avv_signed', details: { version: avvVersion, ip, user_agent: userAgent, signer: signerName, role: signerRole } },
+        ]),
+      })
+    } catch (auditErr) {
+      console.error('[register] audit log failed:', auditErr)
+    }
+
+    // 5. Set auth cookie
     const projectRef = new URL(supabaseUrl).hostname.split('.')[0]
     const cookieName = `sb-${projectRef}-auth-token`
     const session = { access_token, refresh_token, token_type: 'bearer' }
     const encoded = 'base64-' + Buffer.from(JSON.stringify(session)).toString('base64url')
     const cookieOpts = { httpOnly: true, sameSite: 'lax' as const, path: '/', maxAge: 400 * 24 * 60 * 60 }
 
-    // 4. Send welcome email (best-effort, don't fail registration)
+    // 6. Build AVV PDF + send welcome email (best-effort)
     try {
-      const appUrl = (process.env.NEXT_PUBLIC_APP_URL ?? 'https://gatesign-production.up.railway.app').replace(/\/$/, '')
+      const pdfBuffer = await buildAvvPdf({
+        companyName,
+        companyAddress,
+        companyRegisterNo: companyRegisterNo ?? undefined,
+        signerName,
+        signerRole,
+        signedAt,
+        signatureDataUrl: signatureData,
+        ip: ip ?? undefined,
+        userAgent: userAgent ?? undefined,
+      })
+
+      const appUrl = (process.env.NEXT_PUBLIC_APP_URL ?? process.env.APP_URL ?? 'https://gatesign.de').replace(/\/$/, '')
       const terminalUrl = `${appUrl}/${slug}`
       const adminUrl = `${appUrl}/${slug}/admin`
       const setupUrl = `${appUrl}/einrichtung`
@@ -51,8 +142,13 @@ export async function POST(req: NextRequest) {
         to: email,
         subject: `Willkommen bei GateSign — ${companyName}`,
         html: welcomeHtml(companyName, terminalUrl, adminUrl, setupUrl),
+        attachments: [
+          { name: `AVV-GateSign-${slug}.pdf`, content: pdfBuffer },
+        ],
       })
-    } catch (emailErr) { console.error('[register] welcome email failed:', emailErr) }
+    } catch (emailErr) {
+      console.error('[register] welcome email/PDF failed:', emailErr)
+    }
 
     const response = NextResponse.json({ success: true, slug })
     const CHUNK_SIZE = 3180
@@ -84,7 +180,8 @@ function welcomeHtml(companyName: string, terminalUrl: string, adminUrl: string,
     <div style="padding:32px">
       <h2 style="margin:0 0 8px;font-size:18px">Willkommen, ${companyName}!</h2>
       <p style="color:#475569;font-size:14px;margin:0 0 24px">
-        Ihr GateSign-Konto ist eingerichtet. Hier sind Ihre Zugangsdaten:
+        Ihr GateSign-Konto ist eingerichtet. Im Anhang dieser E-Mail finden Sie eine
+        Kopie des elektronisch unterzeichneten Auftragsverarbeitungsvertrags (AVV).
       </p>
       <div style="background:#f8fafc;border-radius:8px;padding:16px 20px;margin-bottom:24px">
         <p style="margin:0 0 8px;font-size:13px;color:#64748b"><strong style="color:#0f172a">Check-In Terminal</strong> (für Ihre Besucher)</p>

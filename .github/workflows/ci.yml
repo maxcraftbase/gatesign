@@ -45,6 +45,9 @@ jobs:
     # NOTE: secrets.X cannot be referenced in job-level if — would cause the
     # whole workflow file to be rejected (0s failure, no jobs run).
     if: ${{ vars.PLAYWRIGHT_BASE_URL != '' }}
+    # Don't block merges when smoke fails (e.g. Production-Cert oder Live-Site down).
+    # Failure bleibt in Actions sichtbar, blockt aber nicht den PR.
+    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

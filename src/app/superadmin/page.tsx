@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { Play, CheckCircle, XCircle, Clock, ChevronDown, ChevronUp, Mail, AlertTriangle } from 'lucide-react'
+import { Play, CheckCircle, XCircle, Clock, ChevronDown, ChevronUp, Mail, AlertTriangle, X, Monitor } from 'lucide-react'
 import type { AgentRun, AgentType, ComplianceResult, WeeklyResult } from '@/lib/agents/types'
 
 type Company = {
@@ -17,6 +17,24 @@ type Company = {
   total_check_ins: number
   check_ins_7d: number
   last_check_in: string | null
+  active_terminal_count: number
+  daily_7d: number[]
+}
+
+type CompanyDetail = {
+  checkins_today: number
+  checkins_7d: number
+  checkins_30d: number
+  daily_trend: { date: string; count: number }[]
+  by_type: { truck: number; visitor: number; service: number }
+  terminals: { id: string; name: string; is_active: boolean }[]
+  recent_checkins: {
+    id: string
+    created_at: string
+    visitor_type: string
+    driver_name: string | null
+    license_plate: string | null
+  }[]
 }
 
 const PLANS = [
@@ -46,6 +64,10 @@ function formatDate(iso: string | null) {
   return new Date(iso).toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: '2-digit' })
 }
 
+function formatDateTime(iso: string) {
+  return new Intl.DateTimeFormat('de-DE', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }).format(new Date(iso))
+}
+
 function activityColor(c: Company): string {
   if (c.total_check_ins === 0) return 'bg-zinc-600'
   const d = daysSince(c.last_check_in)
@@ -58,6 +80,34 @@ function StatusBadge({ status }: { status: string }) {
   if (status === 'active') return <span className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full bg-emerald-950 text-emerald-400"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />Aktiv</span>
   if (status === 'trial') return <span className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full bg-amber-950 text-amber-400"><span className="w-1.5 h-1.5 rounded-full bg-amber-400" />Testphase</span>
   return <span className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full bg-zinc-800 text-zinc-500"><span className="w-1.5 h-1.5 rounded-full bg-zinc-600" />Inaktiv</span>
+}
+
+// ─── Sparkline ────────────────────────────────────────────────────────────────
+
+function Sparkline({ data }: { data: number[] }) {
+  const max = Math.max(...data, 1)
+  const W = 56
+  const H = 18
+  const barW = 5
+  const gap = 3
+  return (
+    <svg width={W} height={H} className="inline-block align-middle ml-1.5" aria-hidden>
+      {data.map((v, i) => {
+        const barH = v > 0 ? Math.max((v / max) * H, 2) : 1
+        return (
+          <rect
+            key={i}
+            x={i * (barW + gap)}
+            y={H - barH}
+            width={barW}
+            height={barH}
+            rx={1}
+            className={v > 0 ? 'fill-blue-400/80' : 'fill-zinc-700'}
+          />
+        )
+      })}
+    </svg>
+  )
 }
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
@@ -89,6 +139,11 @@ export default function SuperadminPage() {
   const [expandedRun, setExpandedRun] = useState<string | null>(null)
   const [agentFlash, setAgentFlash] = useState<string | null>(null)
 
+  // Detail drawer
+  const [drawerCompany, setDrawerCompany] = useState<Company | null>(null)
+  const [drawerData, setDrawerData] = useState<CompanyDetail | null>(null)
+  const [drawerLoading, setDrawerLoading] = useState(false)
+
   async function loadData() {
     setDataLoading(true)
     const res = await fetch('/api/superadmin/data')
@@ -99,6 +154,20 @@ export default function SuperadminPage() {
     setCheckInsToday(json.check_ins_today ?? 0)
     setNewThisWeek(json.new_this_week ?? 0)
     setDataLoading(false)
+  }
+
+  async function openDrawer(company: Company) {
+    setDrawerCompany(company)
+    setDrawerData(null)
+    setDrawerLoading(true)
+    const res = await fetch(`/api/superadmin/company/${company.id}`)
+    if (res.ok) setDrawerData(await res.json())
+    setDrawerLoading(false)
+  }
+
+  function closeDrawer() {
+    setDrawerCompany(null)
+    setDrawerData(null)
   }
 
   async function handleLogin(e: React.FormEvent) {
@@ -136,6 +205,7 @@ export default function SuperadminPage() {
       body: JSON.stringify({ companyId: company.id, subscription_status: next }),
     })
     setCompanies(prev => prev.map(c => c.id === company.id ? { ...c, subscription_status: next } : c))
+    if (drawerCompany?.id === company.id) setDrawerCompany(prev => prev ? { ...prev, subscription_status: next } : null)
     setToggling(null)
   }
 
@@ -150,6 +220,7 @@ export default function SuperadminPage() {
       ? { ...c, plan, terminal_limit: plan === 'enterprise' ? null : plan === 'professional' ? 3 : 1 }
       : c
     ))
+    if (drawerCompany?.id === company.id) setDrawerCompany(prev => prev ? { ...prev, plan } : null)
     setChangingPlan(null)
   }
 
@@ -169,6 +240,7 @@ export default function SuperadminPage() {
       ? { ...c, trial_ends_at: newDate, subscription_status: 'trial' }
       : c
     ))
+    if (drawerCompany?.id === company.id) setDrawerCompany(prev => prev ? { ...prev, trial_ends_at: newDate, subscription_status: 'trial' } : null)
     setExtendingTrial(null)
   }
 
@@ -453,6 +525,7 @@ export default function SuperadminPage() {
                     <span className="ml-2 text-sm font-normal text-zinc-500">{filtered.length} von {companies.length}</span>
                   )}
                 </h2>
+                <p className="text-xs text-zinc-600">Zeile anklicken für Details</p>
               </div>
 
               {dataLoading ? (
@@ -483,21 +556,34 @@ export default function SuperadminPage() {
                         const trialDays = c.trial_ends_at ? daysUntil(c.trial_ends_at) : null
                         const isLast = i === filtered.length - 1
                         return (
-                          <tr key={c.id} className={`${!isLast ? 'border-b border-zinc-800/60' : ''} hover:bg-zinc-800/40 transition-colors`}>
+                          <tr
+                            key={c.id}
+                            onClick={() => openDrawer(c)}
+                            className={`${!isLast ? 'border-b border-zinc-800/60' : ''} hover:bg-zinc-800/40 transition-colors cursor-pointer`}
+                          >
                             <td className="px-6 py-4">
                               <div className="flex items-center gap-3">
                                 <span className={`w-2 h-2 rounded-full flex-shrink-0 ${activityColor(c)}`} title="Aktivität letzte 14 Tage" />
                                 <div>
                                   <p className="font-semibold text-white">{c.name}</p>
                                   <p className="text-xs text-zinc-500 mt-0.5">{c.email}</p>
+                                  {c.active_terminal_count > 0 && (
+                                    <span className="inline-flex items-center gap-1 text-[10px] text-zinc-500 mt-0.5">
+                                      <Monitor className="w-2.5 h-2.5" />
+                                      {c.active_terminal_count} Terminal{c.active_terminal_count !== 1 ? 's' : ''}
+                                    </span>
+                                  )}
                                 </div>
                               </div>
                             </td>
                             <td className="px-4 py-4 text-xs text-zinc-500 whitespace-nowrap">{formatDate(c.created_at)}</td>
                             <td className="px-4 py-4 text-right whitespace-nowrap">
-                              <span className="font-semibold text-white">{c.check_ins_7d}</span>
-                              <span className="text-zinc-600 mx-1">/</span>
-                              <span className="text-zinc-400">{c.total_check_ins}</span>
+                              <div className="flex items-center justify-end gap-1">
+                                <Sparkline data={c.daily_7d ?? []} />
+                                <span className="font-semibold text-white">{c.check_ins_7d}</span>
+                                <span className="text-zinc-600 mx-0.5">/</span>
+                                <span className="text-zinc-400">{c.total_check_ins}</span>
+                              </div>
                             </td>
                             <td className="px-4 py-4 text-xs text-zinc-500 whitespace-nowrap">{formatDate(c.last_check_in)}</td>
                             <td className="px-4 py-4">
@@ -508,7 +594,7 @@ export default function SuperadminPage() {
                                 </p>
                               )}
                             </td>
-                            <td className="px-4 py-4">
+                            <td className="px-4 py-4" onClick={e => e.stopPropagation()}>
                               <select
                                 value={c.plan ?? 'starter'}
                                 disabled={changingPlan === c.id}
@@ -520,7 +606,7 @@ export default function SuperadminPage() {
                                 ))}
                               </select>
                             </td>
-                            <td className="px-4 py-4">
+                            <td className="px-4 py-4" onClick={e => e.stopPropagation()}>
                               <div className="flex items-center justify-end gap-1.5">
                                 <a href={`mailto:${c.email}`} title="E-Mail schreiben"
                                   className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800 transition-colors">
@@ -563,6 +649,23 @@ export default function SuperadminPage() {
           </div>
         )}
       </main>
+
+      {/* Company Detail Drawer */}
+      {drawerCompany && (
+        <CompanyDrawer
+          company={drawerCompany}
+          detail={drawerData}
+          loading={drawerLoading}
+          onClose={closeDrawer}
+          onToggleStatus={toggleStatus}
+          onExtendTrial={extendTrial}
+          onChangePlan={changePlan}
+          onOpenAgents={openAgents}
+          toggling={toggling}
+          extendingTrial={extendingTrial}
+          changingPlan={changingPlan}
+        />
+      )}
     </div>
   )
 }
@@ -579,6 +682,228 @@ function KpiCard({ label, value, highlight }: { label: string; value: number; hi
     <div className="bg-zinc-900 rounded-2xl border border-zinc-800 p-5">
       <p className="text-xs text-zinc-500 font-medium uppercase tracking-wide mb-1">{label}</p>
       <p className={`text-3xl font-bold ${valueColor}`}>{value}</p>
+    </div>
+  )
+}
+
+// ─── Company Detail Drawer ────────────────────────────────────────────────────
+
+const VISITOR_TYPE_LABELS: Record<string, string> = { truck: 'LKW', visitor: 'Besucher', service: 'Service' }
+
+function CompanyDrawer({
+  company, detail, loading, onClose,
+  onToggleStatus, onExtendTrial, onChangePlan, onOpenAgents,
+  toggling, extendingTrial, changingPlan,
+}: {
+  company: Company
+  detail: CompanyDetail | null
+  loading: boolean
+  onClose: () => void
+  onToggleStatus: (c: Company) => void
+  onExtendTrial: (c: Company, days: number) => void
+  onChangePlan: (c: Company, plan: PlanValue) => void
+  onOpenAgents: (c: Company) => void
+  toggling: string | null
+  extendingTrial: string | null
+  changingPlan: string | null
+}) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [onClose])
+
+  const total = detail ? detail.by_type.truck + detail.by_type.visitor + detail.by_type.service : 0
+  const pct = (n: number) => total > 0 ? Math.round((n / total) * 100) : 0
+
+  return (
+    <div className="fixed inset-0 z-40 flex">
+      {/* Backdrop */}
+      <div className="flex-1 bg-black/60" onClick={onClose} />
+
+      {/* Panel */}
+      <div className="w-full max-w-lg bg-zinc-950 border-l border-zinc-800 h-full overflow-y-auto flex flex-col shadow-2xl">
+
+        {/* Header */}
+        <div className="sticky top-0 bg-zinc-950/95 backdrop-blur border-b border-zinc-800 px-6 py-4 flex items-start justify-between gap-4 z-10">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h2 className="font-bold text-white text-base truncate">{company.name}</h2>
+              <StatusBadge status={company.subscription_status} />
+            </div>
+            <p className="text-xs text-zinc-500 mt-1 truncate">
+              {company.email} · {company.plan.charAt(0).toUpperCase() + company.plan.slice(1)} · seit {formatDate(company.created_at)}
+            </p>
+          </div>
+          <button onClick={onClose} className="p-1.5 rounded-lg text-zinc-500 hover:text-white hover:bg-zinc-800 transition-colors flex-shrink-0 mt-0.5">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div className="flex flex-col gap-6 px-6 py-6 flex-1">
+
+          {/* Quick Actions */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <select
+              value={company.plan ?? 'starter'}
+              disabled={changingPlan === company.id}
+              onChange={e => onChangePlan(company, e.target.value as PlanValue)}
+              className="text-xs bg-zinc-800 border border-zinc-700 text-zinc-200 rounded-lg px-2.5 py-1.5 outline-none focus:border-zinc-500 disabled:opacity-50 cursor-pointer"
+            >
+              {PLANS.map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
+            </select>
+            {company.subscription_status === 'trial' && (
+              <>
+                <button onClick={() => onExtendTrial(company, 14)} disabled={extendingTrial === company.id}
+                  className="text-xs px-2.5 py-1.5 rounded-lg bg-zinc-800 text-zinc-300 hover:bg-zinc-700 transition-colors disabled:opacity-40">
+                  +14 Tage Trial
+                </button>
+                <button onClick={() => onExtendTrial(company, 30)} disabled={extendingTrial === company.id}
+                  className="text-xs px-2.5 py-1.5 rounded-lg bg-zinc-800 text-zinc-300 hover:bg-zinc-700 transition-colors disabled:opacity-40">
+                  +30 Tage Trial
+                </button>
+              </>
+            )}
+            <button onClick={() => { onClose(); onOpenAgents(company) }}
+              className="text-xs text-violet-400 hover:text-violet-300 border border-violet-800 hover:border-violet-600 hover:bg-violet-950 px-2.5 py-1.5 rounded-lg transition-colors font-medium">
+              Agenten
+            </button>
+            <button onClick={() => onToggleStatus(company)} disabled={toggling === company.id}
+              className={`text-xs px-2.5 py-1.5 rounded-lg transition-colors disabled:opacity-40 font-medium ${
+                company.subscription_status === 'active'
+                  ? 'bg-red-950 text-red-400 hover:bg-red-900'
+                  : 'bg-emerald-950 text-emerald-400 hover:bg-emerald-900'
+              }`}>
+              {toggling === company.id ? '…' : company.subscription_status === 'active' ? 'Deaktivieren' : 'Aktivieren'}
+            </button>
+            <a href={`mailto:${company.email}`} className="flex items-center gap-1.5 text-xs px-2.5 py-1.5 rounded-lg bg-zinc-800 text-zinc-300 hover:bg-zinc-700 transition-colors">
+              <Mail className="w-3 h-3" /> E-Mail
+            </a>
+          </div>
+
+          {loading ? (
+            <div className="py-16 flex flex-col items-center gap-3">
+              <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              <p className="text-zinc-500 text-sm">Daten werden geladen…</p>
+            </div>
+          ) : detail ? (
+            <>
+              {/* KPIs */}
+              <div className="grid grid-cols-4 gap-2">
+                {[
+                  { label: 'Heute', value: detail.checkins_today, color: 'text-blue-400' },
+                  { label: '7 Tage', value: detail.checkins_7d, color: 'text-white' },
+                  { label: '30 Tage', value: detail.checkins_30d, color: 'text-white' },
+                  { label: 'Gesamt', value: company.total_check_ins, color: 'text-white' },
+                ].map(k => (
+                  <div key={k.label} className="bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-center">
+                    <p className="text-[10px] text-zinc-500 uppercase tracking-wide font-medium mb-1">{k.label}</p>
+                    <p className={`text-xl font-bold ${k.color}`}>{k.value}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* Daily trend */}
+              <div>
+                <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-wide mb-3">Tagestrend (14 Tage)</h3>
+                <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
+                  {detail.daily_trend.map((d, i) => {
+                    const max = Math.max(...detail.daily_trend.map(x => x.count), 1)
+                    const pctW = (d.count / max) * 100
+                    const isToday = i === detail.daily_trend.length - 1
+                    return (
+                      <div key={d.date} className={`flex items-center gap-3 px-4 py-2 ${i < detail.daily_trend.length - 1 ? 'border-b border-zinc-800/60' : ''}`}>
+                        <span className={`text-xs w-10 shrink-0 ${isToday ? 'text-blue-400 font-semibold' : 'text-zinc-500'}`}>{d.date}</span>
+                        <div className="flex-1 h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+                          <div
+                            className={`h-full rounded-full transition-all ${isToday ? 'bg-blue-400' : 'bg-zinc-500'}`}
+                            style={{ width: `${pctW}%` }}
+                          />
+                        </div>
+                        <span className={`text-xs w-6 text-right shrink-0 tabular-nums ${d.count > 0 ? 'text-white' : 'text-zinc-700'}`}>{d.count}</span>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+
+              {/* Visitor type breakdown */}
+              {total > 0 && (
+                <div>
+                  <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-wide mb-3">Besuchertypen (30 Tage)</h3>
+                  <div className="grid grid-cols-3 gap-2">
+                    {(Object.entries(detail.by_type) as [string, number][]).map(([type, count]) => (
+                      <div key={type} className="bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-center">
+                        <p className="text-[10px] text-zinc-500 uppercase tracking-wide font-medium mb-1">{VISITOR_TYPE_LABELS[type] ?? type}</p>
+                        <p className="text-lg font-bold text-white">{count}</p>
+                        <p className="text-[10px] text-zinc-600 mt-0.5">{pct(count)}%</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Terminals */}
+              <div>
+                <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-wide mb-3">
+                  Terminals ({detail.terminals.length})
+                </h3>
+                {detail.terminals.length === 0 ? (
+                  <p className="text-zinc-600 text-sm">Keine Terminals konfiguriert.</p>
+                ) : (
+                  <div className="flex flex-col gap-1.5">
+                    {detail.terminals.map(t => (
+                      <div key={t.id} className="flex items-center gap-3 bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-2.5">
+                        <span className={`w-2 h-2 rounded-full shrink-0 ${t.is_active ? 'bg-emerald-500' : 'bg-zinc-600'}`} />
+                        <span className="text-sm text-zinc-200 flex-1">{t.name}</span>
+                        <span className={`text-xs ${t.is_active ? 'text-emerald-400' : 'text-zinc-600'}`}>
+                          {t.is_active ? 'Aktiv' : 'Inaktiv'}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Recent check-ins */}
+              <div>
+                <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-wide mb-3">Letzte Check-ins</h3>
+                {detail.recent_checkins.length === 0 ? (
+                  <p className="text-zinc-600 text-sm">Keine Check-ins in den letzten 30 Tagen.</p>
+                ) : (
+                  <div className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
+                    <table className="w-full text-xs">
+                      <thead>
+                        <tr className="border-b border-zinc-800 bg-zinc-800/50">
+                          <th className="text-left px-4 py-2 text-zinc-500 font-medium">Zeitpunkt</th>
+                          <th className="text-left px-3 py-2 text-zinc-500 font-medium">Typ</th>
+                          <th className="text-left px-3 py-2 text-zinc-500 font-medium">Name</th>
+                          <th className="text-left px-3 py-2 text-zinc-500 font-medium">Kennzeichen</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {detail.recent_checkins.map((ci, i) => (
+                          <tr key={ci.id} className={i < detail.recent_checkins.length - 1 ? 'border-b border-zinc-800/60' : ''}>
+                            <td className="px-4 py-2.5 text-zinc-400 whitespace-nowrap">{formatDateTime(ci.created_at)}</td>
+                            <td className="px-3 py-2.5 text-zinc-300">{VISITOR_TYPE_LABELS[ci.visitor_type] ?? ci.visitor_type}</td>
+                            <td className="px-3 py-2.5 text-zinc-400 max-w-[100px] truncate">{ci.driver_name ?? '—'}</td>
+                            <td className="px-3 py-2.5 text-zinc-400 font-mono">{ci.license_plate ?? '—'}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </>
+          ) : (
+            <div className="py-12 text-center">
+              <p className="text-zinc-600 text-sm">Fehler beim Laden der Daten.</p>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   )
 }

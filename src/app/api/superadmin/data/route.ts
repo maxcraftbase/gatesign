@@ -7,21 +7,25 @@ export async function GET(req: NextRequest) {
   if (!isSuperadminAuthorized(req)) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   const headers = { apikey: serviceKey, Authorization: `Bearer ${serviceKey}` }
 
-  const [companiesRes, checkInsRes] = await Promise.all([
+  const [companiesRes, checkInsRes, terminalsRes] = await Promise.all([
     fetch(`${supabaseUrl}/rest/v1/companies?select=id,name,slug,email,subscription_status,trial_ends_at,created_at,plan,terminal_limit&order=created_at.desc`, {
       headers, cache: 'no-store',
     }),
     fetch(`${supabaseUrl}/rest/v1/check_ins?select=company_id,created_at`, {
       headers, cache: 'no-store',
     }),
+    fetch(`${supabaseUrl}/rest/v1/terminals?select=company_id,is_active`, {
+      headers, cache: 'no-store',
+    }),
   ])
 
-  if (!companiesRes.ok || !checkInsRes.ok) {
+  if (!companiesRes.ok || !checkInsRes.ok || !terminalsRes.ok) {
     return NextResponse.json({ error: 'DB error' }, { status: 500 })
   }
 
   const companies = await companiesRes.json()
   const checkIns: { company_id: string; created_at: string }[] = await checkInsRes.json()
+  const terminals: { company_id: string; is_active: boolean }[] = await terminalsRes.json()
 
   const now = Date.now()
   const sevenDaysAgo = new Date(now - 7 * 24 * 60 * 60 * 1000).toISOString()
@@ -43,6 +47,17 @@ export async function GET(req: NextRequest) {
     const lastCheckIn = companyCheckIns.length > 0
       ? companyCheckIns.reduce((a, b) => a.created_at > b.created_at ? a : b).created_at
       : null
+    const active_terminal_count = terminals.filter(t => t.company_id === c.id && t.is_active).length
+
+    const daily_7d = Array.from({ length: 7 }, (_, i) => {
+      const dayStart = new Date(now - (6 - i) * 86400000)
+      dayStart.setHours(0, 0, 0, 0)
+      const dayEnd = new Date(dayStart.getTime() + 86400000)
+      return companyCheckIns.filter(
+        ci => ci.created_at >= dayStart.toISOString() && ci.created_at < dayEnd.toISOString()
+      ).length
+    })
+
     return {
       id: c.id,
       name: c.name,
@@ -56,6 +71,8 @@ export async function GET(req: NextRequest) {
       total_check_ins: companyCheckIns.length,
       check_ins_7d: checkIns7d,
       last_check_in: lastCheckIn,
+      active_terminal_count,
+      daily_7d,
     }
   })
 

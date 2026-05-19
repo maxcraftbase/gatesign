@@ -7,8 +7,50 @@ DROP TABLE IF EXISTS briefing_translations CASCADE;
 DROP TABLE IF EXISTS safety_briefings CASCADE;
 DROP TABLE IF EXISTS drivers CASCADE;
 DROP TABLE IF EXISTS sites CASCADE;
+DROP TABLE IF EXISTS audit_log CASCADE;
+DROP TABLE IF EXISTS company_users CASCADE;
 DROP TABLE IF EXISTS companies CASCADE;
 DROP TABLE IF EXISTS app_settings CASCADE;
+
+-- Companies (multi-tenant root)
+CREATE TABLE IF NOT EXISTS companies (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT NOT NULL,
+  slug TEXT NOT NULL UNIQUE,
+  owner_id UUID,                                      -- legacy; use company_users for new accounts
+  plan TEXT NOT NULL DEFAULT 'starter',               -- 'starter' | 'professional' | 'enterprise'
+  terminal_limit INT NOT NULL DEFAULT 1,
+  stripe_customer_id TEXT,
+  stripe_subscription_id TEXT,
+  stripe_price_id TEXT,
+  subscription_current_period_end TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- Company users (admin + members per company)
+CREATE TABLE IF NOT EXISTS company_users (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  user_id UUID,                                       -- NULL until invitation accepted
+  email TEXT NOT NULL,
+  name TEXT,
+  role TEXT NOT NULL DEFAULT 'member',                -- 'admin' | 'member'
+  status TEXT NOT NULL DEFAULT 'pending',             -- 'pending' | 'active'
+  last_login_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  UNIQUE (company_id, email)
+);
+
+-- Audit log (all admin actions, per company)
+CREATE TABLE IF NOT EXISTS audit_log (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  company_id UUID REFERENCES companies(id) ON DELETE CASCADE,
+  user_id UUID,
+  user_email TEXT,
+  action TEXT NOT NULL,
+  details JSONB,
+  created_at TIMESTAMPTZ DEFAULT now()
+);
 
 -- Terminals (one or more per company)
 CREATE TABLE IF NOT EXISTS terminals (
@@ -62,11 +104,13 @@ CREATE TABLE IF NOT EXISTS safety_briefings (
   UNIQUE(language, visitor_type, version)
 );
 
--- App configuration
+-- App configuration (per company)
 CREATE TABLE IF NOT EXISTS app_settings (
-  key TEXT PRIMARY KEY,
+  company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+  key TEXT NOT NULL,
   value TEXT NOT NULL,
-  updated_at TIMESTAMPTZ DEFAULT now()
+  updated_at TIMESTAMPTZ DEFAULT now(),
+  PRIMARY KEY (company_id, key)
 );
 
 -- Default safety briefing texts — truck (all 10 languages)
@@ -95,14 +139,8 @@ INSERT INTO safety_briefings (language, visitor_type, content, version) VALUES
 ('en','service', E'# Safety Instructions — Service Provider\n\nPlease observe the following safety rules on our premises:\n\n1. **Protective equipment:** Safety shoes and high-visibility vest are mandatory on all premises.\n2. **ID:** Please carry your identification and work order at all times.\n3. **Speed:** Maximum 10 km/h on company grounds.\n4. **Smoking:** Smoking is only permitted in designated areas.\n5. **Work area:** Only work in the area authorized for your assignment.\n6. **Follow instructions:** Follow the guidance of the responsible employee.\n7. **Emergency:** In case of emergency call 112. Assembly point is at the main entrance.\n\nBy confirming, you declare that you have read and understood these rules.', '1.0')
 ON CONFLICT (language, visitor_type, version) DO NOTHING;
 
--- Default app settings
-INSERT INTO app_settings (key, value) VALUES
-('welcome_title', 'Willkommen / Welcome'),
-('welcome_subtitle', 'Bitte melden Sie sich hier an — Please register here'),
-('signature_required', 'false'),
-('site_info', ''),
-('briefing_version', '1.0')
-ON CONFLICT (key) DO NOTHING;
+-- Default app_settings werden beim Anlegen einer Company per API eingefügt (nicht hier,
+-- da company_id zur Laufzeit bekannt sein muss). Siehe /api/auth/register.
 
 -- RLS
 ALTER TABLE check_ins ENABLE ROW LEVEL SECURITY;
@@ -111,22 +149,53 @@ ALTER TABLE app_settings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE terminals ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_terminal_access ENABLE ROW LEVEL SECURITY;
 
--- check_ins: anyone can insert, only authenticated can read
+-- check_ins: Kiosk darf inserieren (anonym); Lesen nur für eigene Company
 CREATE POLICY "public insert check_ins" ON check_ins FOR INSERT WITH CHECK (true);
-CREATE POLICY "authenticated read check_ins" ON check_ins FOR SELECT USING (auth.role() = 'authenticated');
+CREATE POLICY "company read check_ins" ON check_ins FOR SELECT USING (
+  company_id IN (
+    SELECT company_id FROM company_users WHERE user_id = auth.uid() AND status = 'active'
+  )
+);
 
--- safety_briefings: public read, authenticated write
+-- safety_briefings: globale Tabelle (kein company_id), public read; Schreiben nur via service_role
 CREATE POLICY "public read briefings" ON safety_briefings FOR SELECT USING (true);
-CREATE POLICY "authenticated write briefings" ON safety_briefings FOR ALL USING (auth.role() = 'authenticated');
 
--- app_settings: public read, authenticated write
+-- app_settings: Lesen nur eigene Company, Schreiben nur eigene Company
 CREATE POLICY "public read settings" ON app_settings FOR SELECT USING (true);
-CREATE POLICY "authenticated write settings" ON app_settings FOR ALL USING (auth.role() = 'authenticated');
+CREATE POLICY "company write settings" ON app_settings FOR ALL USING (
+  company_id IN (
+    SELECT company_id FROM company_users WHERE user_id = auth.uid() AND status = 'active'
+  )
+) WITH CHECK (
+  company_id IN (
+    SELECT company_id FROM company_users WHERE user_id = auth.uid() AND status = 'active'
+  )
+);
 
--- terminals: public read (kiosk needs to look up terminal), authenticated write
+-- terminals: public read (Kiosk-Lookup); Schreiben nur für eigene Company
 CREATE POLICY "public read terminals" ON terminals FOR SELECT USING (true);
-CREATE POLICY "authenticated write terminals" ON terminals FOR ALL USING (auth.role() = 'authenticated');
+CREATE POLICY "company write terminals" ON terminals FOR ALL USING (
+  company_id IN (
+    SELECT company_id FROM company_users WHERE user_id = auth.uid() AND status = 'active'
+  )
+) WITH CHECK (
+  company_id IN (
+    SELECT company_id FROM company_users WHERE user_id = auth.uid() AND status = 'active'
+  )
+);
 
--- user_terminal_access: authenticated only
-CREATE POLICY "authenticated read user_terminal_access" ON user_terminal_access FOR SELECT USING (auth.role() = 'authenticated');
-CREATE POLICY "authenticated write user_terminal_access" ON user_terminal_access FOR ALL USING (auth.role() = 'authenticated');
+-- user_terminal_access: nur eigene Company
+CREATE POLICY "company read user_terminal_access" ON user_terminal_access FOR SELECT USING (
+  company_id IN (
+    SELECT company_id FROM company_users WHERE user_id = auth.uid() AND status = 'active'
+  )
+);
+CREATE POLICY "company write user_terminal_access" ON user_terminal_access FOR ALL USING (
+  company_id IN (
+    SELECT company_id FROM company_users WHERE user_id = auth.uid() AND status = 'active'
+  )
+) WITH CHECK (
+  company_id IN (
+    SELECT company_id FROM company_users WHERE user_id = auth.uid() AND status = 'active'
+  )
+);

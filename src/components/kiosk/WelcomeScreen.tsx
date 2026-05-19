@@ -39,6 +39,10 @@ export function WelcomeScreen({
       >
         Check-in starten
       </button>
+      <p className="text-xs text-slate-400 text-center max-w-lg leading-relaxed">
+        Mit dem Check-in werden Ihre Angaben (Name, Fahrzeugkennzeichen, ggf. Unterschrift) zum Zweck der Zutrittskontrolle verarbeitet und gespeichert. /
+        By checking in, your data (name, licence plate, signature if applicable) is processed for access control purposes.
+      </p>
     </div>
   )
 }

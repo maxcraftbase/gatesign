@@ -41,12 +41,21 @@ const industryIcons = [
 
 const content = {
   de: {
-    nav: { login: 'Anmelden', register: 'Jetzt starten', demo: 'Demo anfragen' },
+    nav: {
+      login: 'Anmelden',
+      register: 'Jetzt starten',
+      demo: 'Demo anfragen',
+      features: 'Funktionen',
+      pricing: 'Preise',
+      faq: 'FAQ',
+    },
     hero: {
+      eyebrow: 'Für Werkleiter und Sicherheitsbeauftragte',
       title: 'Sicherheitsbelehrung digital — in 10 Minuten eingerichtet.',
-      sub: 'Für Werkleiter und Sicherheitsbeauftragte: GateSign dokumentiert jeden Check-in rechtssicher — in der Sprache des Fahrers, ohne Papier, ohne Rückfragen.',
+      sub: 'GateSign dokumentiert jeden Check-in rechtssicher — in der Sprache des Fahrers, ohne Papier, ohne Rückfragen.',
       cta: '30 Tage kostenlos testen',
       demo: 'Demo anfragen',
+      microtrust: 'Keine Einrichtungsgebühr · Keine Kreditkarte · Jederzeit kündbar',
     },
     trustedBy: {
       text: 'Entwickelt für Produktion, Logistik und Maschinenbau — in Deutschland, Österreich und der Schweiz.',
@@ -127,6 +136,8 @@ const content = {
       entriesTitle: 'Check-in Einträge',
       refresh: 'Aktualisieren',
       settings: 'Einstellungen',
+      inBuilding: 'Im Haus',
+      documents: 'Dokumente',
       terminal: '← Check-In Terminal',
       logout: 'Abmelden',
     },
@@ -141,12 +152,14 @@ const content = {
     pricing: {
       title: 'Einfache Preisgestaltung',
       desc: 'Keine Einrichtungsgebühr · 30 Tage kostenlos · Jederzeit kündbar',
+      vat: 'Alle Preise zzgl. MwSt. · Monatliche Abrechnung · Kündigung jederzeit zum Monatsende',
       trial: '30 Tage kostenlos',
       support: 'Inkl. E-Mail-Support & Einrichtungshilfe',
       cta: 'Jetzt starten',
       contact: 'Kontakt aufnehmen',
       onRequest: 'Auf Anfrage',
       included: 'Enthalten:',
+      popular: 'Beliebt',
       tiers: [
         {
           label: 'Starter',
@@ -239,6 +252,7 @@ const content = {
       impressum: 'Impressum',
       datenschutz: 'Datenschutz',
       contact: 'info@gatesign.de',
+      mailSubject: 'Anfrage',
     },
     demo: {
       title: 'Demo anfragen',
@@ -258,12 +272,21 @@ const content = {
     },
   },
   en: {
-    nav: { login: 'Log in', register: 'Get started', demo: 'Request demo' },
+    nav: {
+      login: 'Log in',
+      register: 'Get started',
+      demo: 'Request demo',
+      features: 'Features',
+      pricing: 'Pricing',
+      faq: 'FAQ',
+    },
     hero: {
+      eyebrow: 'For plant managers and safety officers',
       title: 'Digital safety briefings — set up in 10 minutes.',
-      sub: 'For plant managers and safety officers: GateSign documents every check-in legally — in the driver\'s own language, with no paperwork and no follow-up calls.',
+      sub: 'GateSign documents every check-in legally — in the driver\'s own language, with no paperwork and no follow-up calls.',
       cta: 'Try free for 30 days',
       demo: 'Request a demo',
+      microtrust: 'No setup fee · No credit card · Cancel anytime',
     },
     trustedBy: {
       text: 'Built for production, logistics and mechanical engineering — in Germany, Austria and Switzerland.',
@@ -344,6 +367,8 @@ const content = {
       entriesTitle: 'Check-in Entries',
       refresh: 'Refresh',
       settings: 'Settings',
+      inBuilding: 'On Site',
+      documents: 'Documents',
       terminal: '← Check-In Terminal',
       logout: 'Log out',
     },
@@ -358,12 +383,14 @@ const content = {
     pricing: {
       title: 'Simple pricing',
       desc: 'No setup fee · 30 days free · Cancel anytime',
+      vat: 'All prices excl. VAT · Monthly billing · Cancel anytime at end of month',
       trial: '30 days free',
       support: 'Incl. email support & onboarding help',
       cta: 'Get started',
       contact: 'Contact us',
       onRequest: 'On request',
       included: 'Included:',
+      popular: 'Popular',
       tiers: [
         {
           label: 'Starter',
@@ -456,6 +483,7 @@ const content = {
       impressum: 'Impressum',
       datenschutz: 'Privacy Policy',
       contact: 'info@gatesign.de',
+      mailSubject: 'Inquiry',
     },
     demo: {
       title: 'Request a demo',
@@ -743,8 +771,21 @@ export default function LandingPage() {
 
       {/* Nav */}
       <nav className="sticky top-0 z-50 bg-white/90 backdrop-blur border-b border-slate-100">
-        <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between">
-          <span className="text-xl font-bold tracking-tight">GateSign</span>
+        <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between gap-4">
+          <Link href="/" className="text-xl font-bold tracking-tight">GateSign</Link>
+
+          <div className="hidden md:flex items-center gap-7">
+            <a href="#funktionen" className="text-sm text-slate-600 hover:text-slate-900 transition-colors font-medium">
+              {t.nav.features}
+            </a>
+            <a href="#pricing" className="text-sm text-slate-600 hover:text-slate-900 transition-colors font-medium">
+              {t.nav.pricing}
+            </a>
+            <a href="#faq" className="text-sm text-slate-600 hover:text-slate-900 transition-colors font-medium">
+              {t.nav.faq}
+            </a>
+          </div>
+
           <div className="flex items-center gap-3">
             <button
               onClick={() => setLang(lang === 'de' ? 'en' : 'de')}
@@ -776,16 +817,20 @@ export default function LandingPage() {
       <section className="flex flex-col" style={{ minHeight: 'calc(100vh - 64px)' }}>
         <div className="flex-1 flex items-center">
           <div className="max-w-5xl mx-auto px-6 py-16 w-full">
-            <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
+            <div className="flex flex-col md:flex-row items-center gap-10 md:gap-12 lg:gap-16">
               {/* Left: Text */}
-              <div className="flex-1 text-center lg:text-left">
+              <div className="flex-1 text-center md:text-left">
+                <p className="inline-flex items-center gap-2 text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-200 px-3 py-1 rounded-full mb-5 uppercase tracking-wide">
+                  <ShieldCheck className="w-3.5 h-3.5" strokeWidth={2} />
+                  {t.hero.eyebrow}
+                </p>
                 <h1 className="text-4xl sm:text-5xl font-bold tracking-tight leading-tight mb-5">
                   {t.hero.title}
                 </h1>
-                <p className="text-lg text-slate-500 mb-10 leading-relaxed lg:max-w-xl mx-auto lg:mx-0">
+                <p className="text-lg text-slate-500 mb-8 leading-relaxed md:max-w-xl mx-auto md:mx-0">
                   {t.hero.sub}
                 </p>
-                <div className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start">
+                <div className="flex flex-col sm:flex-row gap-3 justify-center md:justify-start">
                   <Link
                     href="/register"
                     className="inline-block bg-slate-900 text-white text-base font-semibold px-8 py-4 rounded-xl hover:bg-slate-700 transition-colors"
@@ -795,14 +840,17 @@ export default function LandingPage() {
                   <button
                     type="button"
                     onClick={openDemo}
-                    className="inline-block text-slate-500 text-base font-medium px-8 py-4 rounded-xl hover:text-slate-900 hover:bg-slate-50 transition-colors"
+                    className="inline-block text-slate-700 text-base font-semibold px-8 py-4 rounded-xl border border-slate-300 hover:border-slate-900 hover:text-slate-900 transition-colors"
                   >
                     {t.hero.demo}
                   </button>
                 </div>
+                <p className="text-xs text-slate-400 mt-5 leading-relaxed">
+                  {t.hero.microtrust}
+                </p>
               </div>
-              {/* Right: Terminal mockup */}
-              <div className="flex-shrink-0 hidden lg:block">
+              {/* Right: Terminal mockup — visible from md upwards */}
+              <div className="flex-shrink-0 hidden md:block">
                 <TerminalMockup lang={lang} />
               </div>
             </div>
@@ -880,7 +928,7 @@ export default function LandingPage() {
       </section>
 
       {/* Safety Briefing Section */}
-      <section className="max-w-5xl mx-auto px-6 py-20">
+      <section id="funktionen" className="max-w-5xl mx-auto px-6 py-20">
         <div className="flex flex-col lg:flex-row gap-12 items-center">
           <div className="flex-1">
             <span className="inline-block text-xs font-semibold bg-amber-100 text-amber-700 px-3 py-1 rounded-full mb-4 uppercase tracking-wide">
@@ -1008,6 +1056,12 @@ export default function LandingPage() {
                 <div className="flex gap-1">
                   <span className="bg-slate-900 text-white text-xs font-semibold px-3 py-1.5 rounded-lg">
                     {t.mockup.entriesTitle}
+                  </span>
+                  <span className="text-slate-500 text-xs font-medium px-3 py-1.5 rounded-lg hidden sm:inline-block">
+                    {t.mockup.inBuilding}
+                  </span>
+                  <span className="text-slate-500 text-xs font-medium px-3 py-1.5 rounded-lg hidden md:inline-block">
+                    {t.mockup.documents}
                   </span>
                   <span className="text-slate-500 text-xs font-medium px-3 py-1.5 rounded-lg">
                     {t.mockup.settings}
@@ -1153,7 +1207,7 @@ export default function LandingPage() {
       </section>
 
       {/* Pricing */}
-      <section className="bg-slate-50 py-20">
+      <section id="pricing" className="bg-slate-50 py-20">
         <div className="max-w-5xl mx-auto px-6 text-center">
           <h2 className="text-2xl font-bold mb-4">{t.pricing.title}</h2>
           <p className="text-sm text-slate-400 mb-10">{t.pricing.desc}</p>
@@ -1161,19 +1215,17 @@ export default function LandingPage() {
             {t.pricing.tiers.map((tier, i) => (
               <div
                 key={i}
-                className={`rounded-2xl p-7 border flex flex-col text-left ${
+                className={`relative rounded-2xl p-7 border flex flex-col text-left ${
                   tier.highlight
-                    ? 'bg-slate-900 border-slate-900 text-white'
+                    ? 'bg-slate-900 border-slate-900 text-white shadow-lg md:-mt-2 md:mb-2'
                     : 'bg-white border-slate-200'
                 }`}
               >
-                <div className={`text-xs font-semibold mb-4 px-3 py-1 rounded-full self-start ${
-                  tier.highlight
-                    ? 'bg-white/10 text-white'
-                    : 'bg-emerald-50 text-emerald-700'
-                }`}>
-                  {t.pricing.trial}
-                </div>
+                {tier.highlight && (
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 text-xs font-semibold bg-emerald-500 text-white px-3 py-1 rounded-full shadow-sm uppercase tracking-wide">
+                    {t.pricing.popular}
+                  </div>
+                )}
                 <p className={`text-xs font-semibold uppercase tracking-widest mb-1 ${
                   tier.highlight ? 'text-slate-400' : 'text-slate-400'
                 }`}>
@@ -1243,11 +1295,14 @@ export default function LandingPage() {
               </div>
             ))}
           </div>
+          <p className="text-xs text-slate-400 mt-8 max-w-2xl mx-auto leading-relaxed">
+            {t.pricing.vat}
+          </p>
         </div>
       </section>
 
       {/* FAQ */}
-      <section className="py-20">
+      <section id="faq" className="py-20">
         <div className="max-w-3xl mx-auto px-6">
           <h2 className="text-2xl font-bold text-center mb-10">{t.faq.title}</h2>
           <div className="space-y-2">
@@ -1304,7 +1359,10 @@ export default function LandingPage() {
         <div className="max-w-5xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-sm text-slate-400">
           <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
             <span>{t.footer.rights}</span>
-            <a href={`mailto:${t.footer.contact}`} className="hover:text-slate-600 transition-colors">
+            <a
+              href={`mailto:${t.footer.contact}?subject=${encodeURIComponent(t.footer.mailSubject)}`}
+              className="hover:text-slate-600 transition-colors"
+            >
               {t.footer.contact}
             </a>
           </div>

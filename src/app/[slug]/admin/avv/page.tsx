@@ -59,6 +59,7 @@ export default async function AdminAvvPage({ params }: { params: Promise<{ slug:
         </div>
 
         <div className="flex flex-wrap gap-3 mb-8">
+          {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
           <a
             href="/api/admin/avv/pdf"
             className="inline-flex items-center gap-2 bg-slate-900 hover:bg-slate-700 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors"

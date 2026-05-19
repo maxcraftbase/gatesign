@@ -76,8 +76,8 @@ export function AvvDocument({ controller }: { controller?: AvvController }) {
       <section>
         <h2 className="font-semibold text-slate-900 mb-2">Präambel</h2>
         <p>
-          Der Verantwortliche nutzt die Software „{PROCESSOR.product}" der {PROCESSOR.legalName}{' '}
-          (nachfolgend „Auftragsverarbeiter") zur Erfassung und Dokumentation von Check-ins
+          Der Verantwortliche nutzt die Software „{PROCESSOR.product}“ der {PROCESSOR.legalName}{' '}
+          (nachfolgend „Auftragsverarbeiter“) zur Erfassung und Dokumentation von Check-ins
           am Empfang. Hierbei werden im Auftrag des Verantwortlichen personenbezogene Daten
           verarbeitet. Die Parteien schließen diesen Auftragsverarbeitungsvertrag (AVV) zur
           Erfüllung der Anforderungen nach Art. 28 DSGVO.

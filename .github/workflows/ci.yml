@@ -41,8 +41,10 @@ jobs:
   smoke-tests:
     name: Smoke Tests
     runs-on: ubuntu-latest
-    # Only run when secrets are configured
-    if: ${{ vars.PLAYWRIGHT_BASE_URL != '' || secrets.PLAYWRIGHT_SITE_PASSWORD != '' }}
+    # Only run when PLAYWRIGHT_BASE_URL variable is set.
+    # NOTE: secrets.X cannot be referenced in job-level if — would cause the
+    # whole workflow file to be rejected (0s failure, no jobs run).
+    if: ${{ vars.PLAYWRIGHT_BASE_URL != '' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

@@ -288,6 +288,7 @@ const content = {
       rights: '© 2025 Alpha Consult GmbH · GateSign',
       impressum: 'Impressum',
       datenschutz: 'Datenschutz',
+      avv: 'AVV',
       contact: 'info@gatesign.de',
     },
   },
@@ -539,6 +540,7 @@ const content = {
       rights: '© 2025 Alpha Consult GmbH · GateSign',
       impressum: 'Impressum',
       datenschutz: 'Privacy Policy',
+      avv: 'DPA',
       contact: 'info@gatesign.de',
     },
   },
@@ -1237,6 +1239,7 @@ export default function LandingPage() {
           <div className="flex gap-5">
             <Link href="/impressum" className="hover:text-slate-600 transition-colors">{t.footer.impressum}</Link>
             <Link href="/datenschutz" className="hover:text-slate-600 transition-colors">{t.footer.datenschutz}</Link>
+            <Link href="/avv" className="hover:text-slate-600 transition-colors">{t.footer.avv}</Link>
           </div>
         </div>
       </footer>

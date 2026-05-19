@@ -1,9 +1,6 @@
-#!/usr/bin/env sh
 # .husky/pre-push
 # Läuft vor "git push". Letzter Check bevor Code an GitHub geht.
 # Bei Fehler → Push wird abgebrochen.
-
-. "$(dirname -- "$0")/_/husky.sh"
 
 echo "▶ Running pre-push checks..."
 

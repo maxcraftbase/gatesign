@@ -1,9 +1,6 @@
-#!/usr/bin/env sh
 # .husky/pre-commit
 # Läuft vor "git commit". Bei Fehler → Commit wird abgebrochen.
 # Notausgang: git commit --no-verify überspringt diesen Hook.
-
-. "$(dirname -- "$0")/_/husky.sh"
 
 # Nur Tests laufen lassen, die mit geänderten .ts/.tsx-Dateien zusammenhängen.
 # Wenn keine TS-Dateien geändert sind (z.B. nur .md), wird vitest gar nicht aufgerufen.

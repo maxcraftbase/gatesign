@@ -548,7 +548,7 @@ export default function SuperadminPage() {
                         <th className="text-left px-4 py-3 text-xs font-semibold text-zinc-500 uppercase tracking-wide">Letzter</th>
                         <th className="text-left px-4 py-3 text-xs font-semibold text-zinc-500 uppercase tracking-wide">Status</th>
                         <th className="text-left px-4 py-3 text-xs font-semibold text-zinc-500 uppercase tracking-wide">Plan</th>
-                        <th className="text-right px-4 py-3 text-xs font-semibold text-zinc-500 uppercase tracking-wide">Aktionen</th>
+                        <th className="px-4 py-3" />
                       </tr>
                     </thead>
                     <tbody>
@@ -607,36 +607,10 @@ export default function SuperadminPage() {
                               </select>
                             </td>
                             <td className="px-4 py-4" onClick={e => e.stopPropagation()}>
-                              <div className="flex items-center justify-end gap-1.5">
-                                <a href={`mailto:${c.email}`} title="E-Mail schreiben"
-                                  className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800 transition-colors">
-                                  <Mail className="w-3.5 h-3.5" />
-                                </a>
-                                {c.subscription_status === 'trial' && (
-                                  <>
-                                    <button onClick={() => extendTrial(c, 14)} disabled={extendingTrial === c.id}
-                                      className="text-xs px-2 py-1 rounded-lg bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-zinc-200 transition-colors disabled:opacity-40">
-                                      +14T
-                                    </button>
-                                    <button onClick={() => extendTrial(c, 30)} disabled={extendingTrial === c.id}
-                                      className="text-xs px-2 py-1 rounded-lg bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-zinc-200 transition-colors disabled:opacity-40">
-                                      +30T
-                                    </button>
-                                  </>
-                                )}
-                                <button onClick={() => void openAgents(c)}
-                                  className="text-xs text-violet-400 hover:text-violet-300 border border-violet-800 hover:border-violet-600 hover:bg-violet-950 px-2.5 py-1 rounded-lg transition-colors font-medium">
-                                  Agenten
-                                </button>
-                                <button onClick={() => toggleStatus(c)} disabled={toggling === c.id}
-                                  className={`text-xs px-2.5 py-1 rounded-lg transition-colors disabled:opacity-40 font-medium ${
-                                    c.subscription_status === 'active'
-                                      ? 'bg-red-950 text-red-400 hover:bg-red-900'
-                                      : 'bg-emerald-950 text-emerald-400 hover:bg-emerald-900'
-                                  }`}>
-                                  {toggling === c.id ? '…' : c.subscription_status === 'active' ? 'Deakt.' : 'Aktivieren'}
-                                </button>
-                              </div>
+                              <a href={`mailto:${c.email}`} title="E-Mail schreiben"
+                                className="p-1.5 rounded-lg text-zinc-500 hover:text-zinc-200 hover:bg-zinc-800 transition-colors inline-flex">
+                                <Mail className="w-3.5 h-3.5" />
+                              </a>
                             </td>
                           </tr>
                         )

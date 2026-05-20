@@ -62,7 +62,7 @@ jobs:
           PLAYWRIGHT_BASE_URL: ${{ vars.PLAYWRIGHT_BASE_URL || 'https://www.gatesign.de' }}
           PLAYWRIGHT_SITE_PASSWORD: ${{ secrets.PLAYWRIGHT_SITE_PASSWORD }}
           PLAYWRIGHT_SLUG: ${{ vars.PLAYWRIGHT_SLUG }}
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: failure()
         with:
           name: playwright-report

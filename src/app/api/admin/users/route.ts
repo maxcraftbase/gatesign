@@ -29,7 +29,8 @@ export async function POST(req: NextRequest) {
 
   const { email, name, role } = await req.json() as { email: string; name?: string; role: 'admin' | 'member' }
   if (!email || !role) return NextResponse.json({ error: 'E-Mail und Rolle erforderlich' }, { status: 400 })
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return NextResponse.json({ error: 'Ungültige E-Mail-Adresse' }, { status: 400 })
+  // RFC 5321: max 254 chars. Längen-Check vor Regex bremst potentielle ReDoS-Inputs aus.
+  if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return NextResponse.json({ error: 'Ungültige E-Mail-Adresse' }, { status: 400 })
 
   // Check if user already exists in this company
   const existing = await fetch(
@@ -126,7 +127,6 @@ export async function POST(req: NextRequest) {
 
 function inviteHtml(name: string | null, companyName: string, inviteUrl: string) {
   const greeting = name ? `Hallo ${name}` : 'Hallo'
-  const roleLabel = inviteUrl ? 'Mitarbeiter' : 'Nutzer'
   return `<!DOCTYPE html>
 <html lang="de">
 <head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
@@ -170,5 +170,4 @@ function inviteHtml(name: string | null, companyName: string, inviteUrl: string)
   </div>
 </body>
 </html>`
-  void roleLabel
 }

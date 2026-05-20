@@ -19,7 +19,7 @@ export function AdminNav({ slug, role, userName, companyName, terminals = [] }: 
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
-  const isInSettings = pathname.startsWith(`${base}/settings`) || pathname.startsWith(`${base}/users`) || pathname.startsWith(`${base}/audit`) || pathname.startsWith(`${base}/documents`) || pathname.startsWith(`${base}/account`)
+  const isInSettings = pathname.startsWith(`${base}/settings`) || pathname.startsWith(`${base}/users`) || pathname.startsWith(`${base}/audit`) || pathname.startsWith(`${base}/documents`) || pathname.startsWith(`${base}/account`) || pathname.startsWith(`${base}/avv`)
 
   const navItems = [
     { href: base, label: 'Einträge', icon: <ClipboardList className="w-4 h-4" />, active: pathname === base },

@@ -8,8 +8,8 @@ export default function DatenschutzPage() {
       </nav>
 
       <main className="max-w-2xl mx-auto px-6 py-12">
-        <h1 className="text-2xl font-bold text-slate-900 mb-2">Datenschutzerklärung</h1>
-        <p className="text-xs text-slate-400 mb-8">Stand: März 2025</p>
+        <h1 className="text-2xl font-bold text-slate-900 mb-2">Datenschutzerklärung &amp; Nutzungsbedingungen</h1>
+        <p className="text-xs text-slate-400 mb-8">Stand: Mai 2026</p>
 
         <div className="space-y-8 text-slate-700 text-sm leading-relaxed">
           <section>
@@ -35,11 +35,17 @@ export default function DatenschutzPage() {
           </section>
 
           <section>
-            <h2 className="font-semibold text-slate-900 mb-2">3. Zweck der Verarbeitung</h2>
+            <h2 className="font-semibold text-slate-900 mb-2">3. Zweck der Verarbeitung &amp; Auftragsverarbeitung</h2>
             <p>
               Die Daten werden ausschließlich zur Bereitstellung des GateSign Check-in-Dienstes verarbeitet.
-              Check-in-Daten werden im Auftrag der jeweiligen Unternehmen gespeichert und verarbeitet
-              (Auftragsverarbeitung gemäß Art. 28 DSGVO).
+              Check-in-Daten (Name, Kennzeichen, Unterschrift, Zeitstempel) werden im Auftrag der jeweiligen
+              Kundenunternehmen gespeichert und verarbeitet — diese sind Verantwortliche im Sinne der DSGVO,
+              GateSign ist Auftragsverarbeiter (Art. 28 DSGVO).
+            </p>
+            <p className="mt-2">
+              Mit jedem Kundenunternehmen wird vor Aktivierung des Accounts ein Auftragsverarbeitungsvertrag
+              (AVV) gemäß Art. 28 DSGVO geschlossen. Der unterzeichnete AVV ist im Admin-Bereich des
+              jeweiligen Kunden als PDF abrufbar.
             </p>
           </section>
 
@@ -71,8 +77,15 @@ export default function DatenschutzPage() {
           <section>
             <h2 className="font-semibold text-slate-900 mb-2">7. Speicherdauer</h2>
             <p>
-              Personenbezogene Daten werden nur so lange gespeichert, wie es für den jeweiligen Zweck
-              erforderlich ist. Check-in-Daten können von den jeweiligen Unternehmen jederzeit gelöscht werden.
+              Check-in-Daten werden maximal <strong>2 Jahre</strong> nach Erfassung gespeichert. Die Frist orientiert
+              sich an der Verjährung für Ordnungswidrigkeiten (§ 31 OWiG) im Zusammenhang mit der
+              Dokumentationspflicht nach § 12 ArbSchG. Eine frühere Löschung durch das verantwortliche
+              Kundenunternehmen ist jederzeit möglich.
+            </p>
+            <p className="mt-2">
+              Account-Stammdaten (Firmenname, E-Mail, Login-Daten) werden für die Dauer des Vertragsverhältnisses
+              gespeichert und nach Vertragsende innerhalb von 90 Tagen gelöscht, soweit keine gesetzlichen
+              Aufbewahrungspflichten (§ 147 AO, § 257 HGB) entgegenstehen.
             </p>
           </section>
 
@@ -103,6 +116,82 @@ export default function DatenschutzPage() {
               </a>
             </p>
           </section>
+        </div>
+
+        <div className="mt-12 pt-8 border-t border-slate-200">
+          <h2 className="text-xl font-bold text-slate-900 mb-2">Nutzungsbedingungen</h2>
+          <p className="text-xs text-slate-400 mb-6">Auszug — gelten ergänzend zum jeweiligen Auftragsverarbeitungsvertrag (AVV).</p>
+
+          <div className="space-y-8 text-slate-700 text-sm leading-relaxed">
+            <section>
+              <h3 className="font-semibold text-slate-900 mb-2">A. Leistungsumfang</h3>
+              <p>
+                GateSign stellt eine cloudbasierte Software zur Erfassung von Besuchern, Fahrern und
+                Dienstleistern am Empfang bereit (Check-in Terminal, Admin-Dashboard, Sicherheitsbelehrungen,
+                Protokollierung). Die Bereitstellung erfolgt im Abonnement nach den jeweils gewählten Tarifen.
+              </p>
+            </section>
+
+            <section>
+              <h3 className="font-semibold text-slate-900 mb-2">B. Signaturen am Terminal</h3>
+              <p>
+                Die am Terminal abgegebenen Unterschriften (Touchscreen-Erfassung als Pixelbild) sind
+                <strong> einfache elektronische Signaturen</strong> im Sinne von Art. 3 Nr. 10 eIDAS-Verordnung.
+                Sie sind <strong>keine qualifizierten elektronischen Signaturen</strong> (QES) und ersetzen
+                eine Schriftform im Sinne von § 126 BGB nicht.
+              </p>
+              <p className="mt-2">
+                Für die Dokumentation der Sicherheitsunterweisung nach § 12 ArbSchG sowie für interne
+                Empfangs- und Zutrittsnachweise ist die einfache elektronische Signatur ausreichend.
+                Für rechtsgeschäftliche Erklärungen, die der gesetzlichen Schriftform unterliegen, ist die
+                Lösung nicht vorgesehen.
+              </p>
+            </section>
+
+            <section>
+              <h3 className="font-semibold text-slate-900 mb-2">C. KI-gestützte Übersetzungen</h3>
+              <p>
+                GateSign bietet eine automatische Übersetzung kundeneigener Inhalte (z. B. Sicherheitshinweise)
+                in bis zu 10 Sprachen über externe KI- und Übersetzungsdienste (u. a. DeepL).
+                Maschinelle Übersetzungen können <strong>fehlerhaft, unvollständig oder missverständlich</strong> sein.
+              </p>
+              <p className="mt-2">
+                Die <strong>Verantwortung für die Prüfung und Freigabe der übersetzten Inhalte</strong> liegt
+                ausschließlich beim Kunden. GateSign übernimmt keine Haftung für inhaltliche Richtigkeit
+                oder rechtliche Wirksamkeit maschineller Übersetzungen. Vor Veröffentlichung empfehlen wir
+                eine fachliche Kontrolle durch eine sprachkundige Person.
+              </p>
+            </section>
+
+            <section>
+              <h3 className="font-semibold text-slate-900 mb-2">D. Verantwortlichkeit für Inhalte</h3>
+              <p>
+                Der Kunde ist allein verantwortlich für die Rechtmäßigkeit, Richtigkeit und Aktualität aller
+                über GateSign verarbeiteten Inhalte (Sicherheitsbelehrung, Hausordnung, Ansprechpartner,
+                Dokumente). GateSign prüft Kundeninhalte nicht inhaltlich.
+              </p>
+            </section>
+
+            <section>
+              <h3 className="font-semibold text-slate-900 mb-2">E. Verfügbarkeit</h3>
+              <p>
+                GateSign strebt eine hohe Verfügbarkeit an, gewährt jedoch keine garantierte Uptime. Wartungs-
+                und Aktualisierungsarbeiten werden, soweit möglich, außerhalb der typischen Geschäftszeiten
+                durchgeführt.
+              </p>
+            </section>
+
+            <section>
+              <h3 className="font-semibold text-slate-900 mb-2">F. Haftung</h3>
+              <p>
+                Die Haftung von GateSign richtet sich nach den gesetzlichen Vorschriften. Für leichte
+                Fahrlässigkeit haftet GateSign nur bei Verletzung vertragswesentlicher Pflichten
+                (Kardinalpflichten) und der Höhe nach begrenzt auf den vertragstypisch vorhersehbaren Schaden.
+                Die Haftung für Vorsatz, grobe Fahrlässigkeit, Personenschäden und nach dem
+                Produkthaftungsgesetz bleibt unberührt.
+              </p>
+            </section>
+          </div>
         </div>
 
         <div className="mt-10 pt-6 border-t border-slate-100">

@@ -103,6 +103,17 @@ export function CombinedFormStep({
 
   return (
     <div className="flex flex-col flex-1 px-6 py-2 overflow-y-auto">
+      <div className="bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4 max-w-2xl mx-auto w-full mb-4 flex gap-4">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6 text-slate-500 flex-shrink-0 mt-0.5">
+          <rect x="3" y="11" width="18" height="11" rx="2" />
+          <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+        </svg>
+        <div className="text-sm text-slate-600 leading-relaxed">
+          <p className="font-semibold text-slate-800 mb-1">{t.privacy_notice_title}</p>
+          <p>{t.privacy_notice_body}</p>
+        </div>
+      </div>
+
       <div className="bg-white rounded-2xl shadow-sm p-6 max-w-2xl mx-auto w-full mb-4">
         <h2 className="text-3xl font-bold text-slate-900 mb-6">{t.form_title}</h2>
         <div className="flex flex-col gap-5">

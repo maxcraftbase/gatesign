@@ -2,11 +2,13 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { AVV_VERSION } from '@/lib/avv-content'
 
 export default function RegisterPage() {
   const [companyName, setCompanyName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [accepted, setAccepted] = useState(false)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -20,25 +22,29 @@ export default function RegisterPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    setLoading(true)
     setError('')
 
     const pwError = validatePassword(password)
-    if (pwError) { setError(pwError); setLoading(false); return }
+    if (pwError) { setError(pwError); return }
+    if (!accepted) { setError('Bitte AGB, Datenschutz und AVV akzeptieren.'); return }
 
+    setLoading(true)
     const res = await fetch('/api/auth/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ companyName, email, password }),
+      body: JSON.stringify({
+        email, password, companyName,
+        termsAccepted: true,
+        avvAccepted: true,
+        avvVersion: AVV_VERSION,
+      }),
     })
     const data = await res.json()
-
     if (!res.ok) {
       setError(data.error ?? 'Registrierung fehlgeschlagen.')
       setLoading(false)
       return
     }
-
     window.location.href = `/${data.slug}/admin`
   }
 
@@ -70,23 +76,44 @@ export default function RegisterPage() {
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1.5">Passwort</label>
               <input type="password" value={password} onChange={e => setPassword(e.target.value)}
-                placeholder="Min. 8 Zeichen, Groß- & Kleinbuchstaben, Zahl" required autoComplete="new-password"
+                placeholder="Min. 8 Zeichen, Groß- &amp; Kleinbuchstaben, Zahl" required autoComplete="new-password"
                 className={inputCls} />
-              <p className="text-xs text-slate-400 mt-1">Min. 8 Zeichen · Groß- & Kleinbuchstaben · Zahl</p>
+              <p className="text-xs text-slate-400 mt-1">Min. 8 Zeichen · Groß- &amp; Kleinbuchstaben · Zahl</p>
             </div>
+
+            <label className="flex items-start gap-3 cursor-pointer mt-2 select-none">
+              <div onClick={() => setAccepted(!accepted)}
+                className={`mt-0.5 w-6 h-6 rounded-md border-2 flex items-center justify-center shrink-0 transition-colors cursor-pointer ${
+                  accepted ? 'bg-slate-900 border-slate-900' : 'border-slate-300 hover:border-slate-500'
+                }`}>
+                {accepted && <span className="text-white text-sm font-bold leading-none">✓</span>}
+              </div>
+              <span onClick={() => setAccepted(!accepted)} className="text-sm text-slate-700 leading-relaxed">
+                Ich akzeptiere die{' '}
+                <Link href="/datenschutz" target="_blank" className="underline hover:text-slate-900">Nutzungsbedingungen</Link>,{' '}
+                die{' '}
+                <Link href="/datenschutz" target="_blank" className="underline hover:text-slate-900">Datenschutzerklärung</Link>{' '}
+                und schließe den{' '}
+                <Link href="/avv" target="_blank" className="underline hover:text-slate-900">Auftragsverarbeitungsvertrag</Link>{' '}
+                (Art. 28 DSGVO) verbindlich ab.
+              </span>
+            </label>
 
             {error && <p className="text-sm text-red-500 bg-red-50 rounded-lg px-3 py-2">{error}</p>}
 
-            <button type="submit" disabled={loading}
-              className="w-full py-3 bg-slate-900 text-white font-semibold rounded-xl hover:bg-slate-700 transition-colors disabled:opacity-50 mt-2">
+            <button type="submit" disabled={loading || !accepted}
+              className="w-full py-3 bg-slate-900 text-white font-semibold rounded-xl hover:bg-slate-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed mt-2">
               {loading ? 'Wird eingerichtet…' : 'Konto erstellen'}
             </button>
+            <p className="text-xs text-slate-400 text-center mt-1">
+              Eine signierte AVV-Fassung erhalten Sie per E-Mail und im Admin-Bereich als PDF.
+            </p>
           </form>
         </div>
 
         <p className="text-center text-sm text-slate-400 mt-4">
           Bereits registriert?{' '}
-          <Link href="/" className="text-slate-700 hover:underline font-medium">Zur Startseite</Link>
+          <Link href="/login" className="text-slate-700 hover:underline font-medium">Zum Login</Link>
         </p>
       </div>
     </div>

@@ -9,17 +9,16 @@ interface Props {
 
 interface State {
   hasError: boolean
-  error: Error | null
 }
 
 export class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
     super(props)
-    this.state = { hasError: false, error: null }
+    this.state = { hasError: false }
   }
 
-  static getDerivedStateFromError(error: Error): State {
-    return { hasError: true, error }
+  static getDerivedStateFromError(): State {
+    return { hasError: true }
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
@@ -34,7 +33,7 @@ export class ErrorBoundary extends Component<Props, State> {
           <div className="text-center">
             <p className="text-slate-500 text-sm">Ein Fehler ist aufgetreten.</p>
             <button
-              onClick={() => this.setState({ hasError: false, error: null })}
+              onClick={() => this.setState({ hasError: false })}
               className="mt-3 text-sm text-slate-400 hover:text-slate-700 underline"
             >
               Erneut versuchen

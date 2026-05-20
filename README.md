@@ -34,3 +34,18 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+## Testing
+
+| Befehl | Zweck |
+|---|---|
+| `npm test` | Watch-Mode beim Coden |
+| `npm run test:run` | Alle Unit + Integration Tests einmal |
+| `npm run test:coverage` | Mit Coverage-Report (Threshold in `vitest.config.ts`) |
+| `npm run test:e2e` | Playwright Smoke-Tests gegen Live-URL |
+
+Test-Dateien liegen in `tests/unit/`, `tests/integration/` und `tests/e2e/`.
+Pre-commit-Hook (Husky) führt automatisch nur Tests aus, die zu geänderten
+Dateien passen. Pre-push-Hook führt typecheck + alle Vitest-Tests.
+
+Details und Roadmap siehe [`docs/test-strategy.md`](docs/test-strategy.md).

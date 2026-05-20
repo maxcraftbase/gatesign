@@ -1,0 +1,16 @@
+# .husky/pre-commit
+# Läuft vor "git commit". Bei Fehler → Commit wird abgebrochen.
+# Notausgang: git commit --no-verify überspringt diesen Hook.
+
+# Nur Tests laufen lassen, die mit geänderten .ts/.tsx-Dateien zusammenhängen.
+# Wenn keine TS-Dateien geändert sind (z.B. nur .md), wird vitest gar nicht aufgerufen.
+CHANGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(ts|tsx)$' | tr '\n' ' ')
+
+if [ -n "$CHANGED" ]; then
+  echo "▶ Running related tests for changed files..."
+  # shellcheck disable=SC2086
+  npx vitest related --run --reporter=dot $CHANGED || {
+    echo "✗ Related tests failed. Fix issues and commit again (or use --no-verify)."
+    exit 1
+  }
+fi

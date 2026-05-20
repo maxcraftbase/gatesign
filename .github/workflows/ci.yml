@@ -6,27 +6,51 @@ on:
   pull_request:
     branches: [main]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   typecheck:
     name: TypeScript
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: '20'
           cache: 'npm'
       - run: npm ci
       - run: npx tsc --noEmit
 
+  unit-tests:
+    name: Unit & Integration Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      - name: Run Vitest
+        run: npm run test:run
+        env:
+          CI: true
+
   smoke-tests:
     name: Smoke Tests
     runs-on: ubuntu-latest
-    # Only run when secrets are configured
-    if: ${{ vars.PLAYWRIGHT_BASE_URL != '' || secrets.PLAYWRIGHT_SITE_PASSWORD != '' }}
+    # Only run when PLAYWRIGHT_BASE_URL variable is set.
+    # NOTE: secrets.X cannot be referenced in job-level if — would cause the
+    # whole workflow file to be rejected (0s failure, no jobs run).
+    if: ${{ vars.PLAYWRIGHT_BASE_URL != '' }}
+    # Don't block merges when smoke fails (e.g. Production-Cert oder Live-Site down).
+    # Failure bleibt in Actions sichtbar, blockt aber nicht den PR.
+    continue-on-error: true
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
         with:
           node-version: '20'
           cache: 'npm'
@@ -38,7 +62,7 @@ jobs:
           PLAYWRIGHT_BASE_URL: ${{ vars.PLAYWRIGHT_BASE_URL || 'https://www.gatesign.de' }}
           PLAYWRIGHT_SITE_PASSWORD: ${{ secrets.PLAYWRIGHT_SITE_PASSWORD }}
           PLAYWRIGHT_SLUG: ${{ vars.PLAYWRIGHT_SLUG }}
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: failure()
         with:
           name: playwright-report

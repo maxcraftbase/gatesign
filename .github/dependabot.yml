@@ -1,0 +1,35 @@
+version: 2
+updates:
+  # NPM-Dependencies wöchentlich prüfen
+  - package-ecosystem: npm
+    directory: "/"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Europe/Berlin
+    open-pull-requests-limit: 5
+    # Minor und Patch in eine PR gruppieren — weniger Noise
+    groups:
+      minor-and-patch:
+        update-types:
+          - minor
+          - patch
+    # Major-Updates einzeln, da oft Breaking Changes
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+    commit-message:
+      prefix: "chore"
+      include: scope
+    labels:
+      - dependencies
+
+  # GitHub Actions selbst auch aktuell halten
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: monthly
+    labels:
+      - ci
+      - dependencies

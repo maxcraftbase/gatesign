@@ -51,7 +51,8 @@ export async function PUT(req: NextRequest) {
   // Update email, phone, password via auth admin API
   const authUpdate: Record<string, unknown> = {}
   if (email && email !== ctx.email) {
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    // RFC 5321: max 254 chars. Längen-Check vor Regex bremst potentielle ReDoS-Inputs aus.
+    if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return NextResponse.json({ error: 'Ungültige E-Mail-Adresse' }, { status: 400 })
     }
     authUpdate.email = email.trim()

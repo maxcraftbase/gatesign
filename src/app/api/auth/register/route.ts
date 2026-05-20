@@ -3,31 +3,20 @@ import { generateSlug, createCompanyWithDefaults } from '@/lib/company'
 import { sendEmail } from '@/lib/brevo'
 import { supabaseUrl, anonKey, serviceKey } from '@/lib/supabase-server'
 import { buildAvvPdf } from '@/lib/avv-pdf'
+import { AVV_VERSION } from '@/lib/avv-content'
 
 const TERMS_VERSION = '2026-05'
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const {
-      email, password, companyName,
-      companyAddress, companyRegisterNo,
-      signerName, signerRole,
-      termsAccepted, avvAccepted, avvVersion,
-      signatureData,
-    } = body
+    const { email, password, companyName, termsAccepted, avvAccepted, avvVersion } = body
 
     if (!email || !password || !companyName) {
       return NextResponse.json({ error: 'Alle Basisfelder sind erforderlich.' }, { status: 400 })
     }
-    if (!companyAddress || !signerName || !signerRole) {
-      return NextResponse.json({ error: 'Firmenanschrift und Daten der unterzeichnenden Person sind erforderlich.' }, { status: 400 })
-    }
     if (!termsAccepted || !avvAccepted) {
-      return NextResponse.json({ error: 'Datenschutz/Nutzungsbedingungen und AVV müssen akzeptiert werden.' }, { status: 400 })
-    }
-    if (!signatureData || !signatureData.startsWith('data:image/png;base64,')) {
-      return NextResponse.json({ error: 'Gültige Signatur erforderlich.' }, { status: 400 })
+      return NextResponse.json({ error: 'Nutzungsbedingungen, Datenschutz und AVV müssen akzeptiert werden.' }, { status: 400 })
     }
 
     const ip =
@@ -53,26 +42,22 @@ export async function POST(req: NextRequest) {
 
     const { access_token, refresh_token } = signupData
 
-    // 2. Create company + default settings using the new user's token
+    // 2. Create company + default settings
     const slug = generateSlug(companyName)
     const company = await createCompanyWithDefaults(companyName, slug, access_token, email)
     if (!company) {
       return NextResponse.json({ error: 'Firma konnte nicht erstellt werden.' }, { status: 500 })
     }
 
-    // 3. Write terms + AVV signature data using service key
+    // 3. Click-wrap acceptance: AVV is accepted at signup via the combined checkbox.
+    //    No signature image — Annahme durch Click-Wrap mit Audit-Trail (IP, UA, Timestamp).
     const signedAt = new Date()
     const avvFields = {
       terms_accepted_at: signedAt.toISOString(),
       terms_accepted_ip: ip,
       terms_version: TERMS_VERSION,
-      avv_version: avvVersion ?? null,
+      avv_version: avvVersion ?? AVV_VERSION,
       avv_signed_at: signedAt.toISOString(),
-      avv_signer_name: signerName,
-      avv_signer_role: signerRole,
-      avv_company_address: companyAddress,
-      avv_company_register_no: companyRegisterNo ?? null,
-      avv_signature_data: signatureData,
       avv_signature_ip: ip,
       avv_signature_user_agent: userAgent,
     }
@@ -91,10 +76,9 @@ export async function POST(req: NextRequest) {
     )
     if (!patchRes.ok) {
       console.error('[register] failed to save AVV fields:', await patchRes.text())
-      // Don't fail the registration — log to Sentry would be nice but signature got accepted
     }
 
-    // 4. Audit log: terms + AVV acceptance
+    // 4. Audit log
     try {
       await fetch(`${supabaseUrl}/rest/v1/audit_log`, {
         method: 'POST',
@@ -106,7 +90,7 @@ export async function POST(req: NextRequest) {
         },
         body: JSON.stringify([
           { company_id: company.id, user_email: email, action: 'terms_accepted', details: { version: TERMS_VERSION, ip } },
-          { company_id: company.id, user_email: email, action: 'avv_signed', details: { version: avvVersion, ip, user_agent: userAgent, signer: signerName, role: signerRole } },
+          { company_id: company.id, user_email: email, action: 'avv_accepted_clickwrap', details: { version: avvVersion ?? AVV_VERSION, ip, user_agent: userAgent } },
         ]),
       })
     } catch (auditErr) {
@@ -124,12 +108,9 @@ export async function POST(req: NextRequest) {
     try {
       const pdfBuffer = await buildAvvPdf({
         companyName,
-        companyAddress,
-        companyRegisterNo: companyRegisterNo ?? undefined,
-        signerName,
-        signerRole,
-        signedAt,
-        signatureDataUrl: signatureData,
+        acceptedAt: signedAt,
+        avvVersion: avvVersion ?? AVV_VERSION,
+        acceptedByEmail: email,
         ip: ip ?? undefined,
         userAgent: userAgent ?? undefined,
       })
@@ -181,7 +162,7 @@ function welcomeHtml(companyName: string, terminalUrl: string, adminUrl: string,
       <h2 style="margin:0 0 8px;font-size:18px">Willkommen, ${companyName}!</h2>
       <p style="color:#475569;font-size:14px;margin:0 0 24px">
         Ihr GateSign-Konto ist eingerichtet. Im Anhang dieser E-Mail finden Sie eine
-        Kopie des elektronisch unterzeichneten Auftragsverarbeitungsvertrags (AVV).
+        Kopie des Auftragsverarbeitungsvertrags (AVV) nach Art. 28 DSGVO mit Annahme-Nachweis.
       </p>
       <div style="background:#f8fafc;border-radius:8px;padding:16px 20px;margin-bottom:24px">
         <p style="margin:0 0 8px;font-size:13px;color:#64748b"><strong style="color:#0f172a">Check-In Terminal</strong> (für Ihre Besucher)</p>

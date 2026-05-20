@@ -30,22 +30,21 @@ function ControllerBlock({ controller }: { controller?: AvvController }) {
       <div className="bg-slate-50 border border-slate-200 rounded-xl px-5 py-4 text-sm leading-relaxed">
         <p className="font-semibold text-slate-900 mb-1">Verantwortlicher (Kunde)</p>
         <p className="text-slate-500">
-          [Firmenname]<br />
-          [Anschrift]<br />
-          [Register-Nr., falls vorhanden]<br />
-          vertreten durch: [Name, Funktion]
+          Das jeweilige Kundenunternehmen, das den AVV im Rahmen der Account-Einrichtung
+          elektronisch angenommen hat. Die konkreten Daten werden in der unterzeichneten
+          Fassung im Admin-Bereich des Kunden hinterlegt.
         </p>
       </div>
     )
   }
+  const extras = [controller.address, controller.registerInfo].filter(Boolean)
   return (
     <div className="bg-slate-50 border border-slate-200 rounded-xl px-5 py-4 text-sm leading-relaxed">
       <p className="font-semibold text-slate-900 mb-1">Verantwortlicher (Kunde)</p>
       <p>
-        {controller.companyName}<br />
-        {controller.address ?? '—'}<br />
-        {controller.registerInfo ? <>{controller.registerInfo}<br /></> : null}
-        {controller.signerName ? <>vertreten durch: {controller.signerName}{controller.signerRole ? `, ${controller.signerRole}` : ''}</> : null}
+        {controller.companyName}
+        {extras.length > 0 && <><br />{extras.join(' · ')}</>}
+        {controller.signerName ? <><br />vertreten durch: {controller.signerName}{controller.signerRole ? `, ${controller.signerRole}` : ''}</> : null}
       </p>
     </div>
   )

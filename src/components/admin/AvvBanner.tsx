@@ -13,10 +13,10 @@ export function AvvBanner({ slug }: { slug: string }) {
             <line x1="12" y1="17" x2="12.01" y2="17" />
           </svg>
           <div className="text-sm">
-            <p className="font-semibold text-amber-900">Auftragsverarbeitungsvertrag noch nicht unterzeichnet</p>
+            <p className="font-semibold text-amber-900">Auftragsverarbeitungsvertrag noch nicht angenommen</p>
             <p className="text-amber-800 mt-0.5">
               Nach Art. 28 DSGVO ist ein AVV zwischen Ihrem Unternehmen und GateSign erforderlich.
-              Die Unterzeichnung dauert ca. 2 Minuten.
+              Die Annahme erfolgt in einem Klick.
             </p>
           </div>
         </div>
@@ -24,7 +24,7 @@ export function AvvBanner({ slug }: { slug: string }) {
           href={`/${slug}/admin/avv`}
           className="self-start sm:self-center shrink-0 inline-flex items-center gap-2 bg-amber-900 hover:bg-amber-800 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors"
         >
-          Jetzt unterzeichnen
+          Jetzt annehmen
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
             strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4">
             <line x1="5" y1="12" x2="19" y2="12" />

@@ -3,12 +3,9 @@ import { AVV_VERSION, AVV_DATE } from './avv-content'
 
 export interface AvvPdfData {
   companyName: string
-  companyAddress: string
-  companyRegisterNo?: string
-  signerName: string
-  signerRole: string
-  signedAt: Date
-  signatureDataUrl: string
+  acceptedAt: Date
+  avvVersion: string
+  acceptedByEmail?: string
   ip?: string
   userAgent?: string
 }
@@ -27,7 +24,7 @@ const MUTED = '#94a3b8'
 const RULE = '#e2e8f0'
 
 const PAGE_MARGIN = 50
-const CONTENT_WIDTH_OFFSET = 100 // total horizontal margins
+const CONTENT_WIDTH_OFFSET = 100
 
 type Doc = InstanceType<typeof PDFDocument>
 
@@ -49,7 +46,7 @@ export async function buildAvvPdf(data: AvvPdfData): Promise<Buffer> {
     doc.addPage()
     annex3(doc)
     doc.addPage()
-    signaturePage(doc, data)
+    acceptancePage(doc, data)
     pageNumbers(doc)
 
     doc.end()
@@ -60,7 +57,7 @@ function coverPage(doc: Doc, data: AvvPdfData) {
   doc.rect(0, 0, doc.page.width, 110).fill(DARK)
   doc.fillColor('#ffffff').fontSize(20).font('Helvetica-Bold').text('GateSign', PAGE_MARGIN, 36)
   doc.fillColor('#94a3b8').fontSize(11).font('Helvetica').text('Auftragsverarbeitungsvertrag nach Art. 28 DSGVO', PAGE_MARGIN, 64)
-  doc.fillColor('#94a3b8').fontSize(9).text(`Version ${AVV_VERSION} · Stand ${AVV_DATE}`, PAGE_MARGIN, 82)
+  doc.fillColor('#94a3b8').fontSize(9).text(`Version ${data.avvVersion} · Stand ${AVV_DATE}`, PAGE_MARGIN, 82)
 
   doc.y = 160
   doc.fillColor(DARK).fontSize(22).font('Helvetica-Bold')
@@ -70,12 +67,7 @@ function coverPage(doc: Doc, data: AvvPdfData) {
     .text('zwischen den nachfolgend genannten Parteien:', { width: doc.page.width - CONTENT_WIDTH_OFFSET })
 
   doc.moveDown(1.5)
-  partyBlock(doc, 'Verantwortlicher (Kunde)', [
-    data.companyName,
-    data.companyAddress,
-    data.companyRegisterNo ?? '',
-    `vertreten durch: ${data.signerName}, ${data.signerRole}`,
-  ].filter(Boolean))
+  partyBlock(doc, 'Verantwortlicher (Kunde)', [data.companyName])
 
   doc.moveDown(0.6)
   partyBlock(doc, 'Auftragsverarbeiter', [
@@ -89,8 +81,8 @@ function coverPage(doc: Doc, data: AvvPdfData) {
   doc.fillColor(MUTED).fontSize(9).font('Helvetica')
     .text(
       'Dieser Vertrag regelt die Verarbeitung personenbezogener Daten durch den Auftragsverarbeiter im Auftrag des Verantwortlichen ' +
-      'gemäß Art. 28 DSGVO im Zusammenhang mit der Nutzung der Software „GateSign". Die Annahme erfolgte elektronisch ' +
-      'während der Einrichtung des Accounts.',
+      'gemäß Art. 28 DSGVO im Zusammenhang mit der Nutzung der Software „GateSign". Die Annahme erfolgte elektronisch durch ' +
+      'Click-Wrap während der Registrierung; der Annahme-Nachweis befindet sich auf der letzten Seite.',
       PAGE_MARGIN, doc.y, { width: doc.page.width - CONTENT_WIDTH_OFFSET, align: 'justify' }
     )
 }
@@ -290,7 +282,6 @@ function annex2(doc: Doc) {
   ]
   const w = doc.page.width - CONTENT_WIDTH_OFFSET
   const colW = [w * 0.30, w * 0.40, w * 0.30]
-  // header
   const headerY = doc.y
   doc.rect(PAGE_MARGIN, headerY, w, 22).fill(RULE)
   doc.fillColor(DARK).fontSize(9).font('Helvetica-Bold')
@@ -334,59 +325,41 @@ function annex3(doc: Doc) {
   )
 }
 
-function signaturePage(doc: Doc, data: AvvPdfData) {
+function acceptancePage(doc: Doc, data: AvvPdfData) {
   doc.fillColor(DARK).fontSize(16).font('Helvetica-Bold')
-    .text('Elektronische Unterzeichnung', PAGE_MARGIN, doc.y, { width: doc.page.width - CONTENT_WIDTH_OFFSET })
+    .text('Annahme-Nachweis', PAGE_MARGIN, doc.y, { width: doc.page.width - CONTENT_WIDTH_OFFSET })
   doc.moveDown(0.4)
   doc.fillColor(SLATE).fontSize(10).font('Helvetica')
     .text(
-      'Die nachfolgende Unterschrift wurde während der elektronischen Annahme dieses Vertrages auf einem berührungsempfindlichen ' +
-      'Gerät erzeugt. Es handelt sich um eine einfache elektronische Signatur im Sinne von Art. 3 Nr. 10 eIDAS-Verordnung.',
+      'Die Annahme dieses Vertrages erfolgte elektronisch durch Click-Wrap. Der Verantwortliche hat im Registrierungs-Formular die ' +
+      'kombinierte Annahmeerklärung für Nutzungsbedingungen, Datenschutzerklärung und diesen Auftragsverarbeitungsvertrag aktiv bestätigt.',
       { width: doc.page.width - CONTENT_WIDTH_OFFSET, align: 'justify' }
     )
-  doc.moveDown(1.2)
+  doc.moveDown(1.5)
 
-  const sigY = doc.y
-  const sigW = 260
-  const sigH = 100
-  doc.lineWidth(0.5).strokeColor(RULE).rect(PAGE_MARGIN, sigY, sigW, sigH).stroke()
+  const startY = doc.y
+  const w = doc.page.width - CONTENT_WIDTH_OFFSET
+  doc.rect(PAGE_MARGIN, startY, w, 6).fill(RULE)
+  doc.y = startY + 16
 
-  const base64 = (data.signatureDataUrl ?? '').split(',')[1]
-  if (base64) {
-    try {
-      const buf = Buffer.from(base64, 'base64')
-      doc.image(buf, PAGE_MARGIN + 6, sigY + 6, { fit: [sigW - 12, sigH - 12], align: 'center', valign: 'center' })
-    } catch (e) {
-      console.error('[avv-pdf] failed to embed signature image:', e)
-    }
+  const item = (label: string, value: string) => {
+    doc.fillColor(MUTED).fontSize(9).font('Helvetica').text(label, PAGE_MARGIN, doc.y)
+    doc.fillColor(DARK).fontSize(11).font('Helvetica-Bold').text(value, PAGE_MARGIN, doc.y, { width: w })
+    doc.moveDown(0.6)
   }
+  item('Verantwortlicher', data.companyName)
+  if (data.acceptedByEmail) item('Annahme durch (E-Mail)', data.acceptedByEmail)
+  item('Zeitpunkt der Annahme', formatDateTime(data.acceptedAt))
+  item('AVV-Version', `${data.avvVersion} · Stand ${AVV_DATE}`)
+  if (data.ip) item('IP-Adresse zum Zeitpunkt der Annahme', data.ip)
+  if (data.userAgent) item('Browser / Gerät', truncate(data.userAgent, 200))
 
-  doc.fillColor(MUTED).fontSize(8).font('Helvetica').text('Unterschrift', PAGE_MARGIN, sigY + sigH + 4)
-
-  const metaX = PAGE_MARGIN + sigW + 30
-  let metaY = sigY
-  const metaItem = (label: string, value: string) => {
-    doc.fillColor(MUTED).fontSize(8).font('Helvetica').text(label, metaX, metaY)
-    doc.fillColor(DARK).fontSize(10).font('Helvetica-Bold').text(value, metaX, metaY + 10)
-    metaY += 32
-  }
-  metaItem('Unterzeichnende Person', `${data.signerName}, ${data.signerRole}`)
-  metaItem('Firma', data.companyName)
-  metaItem('Zeitpunkt der Annahme', formatDateTime(data.signedAt))
-
-  doc.y = sigY + sigH + 40
-  doc.fillColor(DARK).fontSize(11).font('Helvetica-Bold').text('Audit-Daten', PAGE_MARGIN, doc.y)
-  doc.moveDown(0.3)
-  doc.fillColor(SLATE).fontSize(9).font('Helvetica')
-  doc.text(`AVV-Version: ${AVV_VERSION}  ·  Stand: ${AVV_DATE}`, PAGE_MARGIN, doc.y)
-  if (data.ip) doc.text(`IP-Adresse zum Zeitpunkt der Annahme: ${data.ip}`, PAGE_MARGIN, doc.y)
-  if (data.userAgent) doc.text(`Browser/Gerät: ${truncate(data.userAgent, 140)}`, PAGE_MARGIN, doc.y, { width: doc.page.width - CONTENT_WIDTH_OFFSET })
-
-  doc.moveDown(1.2)
+  doc.moveDown(1)
   doc.fillColor(MUTED).fontSize(8).font('Helvetica').text(
-    'Hinweis: Die Unterzeichnung erfolgte elektronisch durch Anhaken einer ausdrücklichen Annahmeerklärung und Erzeugung einer ' +
-    'Signatur auf dem Signaturpad. Eine qualifizierte elektronische Signatur (QES) im Sinne der eIDAS-Verordnung wird hierfür ' +
-    'nicht erstellt; für den vorliegenden Vertragstyp ist die Textform ausreichend.',
+    'Die Annahme nach Art. 28 Abs. 9 DSGVO erfordert Textform (§ 126b BGB), nicht Schriftform (§ 126 BGB). ' +
+    'Click-Wrap-Annahmen sind nach herrschender Meinung der Aufsichtsbehörden ausreichend, sofern Inhalt, Zeitpunkt und ' +
+    'aktive Bestätigung dokumentiert sind. Dieser Nachweis liegt im Audit-Log des Auftragsverarbeiters und bleibt für ' +
+    'die Dauer des Vertragsverhältnisses verfügbar.',
     PAGE_MARGIN, doc.y, { width: doc.page.width - CONTENT_WIDTH_OFFSET, align: 'justify' }
   )
 }

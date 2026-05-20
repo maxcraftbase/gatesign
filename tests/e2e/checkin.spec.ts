@@ -27,7 +27,7 @@ test.describe('Check-in Terminal — Smoke Tests', () => {
     await page.getByRole('button', { name: 'Check-in starten' }).click()
     await page.getByText('Deutsch').click()
     // LKW / Besucher / Dienstleister müssen angezeigt werden
-    await expect(page.getByText('LKW-Fahrer')).toBeVisible()
+    await expect(page.getByText('LKW / Lieferung')).toBeVisible()
     await expect(page.getByText('Besucher')).toBeVisible()
     await expect(page.getByText('Dienstleister')).toBeVisible()
   })
@@ -35,7 +35,7 @@ test.describe('Check-in Terminal — Smoke Tests', () => {
   test('Formular erscheint nach Besuchertyp-Auswahl (LKW)', async ({ page }) => {
     await page.getByRole('button', { name: 'Check-in starten' }).click()
     await page.getByText('Deutsch').click()
-    await page.getByText('LKW-Fahrer').click()
+    await page.getByText('LKW / Lieferung').click()
     // Pflichtfelder Name + Firma + Kennzeichen
     await expect(page.getByPlaceholder(/name/i).first()).toBeVisible()
   })
@@ -43,7 +43,7 @@ test.describe('Check-in Terminal — Smoke Tests', () => {
   test('Vollständiger Check-in Flow (Deutsch / LKW)', async ({ page }) => {
     await page.getByRole('button', { name: 'Check-in starten' }).click()
     await page.getByText('Deutsch').click()
-    await page.getByText('LKW-Fahrer').click()
+    await page.getByText('LKW / Lieferung').click()
 
     // Formular ausfüllen — Reihenfolge: Name, Firma, Kennzeichen
     const inputs = page.locator('input[type="text"], input:not([type])')

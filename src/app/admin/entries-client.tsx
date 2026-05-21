@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import {
   Download, RefreshCw, FileText, Search, LogOut, FileSpreadsheet,
-  ChevronDown, Truck, User, Wrench, Users as UsersIcon,
+  ChevronDown, Truck, Users as UsersIcon,
   ShieldCheck, MapPin, ClipboardList, CheckCircle2,
 } from 'lucide-react'
 import { type Entry, VISITOR_TYPE_LABELS, formatDate } from '@/types/entry'
@@ -14,20 +14,6 @@ type Kpis = {
   currentlyOnSite: number
   truckTodayCount: number
   briefingRate: number
-}
-
-// Icon pro Besuchertyp (Card-Head)
-function VisitorTypeIcon({ type, className = 'w-5 h-5' }: { type: string | null; className?: string }) {
-  if (type === 'truck')   return <Truck   className={className} strokeWidth={1.75} />
-  if (type === 'visitor') return <User    className={className} strokeWidth={1.75} />
-  if (type === 'service') return <Wrench  className={className} strokeWidth={1.75} />
-  return <ClipboardList   className={className} strokeWidth={1.75} />
-}
-
-const TYPE_ICON_BG: Record<string, string> = {
-  truck:   'bg-amber-50 border-amber-100 text-amber-700',
-  visitor: 'bg-blue-50 border-blue-100 text-blue-700',
-  service: 'bg-violet-50 border-violet-100 text-violet-700',
 }
 
 // Relatives Zeitformat für „letzter Refresh vor X"
@@ -70,86 +56,153 @@ function KpiCard({
   )
 }
 
-// EntryCard — eine Layout-Logik für Desktop und Mobile
-function EntryCard({
-  entry, onClick, onCheckout, checkingOut, showNoteIcon,
+// Desktop: Tabellen-Row · Mobile: kompakte Karte
+function EntryRow({
+  entry, onClick, onCheckout, checkingOut,
 }: {
   entry: Entry
   onClick: (e: Entry) => void
   onCheckout: (e: React.MouseEvent, id: string) => void
   checkingOut: string | null
-  showNoteIcon: boolean
 }) {
-  const typeKey = entry.visitor_type ?? ''
   const typeInfo = entry.visitor_type ? VISITOR_TYPE_LABELS[entry.visitor_type] : null
-  const iconBgClass = TYPE_ICON_BG[typeKey] ?? 'bg-slate-50 border-slate-100 text-slate-500'
   const showCheckout = entry.visitor_type === 'visitor' || entry.visitor_type === 'service'
   const isCheckedOut = !!entry.departed_at
 
-  return (
-    <div
-      onClick={() => onClick(entry)}
-      className="bg-white border border-slate-200 hover:border-indigo-200 hover:shadow-sm rounded-2xl px-4 py-3.5 cursor-pointer transition-all"
-    >
-      <div className="flex items-start gap-3">
-        {/* Typ-Icon links */}
-        <div className={`w-10 h-10 rounded-lg border flex items-center justify-center flex-shrink-0 ${iconBgClass}`}>
-          <VisitorTypeIcon type={entry.visitor_type} />
-        </div>
+  const briefedBadge = entry.briefing_accepted && (
+    <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 text-[11px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap">
+      <CheckCircle2 className="w-3 h-3" strokeWidth={2.5} />
+      Belehrt
+    </span>
+  )
 
-        {/* Hauptinfo */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-semibold text-slate-900 text-base truncate">{entry.driver_name}</span>
+  const action = showCheckout && (
+    isCheckedOut ? (
+      <span className="inline-flex items-center gap-1 bg-slate-100 text-slate-600 text-[11px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap">
+        <LogOut className="w-3 h-3" strokeWidth={2.5} />
+        {new Date(entry.departed_at!).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}
+      </span>
+    ) : (
+      <button
+        onClick={(e) => onCheckout(e, entry.id)}
+        disabled={checkingOut === entry.id}
+        className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-md border border-slate-200 text-slate-600 hover:text-slate-900 hover:border-slate-400 transition-colors disabled:opacity-50 whitespace-nowrap"
+      >
+        <LogOut className="w-3 h-3" strokeWidth={2.25} />
+        {checkingOut === entry.id ? 'Lädt…' : 'Abmelden'}
+      </button>
+    )
+  )
+
+  return (
+    <>
+      {/* Desktop: Tabellen-Row im Grid */}
+      <div
+        onClick={() => onClick(entry)}
+        className="hidden md:grid grid-cols-[110px_90px_minmax(0,1fr)_120px_180px] gap-3 items-center bg-white border border-slate-200 hover:border-indigo-200 hover:bg-slate-50/30 rounded-xl px-4 py-3 cursor-pointer transition-colors"
+      >
+        {/* Zeit */}
+        <span className="text-xs text-slate-500 tabular-nums whitespace-nowrap">
+          {formatDate(entry.created_at)}
+        </span>
+
+        {/* Typ */}
+        <span>
+          {typeInfo ? (
+            <span className={`inline-flex items-center text-[11px] font-semibold px-2 py-0.5 rounded-full ${typeInfo.color}`}>
+              {typeInfo.label}
+            </span>
+          ) : (
+            <span className="text-slate-300 text-xs">—</span>
+          )}
+        </span>
+
+        {/* Person · Firma · Referenz · Notiz */}
+        <div className="min-w-0">
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="font-semibold text-slate-900 text-sm truncate">{entry.driver_name}</span>
             {entry.reference_number && (
-              <span className="font-mono text-[11px] text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">
+              <span className="font-mono text-[10px] text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded shrink-0">
                 {entry.reference_number}
               </span>
             )}
-            {showNoteIcon && entry.staff_note && (
-              <FileText className="w-3.5 h-3.5 text-slate-400" strokeWidth={1.75} aria-label="Notiz vorhanden" />
+            {entry.staff_note && (
+              <FileText className="w-3.5 h-3.5 text-slate-400 shrink-0" strokeWidth={1.75} aria-label="Notiz vorhanden" />
             )}
           </div>
-          <div className="mt-0.5 text-sm text-slate-500 flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
-            {typeInfo && <span className="font-medium text-slate-600">{typeInfo.label}</span>}
-            {typeInfo && entry.company_name && <span className="text-slate-300">·</span>}
-            {entry.company_name && <span className="truncate">{entry.company_name}</span>}
-            {entry.license_plate && <span className="text-slate-300">·</span>}
-            {entry.license_plate && <span className="font-mono text-slate-600">{entry.license_plate}</span>}
-          </div>
+          {entry.company_name && (
+            <p className="text-xs text-slate-500 truncate mt-0.5">{entry.company_name}</p>
+          )}
         </div>
 
-        {/* Rechte Spalte */}
-        <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
-          <span className="text-xs text-slate-500 tabular-nums whitespace-nowrap">{formatDate(entry.created_at)}</span>
-          <div className="flex items-center gap-1.5">
-            {entry.briefing_accepted && (
-              <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 text-[11px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap">
-                <CheckCircle2 className="w-3 h-3" strokeWidth={2.5} />
-                Belehrt
+        {/* Kennzeichen */}
+        <span>
+          {entry.license_plate ? (
+            <span className="font-mono text-xs text-slate-700 bg-slate-100 px-2 py-0.5 rounded w-fit inline-block">
+              {entry.license_plate}
+            </span>
+          ) : (
+            <span className="text-slate-300 text-xs">—</span>
+          )}
+        </span>
+
+        {/* Status / Aktion */}
+        <div
+          className="flex items-center justify-end gap-1.5"
+          onClick={(e) => { if (action) e.stopPropagation() }}
+        >
+          {briefedBadge}
+          {action}
+        </div>
+      </div>
+
+      {/* Mobile: kompakte Karte */}
+      <div
+        onClick={() => onClick(entry)}
+        className="md:hidden bg-white border border-slate-200 hover:border-indigo-200 rounded-xl px-4 py-3 cursor-pointer transition-colors"
+      >
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex items-center gap-2 min-w-0">
+            {typeInfo && (
+              <span className={`inline-flex items-center text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0 ${typeInfo.color}`}>
+                {typeInfo.label}
               </span>
             )}
-            {showCheckout && (
-              isCheckedOut ? (
-                <span className="inline-flex items-center gap-1 bg-slate-100 text-slate-600 text-[11px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap">
-                  <LogOut className="w-3 h-3" strokeWidth={2.5} />
-                  {new Date(entry.departed_at!).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}
-                </span>
-              ) : (
-                <button
-                  onClick={(e) => onCheckout(e, entry.id)}
-                  disabled={checkingOut === entry.id}
-                  className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-md border border-slate-200 text-slate-600 hover:text-slate-900 hover:border-slate-400 transition-colors disabled:opacity-50 whitespace-nowrap"
-                >
-                  <LogOut className="w-3 h-3" strokeWidth={2.25} />
-                  {checkingOut === entry.id ? 'Lädt…' : 'Abmelden'}
-                </button>
-              )
+            <span className="font-semibold text-slate-900 text-sm truncate">{entry.driver_name}</span>
+          </div>
+          <span className="text-[11px] text-slate-500 tabular-nums whitespace-nowrap shrink-0">
+            {formatDate(entry.created_at)}
+          </span>
+        </div>
+        <div className="mt-1 flex items-center gap-1.5 flex-wrap text-xs text-slate-500">
+          {entry.company_name && <span className="truncate">{entry.company_name}</span>}
+          {entry.license_plate && (
+            <span className="font-mono text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded text-[11px]">
+              {entry.license_plate}
+            </span>
+          )}
+          {entry.reference_number && (
+            <span className="font-mono text-[10px] text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">
+              {entry.reference_number}
+            </span>
+          )}
+        </div>
+        <div className="mt-2 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-1.5">
+            {briefedBadge}
+            {entry.staff_note && (
+              <span className="inline-flex items-center gap-1 text-slate-400 text-[11px]">
+                <FileText className="w-3 h-3" strokeWidth={1.75} />
+                Notiz
+              </span>
             )}
+          </div>
+          <div onClick={(e) => { if (action) e.stopPropagation() }}>
+            {action}
           </div>
         </div>
       </div>
-    </div>
+    </>
   )
 }
 
@@ -455,15 +508,22 @@ export function AdminEntriesClient() {
           )}
         </div>
       ) : (
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-1.5">
+          {/* Desktop: Tabellen-Header */}
+          <div className="hidden md:grid grid-cols-[110px_90px_minmax(0,1fr)_120px_180px] gap-3 px-4 py-2 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+            <span>Zeit</span>
+            <span>Typ</span>
+            <span>Person · Firma</span>
+            <span>Kennzeichen</span>
+            <span className="text-right">Status</span>
+          </div>
           {entries.map(entry => (
-            <EntryCard
+            <EntryRow
               key={entry.id}
               entry={entry}
               onClick={setSelectedEntry}
               onCheckout={handleCheckout}
               checkingOut={checkingOut}
-              showNoteIcon
             />
           ))}
         </div>

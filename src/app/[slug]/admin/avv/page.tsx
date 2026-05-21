@@ -2,7 +2,6 @@ import { redirect } from 'next/navigation'
 import { getAdminContext } from '@/lib/admin-auth'
 import { getCompanyAvvState } from '@/lib/avv-storage'
 import { AVV_VERSION, AVV_DATE, AvvDocument } from '@/lib/avv-content'
-import { SettingsSubNav } from '@/components/admin/SettingsSubNav'
 import { AvvSignClient } from './avv-sign-client'
 
 export default async function AdminAvvPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -12,16 +11,13 @@ export default async function AdminAvvPage({ params }: { params: Promise<{ slug:
 
   if (ctx.role !== 'admin') {
     return (
-      <>
-        <SettingsSubNav slug={slug} />
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-8 max-w-2xl">
-          <h1 className="text-xl font-bold text-slate-900 mb-2">Nur für Administratoren</h1>
-          <p className="text-sm text-slate-600">
-            Der Auftragsverarbeitungsvertrag (AVV) kann nur von Administratoren des Unternehmens-Accounts angenommen werden.
-            Bitte wenden Sie sich an Ihren Administrator.
-          </p>
-        </div>
-      </>
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-8 max-w-2xl">
+        <h1 className="text-xl font-bold text-slate-900 mb-2">Nur für Administratoren</h1>
+        <p className="text-sm text-slate-600">
+          Der Auftragsverarbeitungsvertrag (AVV) kann nur von Administratoren des Unternehmens-Accounts angenommen werden.
+          Bitte wenden Sie sich an Ihren Administrator.
+        </p>
+      </div>
     )
   }
 
@@ -32,9 +28,7 @@ export default async function AdminAvvPage({ params }: { params: Promise<{ slug:
     const controller = { companyName: state.name }
     const acceptedAt = new Date(state.avv_signed_at!)
     return (
-      <>
-        <SettingsSubNav slug={slug} />
-        <div className="max-w-3xl">
+      <div className="max-w-3xl">
           <h1 className="text-2xl font-bold text-slate-900 mb-2">Auftragsverarbeitungsvertrag (AVV)</h1>
           <p className="text-sm text-slate-500 mb-6">Art. 28 DSGVO · Version {state.avv_version ?? AVV_VERSION} · Stand {AVV_DATE}</p>
 
@@ -69,22 +63,18 @@ export default async function AdminAvvPage({ params }: { params: Promise<{ slug:
             </a>
           </div>
 
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-8">
-            <AvvDocument controller={controller} />
-          </div>
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 sm:p-8">
+          <AvvDocument controller={controller} />
         </div>
-      </>
+      </div>
     )
   }
 
   return (
-    <>
-      <SettingsSubNav slug={slug} />
-      <AvvSignClient
-        slug={slug}
-        defaultCompanyName={ctx.company.name}
-        adminEmail={ctx.email}
-      />
-    </>
+    <AvvSignClient
+      slug={slug}
+      defaultCompanyName={ctx.company.name}
+      adminEmail={ctx.email}
+    />
   )
 }

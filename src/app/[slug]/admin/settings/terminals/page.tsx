@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import { getAdminContext } from '@/lib/admin-auth'
 import { TerminalsClient } from '@/app/admin/terminals-client'
-import { SettingsSubNav } from '@/components/admin/SettingsSubNav'
+import { SettingsShell } from '@/components/admin/SettingsShell'
 
 export default async function TerminalsPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
@@ -9,9 +9,8 @@ export default async function TerminalsPage({ params }: { params: Promise<{ slug
   if (!ctx) redirect('/login')
   if (ctx.role !== 'admin') redirect(`/${slug}/admin`)
   return (
-    <>
-      <SettingsSubNav slug={slug} />
+    <SettingsShell slug={slug}>
       <TerminalsClient slug={slug} />
-    </>
+    </SettingsShell>
   )
 }

@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import { getAdminContext } from '@/lib/admin-auth'
-import { SettingsSubNav } from '@/components/admin/SettingsSubNav'
+import { SettingsShell } from '@/components/admin/SettingsShell'
 import { AccountClient } from '@/app/admin/account-client'
 
 export default async function AccountPage({ params }: { params: Promise<{ slug: string }> }) {
@@ -9,9 +9,8 @@ export default async function AccountPage({ params }: { params: Promise<{ slug: 
   if (!ctx) redirect(`/${slug}/admin/login`)
 
   return (
-    <>
-      <SettingsSubNav slug={slug} />
+    <SettingsShell slug={slug}>
       <AccountClient />
-    </>
+    </SettingsShell>
   )
 }

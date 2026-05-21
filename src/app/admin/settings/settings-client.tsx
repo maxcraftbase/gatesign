@@ -91,7 +91,15 @@ function DayRow({ label, closedKey, hoursKey, settings, setSettings }: {
   )
 }
 
-export function AdminSettingsClient() {
+type SettingsSection = 'general' | 'safety' | 'hints'
+
+const SECTION_META: Record<SettingsSection, { title: string; subtitle: string }> = {
+  general: { title: 'Einstellungen', subtitle: 'Logo, Firma, Felder, Betriebszeiten, Dokumente, E-Mail-Bericht.' },
+  safety:  { title: 'Sicherheitsregeln', subtitle: 'Welche Regeln Besucher und Fahrer bestätigen — automatisch übersetzt.' },
+  hints:   { title: 'Texthinweise', subtitle: 'Eigene Hinweise am Terminal — automatisch übersetzt.' },
+}
+
+export function AdminSettingsClient({ section = 'general' }: { section?: SettingsSection } = {}) {
   const [settings, setSettings] = useState<Settings>({
     company_name: '',
     logo_url: '',
@@ -358,17 +366,19 @@ export function AdminSettingsClient() {
     <div className="max-w-3xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-slate-900">Einstellungen</h1>
-          <p className="text-slate-500 text-sm mt-1">Check-in Terminal Konfiguration</p>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">{SECTION_META[section].title}</h1>
+          <p className="text-slate-500 text-sm mt-1">{SECTION_META[section].subtitle}</p>
         </div>
         <div className="flex items-center gap-3">
-          <a href="/einrichtung" target="_blank" rel="noreferrer"
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-semibold hover:bg-slate-50 transition-colors text-sm">
-            <BookOpen className="w-4 h-4" />
-            Einrichtungsanleitung
-          </a>
+          {section === 'general' && (
+            <a href="/einrichtung" target="_blank" rel="noreferrer"
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-semibold hover:bg-slate-50 transition-colors text-sm">
+              <BookOpen className="w-4 h-4" />
+              Einrichtungsanleitung
+            </a>
+          )}
           <button onClick={handleSave} disabled={saving}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-900 text-white font-semibold hover:bg-slate-700 disabled:opacity-50 transition-colors">
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 text-white font-semibold hover:bg-indigo-700 disabled:opacity-50 transition-colors">
             <Save className="w-4 h-4" />
             {saving ? 'Speichern…' : 'Speichern'}
           </button>
@@ -378,6 +388,7 @@ export function AdminSettingsClient() {
       {error && <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 mb-4 text-sm">{error}</div>}
       {success && <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-xl px-4 py-3 mb-4 text-sm">Erfolgreich gespeichert.</div>}
 
+      {section === 'general' && (<>
       {/* Allgemein */}
       <div className="bg-white rounded-2xl border border-slate-100 p-6 mb-6">
         <h2 className="text-lg font-bold text-slate-900 mb-5">Allgemein</h2>
@@ -615,7 +626,9 @@ export function AdminSettingsClient() {
           <DayRow label="Sonntag" closedKey="sun_closed" hoursKey="hours_sun" settings={settings} setSettings={setSettings} />
         </div>
       </div>
+      </>)}
 
+      {section === 'safety' && (<>
       {/* Sicherheitsregeln */}
       <div className="bg-white rounded-2xl border border-slate-100 p-6 mb-6">
         <div className="flex items-center justify-between mb-1">
@@ -698,7 +711,9 @@ export function AdminSettingsClient() {
           )
         })}
       </div>
+      </>)}
 
+      {section === 'hints' && (<>
       {/* Texthinweise */}
       <div className="bg-white rounded-2xl border border-slate-100 p-6 mb-6">
         <h2 className="text-lg font-bold text-slate-900 mb-1">Texthinweise</h2>
@@ -795,7 +810,9 @@ export function AdminSettingsClient() {
           </button>
         </div>
       </div>
+      </>)}
 
+      {section === 'general' && (<>
       {/* Hinweisdokumente */}
       <div className="bg-white rounded-2xl border border-slate-100 p-6 mb-6">
         <h2 className="text-lg font-bold text-slate-900 mb-1">Hinweisdokumente</h2>
@@ -886,10 +903,11 @@ export function AdminSettingsClient() {
           Der Bericht wird täglich nach Mitternacht für den Vortag versendet, sofern Einträge vorliegen.
         </p>
       </div>
+      </>)}
 
       <div className="flex justify-end pb-8">
         <button onClick={handleSave} disabled={saving}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-900 text-white font-semibold hover:bg-slate-700 disabled:opacity-50 transition-colors">
+          className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 text-white font-semibold hover:bg-indigo-700 disabled:opacity-50 transition-colors">
           <Save className="w-4 h-4" />
           {saving ? 'Speichern…' : 'Speichern'}
         </button>

@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import { getAdminContext } from '@/lib/admin-auth'
-import { SettingsSubNav } from '@/components/admin/SettingsSubNav'
+import { SettingsShell } from '@/components/admin/SettingsShell'
 import { supabaseUrl, serviceKey } from '@/lib/supabase-server'
 import { isStripeConfigured } from '@/lib/stripe'
 import { normalizePlan, type PlanName, type BillingCycle } from '@/lib/subscription'
@@ -58,14 +58,13 @@ export default async function BillingPage({
   }
 
   return (
-    <>
-      <SettingsSubNav slug={slug} />
+    <SettingsShell slug={slug}>
       <BillingClient
         state={state}
         stripeReady={isStripeConfigured()}
         successFlag={sp.success === '1'}
         canceledFlag={sp.canceled === '1'}
       />
-    </>
+    </SettingsShell>
   )
 }

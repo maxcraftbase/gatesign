@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { sendEmail } from '@/lib/brevo'
 import { supabaseUrl, serviceKey } from '@/lib/supabase-server'
+import { buildCheckInsXlsx } from '@/lib/excel-export'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -10,6 +11,21 @@ interface Company {
   slug: string
   email: string | null
   subscription_status: string | null
+}
+
+type AttachmentFormat = 'csv' | 'xlsx' | 'both'
+
+const DEFAULT_ATTACHMENT_FORMAT: AttachmentFormat = 'both'
+
+function parseAttachmentFormat(value: string | undefined): AttachmentFormat {
+  if (value === 'csv' || value === 'xlsx' || value === 'both') return value
+  return DEFAULT_ATTACHMENT_FORMAT
+}
+
+function attachmentHintLabel(format: AttachmentFormat): string {
+  if (format === 'csv') return 'CSV-Datei'
+  if (format === 'xlsx') return 'Excel-Datei'
+  return 'CSV- und Excel-Datei'
 }
 
 interface CheckIn {
@@ -81,7 +97,7 @@ function formatDate(iso: string): string {
   })
 }
 
-function buildHTML(company: Company, rows: CheckIn[], dateLabel: string): string {
+function buildHTML(company: Company, rows: CheckIn[], dateLabel: string, attachmentFormat: AttachmentFormat): string {
   const byType = rows.reduce<Record<string, number>>((acc, r) => {
     acc[r.visitor_type] = (acc[r.visitor_type] ?? 0) + 1
     return acc
@@ -103,8 +119,9 @@ function buildHTML(company: Company, rows: CheckIn[], dateLabel: string): string
       <td style="padding:6px 12px;border-bottom:1px solid #f5f5f5;font-size:13px;font-family:monospace;">${escapeHTML(r.license_plate)}</td>
     </tr>`).join('')
 
+  const hintLabel = attachmentHintLabel(attachmentFormat)
   const moreNote = rows.length > 20
-    ? `<p style="font-size:13px;color:#888;margin:8px 0 0;">… und ${rows.length - 20} weitere Einträge (vollständig im CSV-Anhang)</p>`
+    ? `<p style="font-size:13px;color:#888;margin:8px 0 0;">… und ${rows.length - 20} weitere Einträge (vollständig im Anhang)</p>`
     : ''
 
   return `<!DOCTYPE html>
@@ -165,12 +182,12 @@ function buildHTML(company: Company, rows: CheckIn[], dateLabel: string): string
           </td>
         </tr>
 
-        <!-- CSV note -->
+        <!-- Attachment note -->
         <tr>
           <td style="padding:0 32px 24px;">
             <div style="background:#eff6ff;border-radius:6px;padding:14px 16px;">
               <p style="margin:0;font-size:13px;color:#1d4ed8;">
-                📎 <strong>CSV-Datei im Anhang</strong> — alle Einträge vollständig, direkt in Excel öffnen.
+                📎 <strong>${hintLabel} im Anhang</strong> — alle Einträge vollständig.
               </p>
             </div>
           </td>
@@ -237,7 +254,25 @@ export async function POST(req: NextRequest) {
     c.subscription_status !== 'inactive'
   )
 
-  const results: { company: string; sent: boolean; count: number; error?: string }[] = []
+  // Bulk-load digest_attachment_format setting for all active companies
+  const formatByCompany = new Map<string, AttachmentFormat>()
+  if (activeCompanies.length > 0) {
+    const companyIds = activeCompanies.map(c => c.id).join(',')
+    const settingsRes = await fetch(
+      `${supabaseUrl}/rest/v1/app_settings?company_id=in.(${companyIds})&key=eq.digest_attachment_format&select=company_id,value`,
+      { headers, cache: 'no-store' }
+    )
+    if (settingsRes.ok) {
+      const rows: { company_id: string; value: string }[] = await settingsRes.json()
+      for (const row of rows) {
+        formatByCompany.set(row.company_id, parseAttachmentFormat(row.value))
+      }
+    } else {
+      console.warn('[daily-digest] Konnte digest_attachment_format-Settings nicht laden, nutze Default für alle Firmen')
+    }
+  }
+
+  const results: { company: string; sent: boolean; count: number; format?: AttachmentFormat; error?: string }[] = []
 
   for (const company of activeCompanies) {
     try {
@@ -255,18 +290,28 @@ export async function POST(req: NextRequest) {
         continue
       }
 
-      const csv = buildCSV(checkIns)
-      const html = buildHTML(company, checkIns, dateLabel)
-      const filename = `gatesign-${company.slug}-${yesterdayUTC.toISOString().slice(0, 10)}.csv`
+      const format = formatByCompany.get(company.id) ?? DEFAULT_ATTACHMENT_FORMAT
+      const baseName = `gatesign-${company.slug}-${yesterdayUTC.toISOString().slice(0, 10)}`
+      const attachments: { name: string; content: Buffer }[] = []
+
+      if (format === 'csv' || format === 'both') {
+        attachments.push({ name: `${baseName}.csv`, content: buildCSV(checkIns) })
+      }
+      if (format === 'xlsx' || format === 'both') {
+        const xlsxBytes = await buildCheckInsXlsx(checkIns)
+        attachments.push({ name: `${baseName}.xlsx`, content: Buffer.from(xlsxBytes) })
+      }
+
+      const html = buildHTML(company, checkIns, dateLabel, format)
 
       await sendEmail({
         to: company.email!,
         subject: `GateSign Tagesbericht – ${company.name} – ${dateLabel}`,
         html,
-        attachments: [{ name: filename, content: csv }],
+        attachments,
       })
 
-      results.push({ company: company.name, sent: true, count: checkIns.length })
+      results.push({ company: company.name, sent: true, count: checkIns.length, format })
     } catch (err) {
       console.error(`[daily-digest] Fehler bei ${company.name}:`, err)
       results.push({ company: company.name, sent: false, count: 0, error: String(err) })

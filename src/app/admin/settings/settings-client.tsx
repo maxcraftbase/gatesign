@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { Save, BookOpen, Plus, X, FileText, Trash2, Languages, ChevronDown, ChevronUp } from 'lucide-react'
+import { Save, BookOpen, Plus, X, FileText, Trash2, Languages, ChevronDown, ChevronUp, Mail } from 'lucide-react'
 import { SAFETY_RULES, SAFETY_RULE_CATEGORIES } from '@/lib/safety-rules'
 import { IsoSign } from '@/components/IsoSign'
 
@@ -41,6 +41,7 @@ interface Settings {
   briefing_pdf_service: string
   settings_password: string
   contact_persons: string
+  digest_attachment_format: string  // 'csv' | 'xlsx' | 'both'
   // Configurable field visibility/required per visitor type
   plate_show_types: string
   plate_required_types: string
@@ -117,6 +118,7 @@ export function AdminSettingsClient() {
     briefing_pdf_service: '',
     settings_password: '',
     contact_persons: '[]',
+    digest_attachment_format: 'both',
     plate_show_types: '["truck","visitor","service"]',
     plate_required_types: '["truck","visitor","service"]',
     company_show_types: '["truck","visitor","service"]',
@@ -834,6 +836,55 @@ export function AdminSettingsClient() {
             )
           })}
         </div>
+      </div>
+
+      {/* E-Mail-Bericht */}
+      <div className="bg-white rounded-2xl border border-slate-100 p-6 mb-6">
+        <div className="flex items-center gap-2 mb-1">
+          <Mail className="w-5 h-5 text-slate-600" />
+          <h2 className="text-lg font-bold text-slate-900">E-Mail-Bericht</h2>
+        </div>
+        <p className="text-sm text-slate-500 mb-5">
+          Format des täglichen Tagesberichts an die hinterlegte Mail-Adresse.
+        </p>
+
+        <label className={labelCls}>Anhang-Format</label>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+          {([
+            { value: 'both', label: 'CSV + Excel', desc: 'Beide Formate, eines pro Workflow' },
+            { value: 'xlsx', label: 'Nur Excel (.xlsx)', desc: 'Formatiert mit Filter und Header' },
+            { value: 'csv', label: 'Nur CSV', desc: 'Klassisches Text-Format mit Semikolon' },
+          ] as const).map(opt => {
+            const selected = settings.digest_attachment_format === opt.value
+            return (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => setSettings(s => ({ ...s, digest_attachment_format: opt.value }))}
+                className={`text-left rounded-xl border p-4 transition-colors ${
+                  selected
+                    ? 'border-blue-500 bg-blue-50'
+                    : 'border-slate-200 bg-white hover:border-slate-300'
+                }`}
+              >
+                <div className="flex items-center gap-2 mb-1">
+                  <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                    selected ? 'border-blue-600' : 'border-slate-300'
+                  }`}>
+                    {selected && <div className="w-2 h-2 rounded-full bg-blue-600" />}
+                  </div>
+                  <span className={`text-sm font-semibold ${selected ? 'text-blue-700' : 'text-slate-800'}`}>
+                    {opt.label}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500 ml-6">{opt.desc}</p>
+              </button>
+            )
+          })}
+        </div>
+        <p className="text-xs text-slate-400 mt-3">
+          Der Bericht wird täglich nach Mitternacht für den Vortag versendet, sofern Einträge vorliegen.
+        </p>
       </div>
 
       <div className="flex justify-end pb-8">

@@ -2,11 +2,25 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Check, CreditCard, ExternalLink, AlertCircle, Sparkles, Clock } from 'lucide-react'
+import {
+  Check, CreditCard, ExternalLink, AlertCircle, Sparkles, Clock,
+  Printer, FileSpreadsheet, Palette, Building2, Languages, Headset, CalendarDays,
+} from 'lucide-react'
 import { clsx } from 'clsx'
 import { Button } from '@/components/ui/Button'
 import { ADDON_REGISTRY, ALL_ADDON_KEYS, type AddonKey } from '@/lib/addons'
 import type { PlanName, BillingCycle } from '@/lib/subscription'
+
+/** Lucide-Icon pro Add-on. Konsistent mit AdminNav/SettingsSubNav-Styling. */
+const ADDON_ICONS: Record<AddonKey, React.ReactNode> = {
+  printer:              <Printer        className="w-5 h-5" strokeWidth={1.75} />,
+  audit_export:         <FileSpreadsheet className="w-5 h-5" strokeWidth={1.75} />,
+  custom_branding:      <Palette        className="w-5 h-5" strokeWidth={1.75} />,
+  extra_location:       <Building2      className="w-5 h-5" strokeWidth={1.75} />,
+  briefing_translation: <Languages      className="w-5 h-5" strokeWidth={1.75} />,
+  priority_support:     <Headset        className="w-5 h-5" strokeWidth={1.75} />,
+  outlook:              <CalendarDays   className="w-5 h-5" strokeWidth={1.75} />,
+}
 
 export interface BillingCompanyState {
   plan: PlanName
@@ -361,7 +375,9 @@ export function BillingClient({
                   isComingSoon && 'opacity-70',
                 )}
               >
-                <div className="text-2xl leading-none mt-0.5">{def.icon}</div>
+                <div className="w-10 h-10 rounded-lg border border-slate-200 bg-slate-50 flex items-center justify-center text-slate-700 shrink-0">
+                  {ADDON_ICONS[key]}
+                </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap mb-0.5">
                     <h4 className="text-sm font-semibold text-slate-900">{def.label}</h4>

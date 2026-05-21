@@ -8,7 +8,9 @@ export function getStripe(): Stripe {
   if (_stripe) return _stripe
   const key = env.STRIPE_SECRET_KEY
   if (!key) throw new Error('STRIPE_SECRET_KEY ist nicht konfiguriert.')
-  _stripe = new Stripe(key, { apiVersion: '2026-03-25.dahlia' })
+  // apiVersion bewusst weggelassen → SDK nutzt jeweils ihren Default.
+  // Pinning der API-Version passiert über package.json (stripe ^22).
+  _stripe = new Stripe(key)
   return _stripe
 }
 

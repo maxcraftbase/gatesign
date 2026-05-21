@@ -170,10 +170,9 @@ export function AdminEntriesClient() {
   const [typeFilter, setTypeFilter] = useState('')
   const [terminalFilter, setTerminalFilter] = useState('')
   const [terminals, setTerminals] = useState<{ id: string; name: string }[]>([])
-  const [sort, setSort] = useState<{ col: string; dir: 'asc' | 'desc' }>({ col: 'created_at', dir: 'desc' })
   const [checkingOut, setCheckingOut] = useState<string | null>(null)
-  const [lastRefresh, setLastRefresh] = useState<Date>(new Date())
-  const [, setNow] = useState(Date.now())
+  const [lastRefresh, setLastRefresh] = useState<Date>(() => new Date())
+  const [, setNow] = useState(() => Date.now())
   const [exportMenuOpen, setExportMenuOpen] = useState(false)
   const exportMenuRef = useRef<HTMLDivElement>(null)
 
@@ -225,10 +224,10 @@ export function AdminEntriesClient() {
     mountedRef.current = true
     const isSearchChange = !isMount && search !== searchRef.current
     searchRef.current = search
-    const t = setTimeout(() => loadEntries(1, search, typeFilter, terminalFilter, sort.col, sort.dir), isSearchChange ? 350 : 0)
+    const t = setTimeout(() => loadEntries(1, search, typeFilter, terminalFilter, 'created_at', 'desc'), isSearchChange ? 350 : 0)
     return () => clearTimeout(t)
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search, typeFilter, terminalFilter, sort])
+  }, [search, typeFilter, terminalFilter])
 
   useEffect(() => {
     let active = true
@@ -246,7 +245,7 @@ export function AdminEntriesClient() {
   // Auto-Refresh alle 30 s
   useEffect(() => {
     const id = setInterval(() => {
-      const qs = new URLSearchParams({ page: String(page), sort: sort.col, dir: sort.dir })
+      const qs = new URLSearchParams({ page: String(page), sort: 'created_at', dir: 'desc' })
       if (search.trim()) qs.set('search', search.trim())
       if (typeFilter) qs.set('type', typeFilter)
       if (terminalFilter) qs.set('terminal', terminalFilter)
@@ -268,7 +267,7 @@ export function AdminEntriesClient() {
         .catch(() => {})
     }, 30_000)
     return () => clearInterval(id)
-  }, [search, typeFilter, terminalFilter, sort, page])
+  }, [search, typeFilter, terminalFilter, page])
 
   // „vor X s"-Anzeige live updaten
   useEffect(() => {
@@ -293,7 +292,7 @@ export function AdminEntriesClient() {
   }
 
   const totalPages = Math.max(1, Math.ceil(total / 50))
-  const refresh = () => loadEntries(page, search, typeFilter, terminalFilter, sort.col, sort.dir)
+  const refresh = () => loadEntries(page, search, typeFilter, terminalFilter, 'created_at', 'desc')
 
   return (
     <div>
@@ -474,7 +473,7 @@ export function AdminEntriesClient() {
       {totalPages > 1 && (
         <div className="flex items-center justify-center gap-3 mt-6">
           <button
-            onClick={() => loadEntries(page - 1, search, typeFilter, terminalFilter, sort.col, sort.dir)}
+            onClick={() => loadEntries(page - 1, search, typeFilter, terminalFilter, 'created_at', 'desc')}
             disabled={page <= 1}
             className="px-4 py-2 rounded-lg border border-slate-200 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
@@ -482,7 +481,7 @@ export function AdminEntriesClient() {
           </button>
           <span className="text-sm text-slate-500 tabular-nums">Seite {page} von {totalPages}</span>
           <button
-            onClick={() => loadEntries(page + 1, search, typeFilter, terminalFilter, sort.col, sort.dir)}
+            onClick={() => loadEntries(page + 1, search, typeFilter, terminalFilter, 'created_at', 'desc')}
             disabled={page >= totalPages}
             className="px-4 py-2 rounded-lg border border-slate-200 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >

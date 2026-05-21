@@ -5,8 +5,8 @@ import { usePathname } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import { clsx } from 'clsx'
 import {
-  SlidersHorizontal, MonitorCheck, FileText, Users, ScrollText,
-  CircleUser, FileSignature, CreditCard, ShieldCheck, MessageSquareText,
+  SlidersHorizontal, MonitorCheck, FileText, Users,
+  ShieldCheck, MessageSquareText,
   Menu, X,
 } from 'lucide-react'
 
@@ -44,15 +44,6 @@ function buildGroups(slug: string): NavGroup[] {
       label: 'Team',
       items: [
         { href: `${base}/users`, label: 'Nutzer', icon: <Users className="w-4 h-4" strokeWidth={1.75} /> },
-      ],
-    },
-    {
-      label: 'Konto',
-      items: [
-        { href: `${base}/account`, label: 'Profil',     icon: <CircleUser className="w-4 h-4" strokeWidth={1.75} /> },
-        { href: `${base}/billing`, label: 'Abrechnung', icon: <CreditCard className="w-4 h-4" strokeWidth={1.75} /> },
-        { href: `${base}/avv`,     label: 'AVV',        icon: <FileSignature className="w-4 h-4" strokeWidth={1.75} /> },
-        { href: `${base}/audit`,   label: 'Protokoll',  icon: <ScrollText className="w-4 h-4" strokeWidth={1.75} /> },
       ],
     },
   ]

@@ -6,7 +6,7 @@ import { useState, useRef, useEffect } from 'react'
 import { clsx } from 'clsx'
 import {
   ChevronDown, ClipboardList, Home, Settings,
-  LogOut, MonitorCheck, CircleUser,
+  LogOut, MonitorCheck, CircleUser, CreditCard, FileSignature, ScrollText,
 } from 'lucide-react'
 import type { Terminal } from '@/lib/company'
 
@@ -35,11 +35,7 @@ export function AdminNav({ slug, role, userName, companyName, terminals = [] }: 
   const isInSettings =
     pathname.startsWith(`${base}/settings`) ||
     pathname.startsWith(`${base}/users`) ||
-    pathname.startsWith(`${base}/audit`) ||
-    pathname.startsWith(`${base}/documents`) ||
-    pathname.startsWith(`${base}/account`) ||
-    pathname.startsWith(`${base}/avv`) ||
-    pathname.startsWith(`${base}/billing`)
+    pathname.startsWith(`${base}/documents`)
 
   const navItems = [
     { href: base,                       label: 'Einträge',      icon: <ClipboardList className="w-4 h-4" strokeWidth={1.75} />, active: pathname === base },
@@ -177,6 +173,34 @@ export function AdminNav({ slug, role, userName, companyName, terminals = [] }: 
                   <CircleUser className="w-4 h-4 text-slate-400" strokeWidth={1.75} />
                   Profil
                 </Link>
+                {role === 'admin' && (
+                  <>
+                    <Link
+                      href={`${base}/billing`}
+                      onClick={() => setUserOpen(false)}
+                      className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
+                    >
+                      <CreditCard className="w-4 h-4 text-slate-400" strokeWidth={1.75} />
+                      Abrechnung
+                    </Link>
+                    <Link
+                      href={`${base}/avv`}
+                      onClick={() => setUserOpen(false)}
+                      className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
+                    >
+                      <FileSignature className="w-4 h-4 text-slate-400" strokeWidth={1.75} />
+                      AVV
+                    </Link>
+                    <Link
+                      href={`${base}/audit`}
+                      onClick={() => setUserOpen(false)}
+                      className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
+                    >
+                      <ScrollText className="w-4 h-4 text-slate-400" strokeWidth={1.75} />
+                      Protokoll
+                    </Link>
+                  </>
+                )}
                 <button
                   type="button"
                   onClick={handleLogout}

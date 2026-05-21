@@ -66,7 +66,7 @@ export async function GET(req: NextRequest) {
       subscription_status: c.subscription_status ?? 'inactive',
       trial_ends_at: c.trial_ends_at,
       created_at: c.created_at,
-      plan: c.plan ?? 'starter',
+      plan: c.plan ?? 'solo',
       terminal_limit: c.terminal_limit,
       total_check_ins: companyCheckIns.length,
       check_ins_7d: checkIns7d,
@@ -94,7 +94,7 @@ export async function PATCH(req: NextRequest) {
 
   // Plan change: routes through applyPlan() so Stripe webhook can use the same path later
   if (plan !== undefined) {
-    const validPlans: PlanName[] = ['starter', 'professional', 'enterprise']
+    const validPlans: PlanName[] = ['solo', 'business', 'enterprise']
     if (!validPlans.includes(plan)) return NextResponse.json({ error: 'Ungültiger Plan' }, { status: 400 })
     const ok = await applyPlan(companyId, plan as PlanName)
     if (!ok) return NextResponse.json({ error: 'Plan-Update fehlgeschlagen' }, { status: 500 })

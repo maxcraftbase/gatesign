@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import * as Sentry from '@sentry/nextjs'
 import type Stripe from 'stripe'
 import { env } from '@/env'
-import { getStripe, planFromPriceId } from '@/lib/stripe'
+import { getStripe, planAndCycleFromPriceId } from '@/lib/stripe'
 import { applyPlan } from '@/lib/subscription'
+import { addonKeyFromPriceId, syncCompanyAddons } from '@/lib/addons'
 import { supabaseUrl, serviceKey } from '@/lib/supabase-server'
 
 export const runtime = 'nodejs'
@@ -65,14 +66,13 @@ function getCompanyIdFromSubscription(sub: Stripe.Subscription): string | null {
   return null
 }
 
+/**
+ * Verarbeitet ein Subscription-Created/Updated-Event.
+ * Eine Subscription kann mehrere Items haben: 1 Base-Plan + 0..n Add-ons.
+ */
 async function handleSubscriptionUpserted(sub: Stripe.Subscription, eventId: string) {
   const companyId = getCompanyIdFromSubscription(sub)
-  const item = sub.items.data[0]
-  const priceId = item?.price.id ?? null
-  const plan = planFromPriceId(priceId)
   const customerId = typeof sub.customer === 'string' ? sub.customer : sub.customer.id
-  const periodEndSec = item?.current_period_end ?? null
-  const currentPeriodEnd = periodEndSec ? new Date(periodEndSec * 1000) : undefined
   const status = sub.status
 
   if (!companyId) {
@@ -84,23 +84,50 @@ async function handleSubscriptionUpserted(sub: Stripe.Subscription, eventId: str
     })
     return
   }
-  if (!plan) {
+
+  // 1. Items klassifizieren: Base vs Add-on
+  let basePlanItem: Stripe.SubscriptionItem | null = null
+  let basePlan: ReturnType<typeof planAndCycleFromPriceId> = null
+  const addonItems: { item: Stripe.SubscriptionItem; addonKey: ReturnType<typeof addonKeyFromPriceId> }[] = []
+
+  for (const item of sub.items.data) {
+    const priceId = item.price.id
+    const planMatch = planAndCycleFromPriceId(priceId)
+    if (planMatch) {
+      basePlanItem = item
+      basePlan = planMatch
+      continue
+    }
+    const addonMatch = addonKeyFromPriceId(priceId)
+    if (addonMatch) {
+      addonItems.push({ item, addonKey: addonMatch })
+    }
+  }
+
+  if (!basePlan || !basePlanItem) {
     await logWebhookEvent('stripe.webhook.unknown_price', {
       event_id: eventId,
       subscription_id: sub.id,
-      price_id: priceId,
+      item_count: sub.items.data.length,
+      price_ids: sub.items.data.map(i => i.price.id),
     }, companyId)
     return
   }
 
-  await applyPlan(companyId, plan, {
+  // 2. Period-End vom Base-Item nehmen
+  const periodEndSec = basePlanItem.current_period_end ?? null
+  const currentPeriodEnd = periodEndSec ? new Date(periodEndSec * 1000) : undefined
+
+  // 3. Base-Plan auf Company anwenden
+  await applyPlan(companyId, basePlan.plan, {
     customerId,
     subscriptionId: sub.id,
-    priceId: priceId ?? undefined,
+    priceId: basePlanItem.price.id,
     currentPeriodEnd,
+    billingCycle: basePlan.cycle,
   })
 
-  // subscription_status separat schreiben (nicht Teil von applyPlan)
+  // 4. subscription_status separat schreiben
   await fetch(`${supabaseUrl}/rest/v1/companies?id=eq.${companyId}`, {
     method: 'PATCH',
     headers: {
@@ -112,12 +139,25 @@ async function handleSubscriptionUpserted(sub: Stripe.Subscription, eventId: str
     body: JSON.stringify({ subscription_status: status }),
   })
 
+  // 5. Add-ons in company_addons syncen
+  await syncCompanyAddons(
+    companyId,
+    addonItems
+      .filter(a => a.addonKey !== null)
+      .map(a => ({
+        addon_key: a.addonKey!,
+        stripe_subscription_item_id: a.item.id,
+        billing_cycle: basePlan!.cycle,
+      })),
+  )
+
   await logWebhookEvent('stripe.subscription.upserted', {
     event_id: eventId,
     subscription_id: sub.id,
-    plan,
+    plan: basePlan.plan,
+    cycle: basePlan.cycle,
     status,
-    price_id: priceId,
+    addons: addonItems.map(a => a.addonKey).filter(Boolean),
     current_period_end: currentPeriodEnd?.toISOString(),
   }, companyId)
 }
@@ -125,7 +165,7 @@ async function handleSubscriptionUpserted(sub: Stripe.Subscription, eventId: str
 async function handleSubscriptionDeleted(sub: Stripe.Subscription, eventId: string) {
   const customerId = typeof sub.customer === 'string' ? sub.customer : sub.customer.id
   const patch = {
-    plan: 'starter',
+    plan: 'solo',
     terminal_limit: 1,
     subscription_status: 'canceled',
     stripe_subscription_id: null,
@@ -157,6 +197,9 @@ async function handleSubscriptionDeleted(sub: Stripe.Subscription, eventId: stri
     })
     return
   }
+
+  // Add-ons vollständig entfernen — Sub ist weg, also keine Items mehr
+  await syncCompanyAddons(companyId, [])
 
   await logWebhookEvent('stripe.subscription.deleted', {
     event_id: eventId,

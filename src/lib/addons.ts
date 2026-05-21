@@ -1,0 +1,218 @@
+import { supabaseUrl, serviceKey } from '@/lib/supabase-server'
+import { env } from '@/env'
+import type { BillingCycle, PlanName } from '@/lib/subscription'
+
+/**
+ * Add-on-Registry: Single Source of Truth für alle Add-ons (Pricing v2).
+ * Neue Add-ons hier registrieren + Stripe-Prices in env.ts + Railway Vars setzen.
+ */
+
+export type AddonKey =
+  | 'printer'
+  | 'audit_export'
+  | 'custom_branding'
+  | 'extra_location'
+  | 'briefing_translation'
+  | 'priority_support'
+  | 'outlook'
+
+export type AddonStatus = 'active' | 'coming_soon'
+
+export interface AddonDefinition {
+  key: AddonKey
+  label: string
+  shortDescription: string
+  icon: string // Emoji für UI-Kürze
+  status: AddonStatus
+  pricing: {
+    monthly: number
+    yearly: number
+    /** Falls einmaliger Hardware-Bestandteil (z. B. Drucker) */
+    oneTimeHardware?: number
+  }
+  /** Plan-Namen, in denen das Add-on enthalten ist (also UI versteckt es) */
+  includedIn: PlanName[]
+  /** Stripe-Price-IDs aus env.ts (resolved at runtime) */
+  stripeMonthlyPriceId: () => string | null | undefined
+  stripeYearlyPriceId: () => string | null | undefined
+  stripeHardwarePriceId?: () => string | null | undefined
+}
+
+export const ADDON_REGISTRY: Record<AddonKey, AddonDefinition> = {
+  printer: {
+    key: 'printer',
+    label: 'Drucker-Print (Besucherkarten)',
+    shortDescription: 'Brother QL-810W druckt bei jedem Check-in eine Visitenkarte mit Foto, Name und Host.',
+    icon: '🖨️',
+    status: 'active',
+    pricing: { monthly: 19, yearly: 190, oneTimeHardware: 299 },
+    includedIn: ['enterprise'],
+    stripeMonthlyPriceId: () => env.STRIPE_PRICE_ADDON_PRINTER_MONTHLY,
+    stripeYearlyPriceId: () => env.STRIPE_PRICE_ADDON_PRINTER_YEARLY,
+    stripeHardwarePriceId: () => env.STRIPE_PRICE_ADDON_PRINTER_HARDWARE,
+  },
+  audit_export: {
+    key: 'audit_export',
+    label: 'Audit-Export (Excel/CSV)',
+    shortDescription: 'Audit-Log als Excel oder CSV exportieren — für DSGVO-Anfragen und Compliance.',
+    icon: '📥',
+    status: 'active',
+    pricing: { monthly: 19, yearly: 190 },
+    includedIn: ['business', 'enterprise'],
+    stripeMonthlyPriceId: () => env.STRIPE_PRICE_ADDON_AUDIT_EXPORT_MONTHLY,
+    stripeYearlyPriceId: () => env.STRIPE_PRICE_ADDON_AUDIT_EXPORT_YEARLY,
+  },
+  custom_branding: {
+    key: 'custom_branding',
+    label: 'Custom Branding',
+    shortDescription: 'Eigenes Logo und Firmenfarben am Terminal und in Briefings.',
+    icon: '🎨',
+    status: 'active',
+    pricing: { monthly: 19, yearly: 190 },
+    includedIn: ['enterprise'],
+    stripeMonthlyPriceId: () => env.STRIPE_PRICE_ADDON_CUSTOM_BRANDING_MONTHLY,
+    stripeYearlyPriceId: () => env.STRIPE_PRICE_ADDON_CUSTOM_BRANDING_YEARLY,
+  },
+  extra_location: {
+    key: 'extra_location',
+    label: 'Zusatz-Standort',
+    shortDescription: 'Weiterer Standort mit eigenem Slug, eigenem Admin und eigenen Terminals.',
+    icon: '🏢',
+    status: 'active',
+    pricing: { monthly: 29, yearly: 290 },
+    includedIn: ['enterprise'],
+    stripeMonthlyPriceId: () => env.STRIPE_PRICE_ADDON_EXTRA_LOCATION_MONTHLY,
+    stripeYearlyPriceId: () => env.STRIPE_PRICE_ADDON_EXTRA_LOCATION_YEARLY,
+  },
+  briefing_translation: {
+    key: 'briefing_translation',
+    label: 'KI-Briefing-Übersetzung',
+    shortDescription: 'Briefing-PDFs werden automatisch in alle 10 Sprachen übersetzt (DeepL).',
+    icon: '🤖',
+    status: 'active',
+    pricing: { monthly: 15, yearly: 150 },
+    includedIn: ['enterprise'],
+    stripeMonthlyPriceId: () => env.STRIPE_PRICE_ADDON_BRIEFING_TRANSLATION_MONTHLY,
+    stripeYearlyPriceId: () => env.STRIPE_PRICE_ADDON_BRIEFING_TRANSLATION_YEARLY,
+  },
+  priority_support: {
+    key: 'priority_support',
+    label: 'Prioritäts-Support',
+    shortDescription: 'Bevorzugte Bearbeitung Ihrer Support-Anfragen, ohne SLA-Garantie.',
+    icon: '📞',
+    status: 'active',
+    pricing: { monthly: 29, yearly: 290 },
+    includedIn: ['enterprise'],
+    stripeMonthlyPriceId: () => env.STRIPE_PRICE_ADDON_PRIORITY_SUPPORT_MONTHLY,
+    stripeYearlyPriceId: () => env.STRIPE_PRICE_ADDON_PRIORITY_SUPPORT_YEARLY,
+  },
+  outlook: {
+    key: 'outlook',
+    label: 'Outlook-Integration',
+    shortDescription: 'Pre-Registration via Outlook-Kalender, Host-Benachrichtigung und Microsoft SSO.',
+    icon: '🗓️',
+    status: 'coming_soon',
+    pricing: { monthly: 29, yearly: 290 },
+    includedIn: ['enterprise'],
+    stripeMonthlyPriceId: () => null,
+    stripeYearlyPriceId: () => null,
+  },
+}
+
+export const ALL_ADDON_KEYS = Object.keys(ADDON_REGISTRY) as AddonKey[]
+
+/** Add-on-Eintrag in DB. */
+export interface CompanyAddonRow {
+  company_id: string
+  addon_key: AddonKey
+  stripe_subscription_item_id: string | null
+  billing_cycle: BillingCycle
+  active_since: string
+}
+
+/** Liest alle aktiven Add-ons einer Company aus der DB. */
+export async function getCompanyAddons(companyId: string): Promise<CompanyAddonRow[]> {
+  const res = await fetch(
+    `${supabaseUrl}/rest/v1/company_addons?company_id=eq.${companyId}&select=company_id,addon_key,stripe_subscription_item_id,billing_cycle,active_since`,
+    { headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}` }, cache: 'no-store' },
+  )
+  if (!res.ok) return []
+  const rows: CompanyAddonRow[] = await res.json()
+  return rows.filter(r => ALL_ADDON_KEYS.includes(r.addon_key))
+}
+
+/**
+ * Prüft ob eine Company ein Add-on freigeschaltet hat — direkt aus DB.
+ * Inkludiert Add-ons die durch den Plan automatisch dazugehören (z. B. Audit-Export in Business).
+ */
+export async function hasAddon(companyId: string, addonKey: AddonKey, plan?: PlanName): Promise<boolean> {
+  const addon = ADDON_REGISTRY[addonKey]
+  if (!addon) return false
+
+  if (plan && addon.includedIn.includes(plan)) return true
+
+  const rows = await getCompanyAddons(companyId)
+  return rows.some(r => r.addon_key === addonKey)
+}
+
+/** Sucht den Add-on-Key zu einer Stripe Price-ID (für Webhook-Sync). */
+export function addonKeyFromPriceId(priceId: string | null | undefined): AddonKey | null {
+  if (!priceId) return null
+  for (const addon of Object.values(ADDON_REGISTRY)) {
+    if (addon.stripeMonthlyPriceId() === priceId) return addon.key
+    if (addon.stripeYearlyPriceId() === priceId) return addon.key
+  }
+  return null
+}
+
+/** Resolved Add-on Stripe Price-ID anhand Add-on-Key + Cycle. */
+export function addonPriceId(addonKey: AddonKey, cycle: BillingCycle): string | null {
+  const addon = ADDON_REGISTRY[addonKey]
+  if (!addon || addon.status !== 'active') return null
+  const id = cycle === 'yearly' ? addon.stripeYearlyPriceId() : addon.stripeMonthlyPriceId()
+  return id ?? null
+}
+
+/** Synchronisiert die DB mit dem aktuellen Stripe-Stand (Insert/Delete-Diff). */
+export async function syncCompanyAddons(
+  companyId: string,
+  desired: { addon_key: AddonKey; stripe_subscription_item_id: string; billing_cycle: BillingCycle }[],
+) {
+  const existing = await getCompanyAddons(companyId)
+  const desiredKeys = new Set(desired.map(d => d.addon_key))
+  const existingKeys = new Set(existing.map(e => e.addon_key))
+
+  // Entfernen: in DB, aber nicht mehr gewünscht
+  const toRemove = existing.filter(e => !desiredKeys.has(e.addon_key))
+  for (const row of toRemove) {
+    await fetch(
+      `${supabaseUrl}/rest/v1/company_addons?company_id=eq.${companyId}&addon_key=eq.${row.addon_key}`,
+      {
+        method: 'DELETE',
+        headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}`, Prefer: 'return=minimal' },
+      },
+    )
+  }
+
+  // Upsert: alles aus desired hinein
+  if (desired.length) {
+    const upsertRows = desired.map(d => ({
+      company_id: companyId,
+      addon_key: d.addon_key,
+      stripe_subscription_item_id: d.stripe_subscription_item_id,
+      billing_cycle: d.billing_cycle,
+      updated_at: new Date().toISOString(),
+      ...(existingKeys.has(d.addon_key) ? {} : { active_since: new Date().toISOString() }),
+    }))
+    await fetch(`${supabaseUrl}/rest/v1/company_addons`, {
+      method: 'POST',
+      headers: {
+        apikey: serviceKey,
+        Authorization: `Bearer ${serviceKey}`,
+        'Content-Type': 'application/json',
+        Prefer: 'resolution=merge-duplicates,return=minimal',
+      },
+      body: JSON.stringify(upsertRows),
+    })
+  }
+}

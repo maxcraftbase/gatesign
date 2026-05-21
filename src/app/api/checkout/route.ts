@@ -2,12 +2,15 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { getAdminContext } from '@/lib/admin-auth'
 import { logAction } from '@/lib/audit'
-import { getStripe, priceIdFromPlan, isStripeConfigured } from '@/lib/stripe'
+import { getStripe, basePriceId, isStripeConfigured } from '@/lib/stripe'
+import { ADDON_REGISTRY, ALL_ADDON_KEYS, addonPriceId, type AddonKey } from '@/lib/addons'
 import { supabaseUrl, serviceKey } from '@/lib/supabase-server'
 import { env } from '@/env'
 
 const BodySchema = z.object({
-  plan: z.enum(['starter', 'professional', 'enterprise']),
+  plan: z.enum(['solo', 'business', 'enterprise']),
+  cycle: z.enum(['monthly', 'yearly']).default('monthly'),
+  addons: z.array(z.enum(ALL_ADDON_KEYS as [AddonKey, ...AddonKey[]])).default([]),
 })
 
 export async function POST(req: NextRequest) {
@@ -29,13 +32,38 @@ export async function POST(req: NextRequest) {
 
     const parsed = BodySchema.safeParse(body)
     if (!parsed.success) {
-      return NextResponse.json({ error: 'Ungültiger Plan.' }, { status: 400 })
+      return NextResponse.json({ error: 'Ungültiger Plan oder Add-on.' }, { status: 400 })
     }
-    const { plan } = parsed.data
+    const { plan, cycle, addons } = parsed.data
 
-    const priceId = priceIdFromPlan(plan)
-    if (!priceId) {
-      return NextResponse.json({ error: `Kein Stripe-Preis für Plan "${plan}" konfiguriert.` }, { status: 503 })
+    // Base-Plan auflösen
+    const basePrice = basePriceId(plan, cycle)
+    if (!basePrice) {
+      return NextResponse.json(
+        { error: `Kein Stripe-Preis für ${plan} (${cycle}) konfiguriert.` },
+        { status: 503 },
+      )
+    }
+
+    // Add-ons validieren: kein 'coming_soon', kein doppeltes, alle haben Stripe-Price
+    const lineItems: { price: string; quantity: number }[] = [{ price: basePrice, quantity: 1 }]
+    const uniqueAddons = Array.from(new Set(addons))
+    for (const key of uniqueAddons) {
+      const def = ADDON_REGISTRY[key]
+      if (!def || def.status !== 'active') {
+        return NextResponse.json({ error: `Add-on "${key}" ist nicht buchbar.` }, { status: 400 })
+      }
+      // Im Plan inkludierte Add-ons sind im Checkout uninteressant (werden nicht extra abgerechnet)
+      if (def.includedIn.includes(plan)) continue
+
+      const addonPrice = addonPriceId(key, cycle)
+      if (!addonPrice) {
+        return NextResponse.json(
+          { error: `Kein Stripe-Preis für Add-on "${key}" (${cycle}) konfiguriert.` },
+          { status: 503 },
+        )
+      }
+      lineItems.push({ price: addonPrice, quantity: 1 })
     }
 
     // Company-Daten lesen (für Stripe-Customer + Slug)
@@ -80,17 +108,23 @@ export async function POST(req: NextRequest) {
     const session = await stripe.checkout.sessions.create({
       mode: 'subscription',
       customer: customerId,
-      line_items: [{ price: priceId, quantity: 1 }],
+      line_items: lineItems,
       success_url: `${returnUrl}?success=1`,
       cancel_url: `${returnUrl}?canceled=1`,
       subscription_data: {
-        metadata: { company_id: company.id },
+        metadata: { company_id: company.id, billing_cycle: cycle },
       },
       allow_promotion_codes: true,
       locale: 'de',
     })
 
-    await logAction(ctx, 'stripe.checkout.started', { plan, price_id: priceId, session_id: session.id })
+    await logAction(ctx, 'stripe.checkout.started', {
+      plan,
+      cycle,
+      addons: uniqueAddons,
+      base_price_id: basePrice,
+      session_id: session.id,
+    })
 
     if (!session.url) {
       return NextResponse.json({ error: 'Checkout-Session ohne URL.' }, { status: 500 })

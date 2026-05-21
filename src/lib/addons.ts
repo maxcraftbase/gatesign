@@ -22,7 +22,6 @@ export interface AddonDefinition {
   key: AddonKey
   label: string
   shortDescription: string
-  icon: string // Emoji für UI-Kürze
   status: AddonStatus
   pricing: {
     monthly: number
@@ -43,7 +42,6 @@ export const ADDON_REGISTRY: Record<AddonKey, AddonDefinition> = {
     key: 'printer',
     label: 'Drucker-Print (Besucherkarten)',
     shortDescription: 'Brother QL-810W druckt bei jedem Check-in eine Visitenkarte mit Foto, Name und Host.',
-    icon: '🖨️',
     status: 'active',
     pricing: { monthly: 19, yearly: 190, oneTimeHardware: 299 },
     includedIn: ['enterprise'],
@@ -55,7 +53,6 @@ export const ADDON_REGISTRY: Record<AddonKey, AddonDefinition> = {
     key: 'audit_export',
     label: 'Audit-Export (Excel/CSV)',
     shortDescription: 'Audit-Log als Excel oder CSV exportieren — für DSGVO-Anfragen und Compliance.',
-    icon: '📥',
     status: 'active',
     pricing: { monthly: 19, yearly: 190 },
     includedIn: ['business', 'enterprise'],
@@ -66,7 +63,6 @@ export const ADDON_REGISTRY: Record<AddonKey, AddonDefinition> = {
     key: 'custom_branding',
     label: 'Custom Branding',
     shortDescription: 'Eigenes Logo und Firmenfarben am Terminal und in Briefings.',
-    icon: '🎨',
     status: 'active',
     pricing: { monthly: 19, yearly: 190 },
     includedIn: ['enterprise'],
@@ -77,7 +73,6 @@ export const ADDON_REGISTRY: Record<AddonKey, AddonDefinition> = {
     key: 'extra_location',
     label: 'Zusatz-Standort',
     shortDescription: 'Weiterer Standort mit eigenem Slug, eigenem Admin und eigenen Terminals.',
-    icon: '🏢',
     status: 'active',
     pricing: { monthly: 29, yearly: 290 },
     includedIn: ['enterprise'],
@@ -88,7 +83,6 @@ export const ADDON_REGISTRY: Record<AddonKey, AddonDefinition> = {
     key: 'briefing_translation',
     label: 'KI-Briefing-Übersetzung',
     shortDescription: 'Briefing-PDFs werden automatisch in alle 10 Sprachen übersetzt (DeepL).',
-    icon: '🤖',
     status: 'active',
     pricing: { monthly: 15, yearly: 150 },
     includedIn: ['enterprise'],
@@ -99,7 +93,6 @@ export const ADDON_REGISTRY: Record<AddonKey, AddonDefinition> = {
     key: 'priority_support',
     label: 'Prioritäts-Support',
     shortDescription: 'Bevorzugte Bearbeitung Ihrer Support-Anfragen, ohne SLA-Garantie.',
-    icon: '📞',
     status: 'active',
     pricing: { monthly: 29, yearly: 290 },
     includedIn: ['enterprise'],
@@ -110,7 +103,6 @@ export const ADDON_REGISTRY: Record<AddonKey, AddonDefinition> = {
     key: 'outlook',
     label: 'Outlook-Integration',
     shortDescription: 'Pre-Registration via Outlook-Kalender, Host-Benachrichtigung und Microsoft SSO.',
-    icon: '🗓️',
     status: 'coming_soon',
     pricing: { monthly: 29, yearly: 290 },
     includedIn: ['enterprise'],

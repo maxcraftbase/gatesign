@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { Download, RefreshCw, FileText, Search, LogOut } from 'lucide-react'
+import { Download, RefreshCw, FileText, Search, LogOut, FileSpreadsheet } from 'lucide-react'
 import { type Entry, VISITOR_TYPE_LABELS, LANG_FLAGS, formatDate } from '@/types/entry'
 import { EntryModal } from '@/components/admin/EntryModal'
 
@@ -137,9 +137,16 @@ export function AdminEntriesClient() {
             <span className="hidden sm:inline">Aktualisieren</span>
           </button>
           <button onClick={() => window.open('/api/admin/export', '_blank')}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-900 text-white text-sm font-medium hover:bg-slate-700 transition-colors">
+            className="flex items-center gap-2 px-4 py-2 rounded-xl border border-slate-200 bg-white text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+            title="CSV-Datei (Excel-kompatibel, ; als Trenner)">
             <Download className="w-4 h-4" />
-            <span className="hidden sm:inline">CSV Export</span>
+            <span className="hidden sm:inline">CSV</span>
+          </button>
+          <button onClick={() => window.open('/api/admin/export/xlsx', '_blank')}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-900 text-white text-sm font-medium hover:bg-slate-700 transition-colors"
+            title="Excel-Datei (.xlsx, mit Formatierung)">
+            <FileSpreadsheet className="w-4 h-4" />
+            <span className="hidden sm:inline">Excel</span>
           </button>
         </div>
       </div>

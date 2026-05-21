@@ -115,7 +115,7 @@ export function BillingClient({
       if (!res.ok || !data.url) {
         throw new Error(data.error || 'Checkout konnte nicht gestartet werden.')
       }
-      window.location.href = data.url
+      window.location.assign(data.url)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unbekannter Fehler.')
       setLoadingPlan(null)
@@ -131,7 +131,7 @@ export function BillingClient({
       if (!res.ok || !data.url) {
         throw new Error(data.error || 'Portal konnte nicht geöffnet werden.')
       }
-      window.location.href = data.url
+      window.location.assign(data.url)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unbekannter Fehler.')
       setPortalLoading(false)
@@ -260,7 +260,7 @@ export function BillingClient({
                 {plan.id === 'enterprise' ? (
                   <Button
                     variant="secondary"
-                    onClick={() => window.location.href = 'mailto:kontakt@gatesign.de?subject=Enterprise-Anfrage'}
+                    onClick={() => window.location.assign('mailto:kontakt@gatesign.de?subject=Enterprise-Anfrage')}
                   >
                     Kontakt aufnehmen
                   </Button>

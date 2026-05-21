@@ -106,7 +106,37 @@ export async function GET(req: NextRequest) {
       if (termRes.ok) terminalsForFilter = await termRes.json()
     } catch (e) { console.error('[entries] terminals fetch error:', e) }
 
-    return NextResponse.json({ entries: data, total, page, limit, companyName: ctx.company.name, logoUrl, contactPersons, companyPdfUrl, terminals: terminalsForFilter })
+    // KPIs — unabhängig von search/type/terminal-Filter, aber respektieren Member-Terminal-Restriktionen
+    const todayStart = new Date()
+    todayStart.setHours(0, 0, 0, 0)
+    const todayStartIso = todayStart.toISOString()
+    const companyId = ctx.company.id
+    const accessToken = ctx.accessToken
+
+    async function count(extra: Record<string, string>): Promise<number> {
+      const p = new URLSearchParams({ company_id: `eq.${companyId}`, select: 'id', limit: '1' })
+      for (const [k, v] of Object.entries(extra)) p.set(k, v)
+      if (allowedTerminalIds !== null) p.set('terminal_id', `in.(${allowedTerminalIds.join(',')})`)
+      const r = await fetch(`${supabaseUrl}/rest/v1/check_ins?${p}`, {
+        headers: { apikey: anonKey, Authorization: `Bearer ${accessToken}`, Prefer: 'count=exact' },
+        cache: 'no-store',
+      })
+      if (!r.ok) return 0
+      return parseInt(r.headers.get('content-range')?.split('/')[1] ?? '0')
+    }
+
+    const [todayCount, currentlyOnSite, truckTodayCount, todayBriefedCount] = await Promise.all([
+      count({ created_at: `gte.${todayStartIso}` }),
+      count({ departed_at: 'is.null', visitor_type: 'in.(visitor,service)' }),
+      count({ created_at: `gte.${todayStartIso}`, visitor_type: 'eq.truck' }),
+      count({ created_at: `gte.${todayStartIso}`, briefing_accepted: 'eq.true' }),
+    ])
+
+    const briefingRate = todayCount > 0 ? Math.round((todayBriefedCount / todayCount) * 100) : 100
+
+    const kpis = { todayCount, currentlyOnSite, truckTodayCount, briefingRate }
+
+    return NextResponse.json({ entries: data, total, page, limit, companyName: ctx.company.name, logoUrl, contactPersons, companyPdfUrl, terminals: terminalsForFilter, kpis })
   } catch (err) {
     console.error('[entries] unexpected error:', err)
     return NextResponse.json({ error: 'Interner Fehler.' }, { status: 500 })

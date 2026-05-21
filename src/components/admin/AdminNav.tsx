@@ -59,7 +59,7 @@ export function AdminNav({ slug, role, userName, companyName, terminals = [] }: 
                 className={clsx(
                   'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors',
                   item.active
-                    ? 'bg-slate-900 text-white'
+                    ? 'bg-indigo-600 text-white'
                     : 'text-slate-500 hover:text-slate-900 hover:bg-slate-100'
                 )}
               >

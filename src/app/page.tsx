@@ -1391,10 +1391,10 @@ export default function LandingPage() {
 
       {/* ── 1. Nav ──────────────────────────────────────────── */}
       <nav className="sticky top-0 z-50 bg-white/90 backdrop-blur border-b border-slate-100">
-        <div className="max-w-5xl mx-auto px-6 h-16 flex items-center justify-between gap-4">
-          <Link href="/" className="text-xl font-bold tracking-tight">GateSign</Link>
+        <div className="max-w-5xl mx-auto px-6 h-16 flex items-center gap-8">
+          <Link href="/" className="text-xl font-bold tracking-tight shrink-0">GateSign</Link>
 
-          <div className="hidden md:flex items-center gap-7">
+          <div className="hidden md:flex items-center gap-6">
             <a href="#module" className="text-sm text-slate-600 hover:text-slate-900 transition-colors font-medium">
               {lang === 'de' ? 'Module' : 'Modules'}
             </a>
@@ -1409,7 +1409,7 @@ export default function LandingPage() {
             </a>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 ml-auto">
             <button
               onClick={() => setLang(lang === 'de' ? 'en' : 'de')}
               className="text-sm text-slate-400 hover:text-slate-700 transition-colors font-medium px-2"

@@ -132,7 +132,7 @@ export function SettingsShell({ slug, children }: { slug: string; children: Reac
 
       {/* Desktop-Sidebar */}
       <aside className="hidden lg:block">
-        <div className="sticky top-6">
+        <div className="sticky top-6 bg-slate-100 rounded-2xl p-4 border border-slate-200/60">
           {navList}
         </div>
       </aside>

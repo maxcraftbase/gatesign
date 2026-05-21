@@ -18,7 +18,7 @@ export async function GET() {
   const planInfo = await getCompanyPlan(ctx.company.id)
   return NextResponse.json({
     terminals,
-    plan: planInfo?.plan ?? 'starter',
+    plan: planInfo?.plan ?? 'solo',
     terminal_limit: planInfo ? planInfo.terminal_limit : 1,
   })
 }
@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
 
   // Check plan limit
   const planInfo = await getCompanyPlan(ctx.company.id)
-  const limit = planInfo ? planInfo.terminal_limit : PLAN_LIMITS['starter'].terminal_limit
+  const limit = planInfo ? planInfo.terminal_limit : PLAN_LIMITS['solo'].terminal_limit
   if (limit !== null) {
     const countRes = await fetch(
       `${supabaseUrl}/rest/v1/terminals?company_id=eq.${ctx.company.id}&is_active=eq.true&select=id`,
@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
     if (total >= limit) {
       return NextResponse.json({
         error: 'plan_limit_reached',
-        plan: planInfo?.plan ?? 'starter',
+        plan: planInfo?.plan ?? 'solo',
         limit,
       }, { status: 403 })
     }

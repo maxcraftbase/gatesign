@@ -24,7 +24,7 @@ interface Terminal {
 
 export function TerminalsClient({ slug }: { slug: string }) {
   const [terminals, setTerminals] = useState<Terminal[]>([])
-  const [plan, setPlan] = useState<PlanName>('starter')
+  const [plan, setPlan] = useState<PlanName>('solo')
   const [terminalLimit, setTerminalLimit] = useState<number | null>(1)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -42,7 +42,7 @@ export function TerminalsClient({ slug }: { slug: string }) {
       const res = await fetch('/api/admin/terminals')
       const data = await res.json()
       setTerminals(data.terminals ?? [])
-      setPlan(data.plan ?? 'starter')
+      setPlan(data.plan ?? 'solo')
       setTerminalLimit(data.terminal_limit !== undefined ? (data.terminal_limit as number | null) : 1)
     } catch { setError('Fehler beim Laden') } finally { setLoading(false) }
   }
@@ -144,8 +144,8 @@ export function TerminalsClient({ slug }: { slug: string }) {
           <p className="text-sm font-semibold text-slate-700">Aktueller Plan: <span className="text-slate-900">{limitInfo.label}</span></p>
           <p className="text-xs text-slate-400 mt-0.5">
             {terminalLimit === null
-              ? `Unbegrenzte Terminals · ${limitInfo.price}`
-              : `${activeCount} von ${terminalLimit} Terminal${terminalLimit !== 1 ? 's' : ''} aktiv · ${limitInfo.price}`}
+              ? `Unbegrenzte Terminals · ${limitInfo.monthly_price}`
+              : `${activeCount} von ${terminalLimit} Terminal${terminalLimit !== 1 ? 's' : ''} aktiv · ${limitInfo.monthly_price}`}
           </p>
         </div>
         {plan !== 'enterprise' && (

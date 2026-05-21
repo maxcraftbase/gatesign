@@ -31,10 +31,16 @@ interface CheckIn {
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
+// German Excel uses ";" as list separator. We follow that convention so the
+// CSV opens in column layout on double-click without an import wizard.
+const CSV_SEPARATOR = ';'
+
 function escapeCSV(val: unknown): string {
   if (val === null || val === undefined) return ''
   const str = String(val)
-  if (str.includes(',') || str.includes('"') || str.includes('\n')) return '"' + str.replace(/"/g, '""') + '"'
+  if (str.includes(CSV_SEPARATOR) || str.includes('"') || str.includes('\n')) {
+    return '"' + str.replace(/"/g, '""') + '"'
+  }
   return str
 }
 
@@ -55,9 +61,9 @@ function buildCSV(rows: CheckIn[]): Buffer {
     escapeCSV(row.briefing_accepted_at),
     escapeCSV(row.has_signature ? 'Ja' : 'Nein'),
     escapeCSV(row.reference_number),
-  ].join(','))
+  ].join(CSV_SEPARATOR))
   // BOM so Excel opens it correctly
-  return Buffer.from('﻿' + [headers.join(','), ...lines].join('\n'), 'utf-8')
+  return Buffer.from('﻿' + [headers.join(CSV_SEPARATOR), ...lines].join('\n'), 'utf-8')
 }
 
 function typeLabel(t: string): string {

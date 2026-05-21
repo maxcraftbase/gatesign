@@ -2,10 +2,16 @@ import { NextResponse } from 'next/server'
 import { getAdminContext } from '@/lib/admin-auth'
 import { supabaseUrl, anonKey } from '@/lib/supabase-server'
 
+// German Excel uses ";" as list separator. We follow that convention so the
+// CSV opens in column layout on double-click without an import wizard.
+const CSV_SEPARATOR = ';'
+
 function escapeCSV(val: unknown): string {
   if (val === null || val === undefined) return ''
   const str = String(val)
-  if (str.includes(',') || str.includes('"') || str.includes('\n')) return '"' + str.replace(/"/g, '""') + '"'
+  if (str.includes(CSV_SEPARATOR) || str.includes('"') || str.includes('\n')) {
+    return '"' + str.replace(/"/g, '""') + '"'
+  }
   return str
 }
 
@@ -37,9 +43,9 @@ export async function GET() {
       escapeCSV(row.language), escapeCSV(row.briefing_accepted ? 'Ja' : 'Nein'),
       escapeCSV(row.briefing_accepted_at), escapeCSV(row.has_signature ? 'Ja' : 'Nein'),
       escapeCSV(row.reference_number),
-    ].join(','))
+    ].join(CSV_SEPARATOR))
 
-    const csv = [headers.join(','), ...rows].join('\n')
+    const csv = [headers.join(CSV_SEPARATOR), ...rows].join('\n')
     return new NextResponse('\uFEFF' + csv, {
       headers: {
         'Content-Type': 'text/csv; charset=utf-8',

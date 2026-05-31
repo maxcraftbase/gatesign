@@ -1,0 +1,12 @@
+# Dependencies (per-OS neu installiert via `npm install`)
+node_modules/
+
+# Build-Output
+dist/
+
+# Lokale Bridge-Konfiguration (enthält den API-Token im Klartext)
+config.json
+.gatesign-bridge/
+
+# Logs
+*.log

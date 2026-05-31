@@ -1,0 +1,24 @@
+{
+  "name": "@gatesign/print-bridge",
+  "version": "0.1.0",
+  "description": "Lokaler Print-Service für GateSign Drucker-Add-on. Pollt Cloud-Backend nach Druckjobs und gibt sie an Brother QL-Drucker weiter (USB oder TCP/9100).",
+  "type": "module",
+  "private": true,
+  "bin": {
+    "gatesign-bridge": "src/index.ts"
+  },
+  "scripts": {
+    "start": "tsx src/index.ts start",
+    "pair": "tsx src/index.ts pair",
+    "status": "tsx src/index.ts status",
+    "reset": "tsx src/index.ts reset"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.0",
+    "@types/node": "^20.11.0",
+    "typescript": "^5.5.0"
+  }
+}

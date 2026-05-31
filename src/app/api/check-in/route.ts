@@ -1,8 +1,15 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse, after } from 'next/server'
 import { z } from 'zod'
 import { getCompanyBySlug, getTerminalBySlug } from '@/lib/company'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { supabaseUrl, anonKey } from '@/lib/supabase-server'
+import { hasAddon } from '@/lib/addons'
+import {
+  allocateCardNumber,
+  getBridgeByTerminalId,
+  createPrintJob,
+} from '@/lib/print-jobs'
+import { renderVisitorCard } from '@/lib/card-renderer'
 
 const checkInSchema = z.object({
   slug: z.string().nullish(),
@@ -72,6 +79,8 @@ export async function POST(req: NextRequest) {
       contact_person?: string
       signature_data?: string
       reference_number?: string
+      card_number?: number
+      card_date?: string
     }
 
     const payload: CheckInPayload = {
@@ -94,6 +103,24 @@ export async function POST(req: NextRequest) {
     if (signature_data) payload.signature_data = signature_data
     if (reference_number) payload.reference_number = reference_number
 
+    // ── Drucker-Add-on: Tagesnummer vor dem Insert atomar ziehen ──
+    // Nur wenn company+terminal vorhanden UND Add-on aktiv.
+    // Datum wird hier fixiert und identisch im check_ins-Row gesetzt,
+    // damit Tagesübergänge zwischen Allokation und Insert konsistent bleiben.
+    let cardNumber: number | null = null
+    if (company && terminal && await hasAddon(company.id, 'printer')) {
+      const today = new Date().toISOString().split('T')[0]  // YYYY-MM-DD
+      cardNumber = await allocateCardNumber({
+        companyId: company.id,
+        terminalId: terminal.id,
+        cardDate: today,
+      })
+      if (cardNumber !== null) {
+        payload.card_number = cardNumber
+        payload.card_date = today
+      }
+    }
+
     const res = await fetch(`${supabaseUrl}/rest/v1/check_ins`, {
       method: 'POST',
       headers: {
@@ -112,9 +139,78 @@ export async function POST(req: NextRequest) {
     }
 
     const data = await res.json()
-    return NextResponse.json({ success: true, id: data[0]?.id })
+    const checkInId: string | undefined = data[0]?.id
+
+    // ── Drucker-Add-on: Karten-PNG generieren + Print-Job in Queue ──
+    // Best-effort: wenn die Bridge offline ist oder das Rendering kracht,
+    // wollen wir den Check-in NICHT scheitern lassen — die card_number ist
+    // bereits vergeben, der Besucher kann seinen Beleg sehen.
+    //
+    // after() statt losem `void promise`: die Arbeit läuft nach dem Senden der
+    // Response, wird aber von Next.js bis zum Abschluss am Leben gehalten (auch
+    // auf Serverless, wo ein dangling promise sonst abgeschnitten würde).
+    if (checkInId && cardNumber !== null && company && terminal) {
+      const job = {
+        checkInId,
+        cardNumber,
+        terminalId: terminal.id,
+        visitorName: driver_name,
+        visitorCompany: company_name,
+        hostCompanyName: company.name,
+        language,
+      }
+      after(async () => {
+        try {
+          await enqueuePrintJob(job)
+        } catch (err) {
+          console.error('[check-in] Print-Job enqueue fehlgeschlagen:', err)
+        }
+      })
+    }
+
+    return NextResponse.json({
+      success: true,
+      id: checkInId,
+      ...(cardNumber !== null ? { card_number: cardNumber } : {}),
+    })
   } catch (err) {
     console.error('Check-in route error:', err instanceof Error ? err.message : String(err), err)
     return NextResponse.json({ error: 'Interner Fehler.' }, { status: 500 })
   }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Print-Job-Helper (asynchron nach Check-in)
+// ─────────────────────────────────────────────────────────────────────────────
+
+async function enqueuePrintJob(opts: {
+  checkInId: string
+  cardNumber: number
+  terminalId: string
+  visitorName: string
+  visitorCompany: string
+  hostCompanyName: string
+  language: 'de' | 'en' | 'pl' | 'ro' | 'cs' | 'hu' | 'bg' | 'uk' | 'ru' | 'tr'
+}): Promise<void> {
+  const bridge = await getBridgeByTerminalId(opts.terminalId)
+  if (!bridge) {
+    console.warn(`[check-in] Keine Print-Bridge für Terminal ${opts.terminalId} — Job verworfen.`)
+    return
+  }
+
+  const pngBuffer = await renderVisitorCard({
+    cardNumber: opts.cardNumber,
+    visitorName: opts.visitorName,
+    visitorCompany: opts.visitorCompany,
+    hostCompanyName: opts.hostCompanyName,
+    date: new Date(),
+    language: opts.language,
+  })
+
+  const pngBase64 = pngBuffer.toString('base64')
+  await createPrintJob({
+    bridgeId: bridge.id,
+    checkInId: opts.checkInId,
+    pngBase64,
+  })
 }

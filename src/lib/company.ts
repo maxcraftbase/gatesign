@@ -77,7 +77,8 @@ export async function createCompanyWithDefaults(
   if (!compRes.ok) return null
   const [company] = await compRes.json()
 
-  // Default settings
+  // Default settings — welcome_title enthält den Firmennamen, weil das Welcome
+  // selbst das Brand-Element ist (besonders wenn kein Logo-Bild hochgeladen wurde).
   const defaultSettings = [
     { company_id: company.id, key: 'welcome_title', value: `Willkommen bei ${name}` },
     { company_id: company.id, key: 'welcome_subtitle', value: 'Bitte melden Sie sich hier an — Please register here' },

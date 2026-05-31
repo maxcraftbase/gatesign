@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getAdminContext } from '@/lib/admin-auth'
+import { hasAddon, addonRequiredError } from '@/lib/addons'
 import { supabaseUrl, anonKey } from '@/lib/supabase-server'
 
 // German Excel uses ";" as list separator. We follow that convention so the
@@ -19,6 +20,11 @@ export async function GET() {
   try {
     const ctx = await getAdminContext()
     if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+    // Add-on-Gate: Audit-Export ist in Business/Enterprise enthalten, sonst kostenpflichtig.
+    if (!await hasAddon(ctx.company.id, 'audit_export')) {
+      return NextResponse.json(addonRequiredError('audit_export'), { status: 403 })
+    }
 
     const params = new URLSearchParams({
       company_id: `eq.${ctx.company.id}`,

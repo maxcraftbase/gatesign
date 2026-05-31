@@ -18,6 +18,7 @@ import {
   hashApiToken,
   extractBearerToken,
   authenticateBridge,
+  startPairing,
   pickUpNextJob,
   reportJobStatus,
   allocateCardNumber,
@@ -126,6 +127,54 @@ describe('authenticateBridge', () => {
   it('returnt null, wenn kein Hash matcht', async () => {
     global.fetch = vi.fn().mockResolvedValue(new Response(JSON.stringify([]), { status: 200 })) as unknown as typeof fetch
     expect(await authenticateBridge('unknown-token')).toBeNull()
+  })
+})
+
+describe('startPairing — Upsert auf terminal_id-Constraint', () => {
+  function mockPostOk() {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(null, { status: 201 }))
+    global.fetch = fetchMock as unknown as typeof fetch
+    return fetchMock
+  }
+
+  it('postet auf print_bridges mit on_conflict=terminal_id (mergt statt zu kollidieren)', async () => {
+    const fetchMock = mockPostOk()
+    await startPairing({ companyId: 'company-1', terminalId: 'terminal-1', displayName: 'Tor Nord' })
+
+    const [url, init] = fetchMock.mock.calls[0]
+    expect(String(url)).toContain('/rest/v1/print_bridges')
+    expect(String(url)).toContain('on_conflict=terminal_id')
+    expect(init?.method).toBe('POST')
+    expect(String((init?.headers as Record<string, string>).Prefer)).toContain('resolution=merge-duplicates')
+  })
+
+  it('nutzt bei wiederholtem Pairing desselben Terminals erneut on_conflict=terminal_id (kein 409)', async () => {
+    const fetchMock = mockPostOk()
+    await startPairing({ companyId: 'company-1', terminalId: 'terminal-1' })
+    await startPairing({ companyId: 'company-1', terminalId: 'terminal-1' })
+
+    expect(fetchMock.mock.calls).toHaveLength(2)
+    for (const [url] of fetchMock.mock.calls) {
+      expect(String(url)).toContain('on_conflict=terminal_id')
+    }
+  })
+
+  it('gibt frischen Code + Ablaufzeit zurück und resettet api_token_hash im Body', async () => {
+    const fetchMock = mockPostOk()
+    const { pairingCode, expiresAt } = await startPairing({ companyId: 'company-1', terminalId: 'terminal-1' })
+
+    expect(pairingCode).toHaveLength(8)
+    expect(Number.isNaN(Date.parse(expiresAt))).toBe(false)
+
+    const body = JSON.parse(String(fetchMock.mock.calls[0][1]!.body))
+    expect(body.terminal_id).toBe('terminal-1')
+    expect(body.api_token_hash).toBeNull()
+    expect(body.status).toBe('offline')
+  })
+
+  it('wirft, wenn PostgREST den Upsert ablehnt', async () => {
+    global.fetch = vi.fn().mockResolvedValue(new Response('conflict', { status: 409 })) as unknown as typeof fetch
+    await expect(startPairing({ companyId: 'company-1', terminalId: 'terminal-1' })).rejects.toThrow()
   })
 })
 

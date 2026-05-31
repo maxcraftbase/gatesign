@@ -151,7 +151,13 @@ export async function startPairing(opts: {
     status: 'offline' as BridgeStatus,
   }
 
-  const res = await fetch(`${supabaseUrl}/rest/v1/print_bridges`, {
+  // on_conflict=terminal_id: ohne diesen Parameter nutzt PostgREST bei
+  // merge-duplicates den Primary Key (id) als Konflikt-Ziel. Der Body enthält
+  // keine id → keine PK-Kollision → PostgREST versucht ein plain INSERT und
+  // verletzt die terminal_id-UNIQUE-Constraint (eine Bridge pro Terminal) → 409.
+  // Mit on_conflict=terminal_id mergt PostgREST auf die Unique-Constraint und
+  // aktualisiert die bestehende Zeile (Re-Pairing eines Terminals).
+  const res = await fetch(`${supabaseUrl}/rest/v1/print_bridges?on_conflict=terminal_id`, {
     method: 'POST',
     headers: {
       ...sbServiceHeaders(),

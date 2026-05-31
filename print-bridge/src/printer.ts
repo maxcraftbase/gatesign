@@ -37,7 +37,11 @@ export interface PrintOptions {
 
 /** Druckt eine Karte. Liefert PrintResult mit erkennbarem Fehler-Typ zurück. */
 export async function printCard(opts: PrintOptions): Promise<PrintResult> {
-  const tmpPath = path.join(os.tmpdir(), `gatesign-job-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.png`)
+  // mkdtempSync legt ein Verzeichnis mit kryptografisch zufälligem, nicht
+  // erratbarem Namen an (0700) → kein Symlink-/Race-Angriff auf einen
+  // vorhersehbaren Pfad (js/insecure-temporary-file).
+  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'gatesign-job-'))
+  const tmpPath = path.join(tmpDir, 'card.png')
   fs.writeFileSync(tmpPath, opts.png)
 
   try {
@@ -62,7 +66,7 @@ export async function printCard(opts: PrintOptions): Promise<PrintResult> {
     }
     return { ok: false, kind: 'error', message: result.stderr || result.stdout || `brother_ql exit ${result.code}` }
   } finally {
-    fs.unlink(tmpPath, () => { /* cleanup, ignore */ })
+    fs.rm(tmpDir, { recursive: true, force: true }, () => { /* cleanup, ignore */ })
   }
 }
 

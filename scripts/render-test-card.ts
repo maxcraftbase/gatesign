@@ -1,21 +1,19 @@
 /**
  * Standalone-Test für den Karten-Renderer.
- * Ruft renderVisitorCard() auf und schreibt das PNG nach /tmp/gatesign-card.png.
+ * Ruft renderVisitorCard() auf und schreibt das PNG in ein frisches Temp-Verzeichnis.
+ * Der konkrete Pfad wird am Ende ausgegeben (zur Sichtkontrolle: `open <pfad>`).
  *
  * Ausführen:
  *   npx tsx scripts/render-test-card.ts
  *
- * Dann zur Sichtkontrolle:
- *   open /tmp/gatesign-card.png
- *
- * Direkter Druck-Test (kombiniert mit Phase 0):
- *   npx tsx scripts/render-test-card.ts && \
- *     PRINTER_USB="usb://0x04f9:0x209d" \
- *     brother_ql --backend pyusb --model QL-820NWB --printer usb://0x04f9:0x209d \
- *       print --label 54 /tmp/gatesign-card.png
+ * Direkter Druck-Test (kombiniert mit Phase 0) — Pfad aus der Ausgabe einsetzen:
+ *   brother_ql --backend pyusb --model QL-820NWB --printer usb://0x04f9:0x209d \
+ *     print --label 54 <pfad>
  */
 
 import fs from 'node:fs'
+import os from 'node:os'
+import path from 'node:path'
 import { renderVisitorCard } from '../src/lib/card-renderer'
 
 async function main() {
@@ -30,7 +28,9 @@ async function main() {
     language: (process.argv[2] as 'de' | 'en' | 'pl' | 'ro' | 'cs' | 'hu' | 'bg' | 'uk' | 'ru' | 'tr' | undefined) ?? 'de',
   })
 
-  const outPath = '/tmp/gatesign-card.png'
+  // mkdtempSync → nicht erratbares Temp-Verzeichnis (js/insecure-temporary-file).
+  const outDir = fs.mkdtempSync(path.join(os.tmpdir(), 'gatesign-card-'))
+  const outPath = path.join(outDir, 'card.png')
   fs.writeFileSync(outPath, png)
 
   const ms = Date.now() - start
@@ -40,7 +40,7 @@ async function main() {
   console.log(`  Pfad:  ${outPath}`)
   console.log(`  Größe: ${png.length} Bytes`)
   console.log('')
-  console.log('Sichtkontrolle:  open /tmp/gatesign-card.png')
+  console.log(`Sichtkontrolle:  open ${outPath}`)
 }
 
 main().catch((err) => {

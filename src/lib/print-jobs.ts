@@ -66,10 +66,11 @@ export interface PrintJob {
 
 /** Generiert einen Pairing-Code (8 alphanumerische Zeichen, verwechslungssicher). */
 export function generatePairingCode(): string {
-  const buf = crypto.randomBytes(PAIRING_CODE_LENGTH)
+  // crypto.randomInt() zieht gleichverteilt aus [0, n) per Rejection-Sampling —
+  // kein Modulo-Bias (anders als randomBytes()[i] % n, das CodeQL zu Recht rügt).
   let code = ''
   for (let i = 0; i < PAIRING_CODE_LENGTH; i++) {
-    code += PAIRING_CHARS[buf[i] % PAIRING_CHARS.length]
+    code += PAIRING_CHARS[crypto.randomInt(PAIRING_CHARS.length)]
   }
   return code
 }

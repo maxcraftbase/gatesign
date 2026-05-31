@@ -29,6 +29,12 @@ const checkInSchema = z.object({
   reference_number: z.string().max(50).nullish(),
 })
 
+// Besuchertypen, die eine gedruckte Tagesnummern-Karte bekommen.
+// Bewusst nur Besucher + Service-Mitarbeiter — analog zur „Im Gebäude"-Logik
+// (Anwesenheits-Zählung + Self-Service-Checkout), die LKW-Fahrer ebenfalls
+// ausklammert. LKW laufen über den Logistik-Flow ohne Kartendruck.
+const CARD_VISITOR_TYPES = new Set(['visitor', 'service'])
+
 export async function POST(req: NextRequest) {
   try {
     const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() ?? 'unknown'
@@ -108,7 +114,12 @@ export async function POST(req: NextRequest) {
     // Datum wird hier fixiert und identisch im check_ins-Row gesetzt,
     // damit Tagesübergänge zwischen Allokation und Insert konsistent bleiben.
     let cardNumber: number | null = null
-    if (company && terminal && await hasAddon(company.id, 'printer')) {
+    if (
+      company &&
+      terminal &&
+      CARD_VISITOR_TYPES.has(payload.visitor_type) &&
+      await hasAddon(company.id, 'printer')
+    ) {
       const today = new Date().toISOString().split('T')[0]  // YYYY-MM-DD
       cardNumber = await allocateCardNumber({
         companyId: company.id,

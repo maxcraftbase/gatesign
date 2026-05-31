@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import * as Sentry from '@sentry/nextjs'
 import { getAdminContext } from '@/lib/admin-auth'
+import { hasAddon, addonRequiredError } from '@/lib/addons'
 import { checkAdminRateLimit } from '@/lib/rate-limit'
 import { supabaseUrl, anonKey } from '@/lib/supabase-server'
 
@@ -8,6 +9,11 @@ export async function POST(req: NextRequest) {
   try {
     const ctx = await getAdminContext()
     if (!ctx) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    // Add-on-Gate: Eigenes Logo am Terminal gehört zu Custom Branding.
+    // (DELETE bleibt offen, damit man ein Logo auch ohne aktives Add-on wieder entfernen kann.)
+    if (!await hasAddon(ctx.company.id, 'custom_branding')) {
+      return NextResponse.json(addonRequiredError('custom_branding'), { status: 403 })
+    }
     if (!await checkAdminRateLimit(ctx.company.id, 'upload-logo', 10, 60_000)) {
       return NextResponse.json({ error: 'Zu viele Anfragen. Bitte warten.' }, { status: 429 })
     }

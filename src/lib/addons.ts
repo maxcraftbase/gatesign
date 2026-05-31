@@ -1,5 +1,6 @@
 import { supabaseUrl, serviceKey } from '@/lib/supabase-server'
 import { env } from '@/env'
+import { getCompanyPlan } from '@/lib/subscription'
 import type { BillingCycle, PlanName } from '@/lib/subscription'
 
 /**
@@ -44,7 +45,12 @@ export const ADDON_REGISTRY: Record<AddonKey, AddonDefinition> = {
     shortDescription: 'Brother QL-810W druckt bei jedem Check-in eine Visitenkarte mit Foto, Name und Host.',
     status: 'active',
     pricing: { monthly: 19, yearly: 190, oneTimeHardware: 299 },
-    includedIn: ['enterprise'],
+    // Bewusst LEER: Drucker wird NIE über den Plan auto-aktiv. Er braucht physische
+    // Hardware + eine gekoppelte Print-Bridge. Würde er in einem Plan „enthalten" sein,
+    // zögen alle Firmen dieses Plans beim Check-in Tagesnummern, die ohne Drucker ins
+    // Leere laufen (Besucher sieht eine Nummer, bekommt aber keine Karte). Nur via
+    // expliziten company_addons-Kauf + Pairing.
+    includedIn: [],
     stripeMonthlyPriceId: () => env.STRIPE_PRICE_ADDON_PRINTER_MONTHLY,
     stripeYearlyPriceId: () => env.STRIPE_PRICE_ADDON_PRINTER_YEARLY,
     stripeHardwarePriceId: () => env.STRIPE_PRICE_ADDON_PRINTER_HARDWARE,
@@ -136,15 +142,38 @@ export async function getCompanyAddons(companyId: string): Promise<CompanyAddonR
 /**
  * Prüft ob eine Company ein Add-on freigeschaltet hat — direkt aus DB.
  * Inkludiert Add-ons die durch den Plan automatisch dazugehören (z. B. Audit-Export in Business).
+ *
+ * Plan-Bundling: Add-ons mit `includedIn` sind in diesen Plänen automatisch aktiv.
+ * Den Plan laden wir selbst, wenn der Aufrufer ihn nicht übergibt — sonst wäre das
+ * Bundling totes Dead-Code (so war es bis zur Add-on-Durchsetzung). Add-ons ohne
+ * `includedIn` (z. B. Drucker) überspringen den Plan-Lookup komplett, damit
+ * Hot-Paths wie der Check-in keine zusätzliche DB-Query bezahlen.
  */
 export async function hasAddon(companyId: string, addonKey: AddonKey, plan?: PlanName): Promise<boolean> {
   const addon = ADDON_REGISTRY[addonKey]
   if (!addon) return false
 
-  if (plan && addon.includedIn.includes(plan)) return true
+  if (addon.includedIn.length > 0) {
+    const effectivePlan = plan ?? (await getCompanyPlan(companyId))?.plan ?? null
+    if (effectivePlan && addon.includedIn.includes(effectivePlan)) return true
+  }
 
   const rows = await getCompanyAddons(companyId)
   return rows.some(r => r.addon_key === addonKey)
+}
+
+/**
+ * Standard-Antwortkörper für eine gesperrte Add-on-Funktion (HTTP 403).
+ * Einheitliche Form `{ error: 'addon_required', addon, message }`, damit das
+ * Frontend konsistent eine Upsell-Meldung anzeigen kann.
+ */
+export function addonRequiredError(addonKey: AddonKey): { error: 'addon_required'; addon: AddonKey; message: string } {
+  const addon = ADDON_REGISTRY[addonKey]
+  return {
+    error: 'addon_required',
+    addon: addonKey,
+    message: `Diese Funktion gehört zum Add-on „${addon?.label ?? addonKey}". Bitte im Tarif-Bereich freischalten.`,
+  }
 }
 
 /** Sucht den Add-on-Key zu einer Stripe Price-ID (für Webhook-Sync). */

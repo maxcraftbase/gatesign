@@ -74,13 +74,25 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Bereits aktiv? → 409
     const existing = await getCompanyAddons(ctx.company.id)
-    if (existing.some(e => e.addon_key === addon)) {
+    const existingRow = existing.find(e => e.addon_key === addon)
+    const stripe = getStripe()
+
+    if (existingRow) {
+      // Mengen-Add-on (Zusatz-Standort): jede weitere Buchung = +1 Einheit = +1 Terminal.
+      // Boolesche Feature-Add-ons können dagegen nur einmal gebucht werden → 409.
+      if (addon === 'extra_location' && existingRow.stripe_subscription_item_id) {
+        const nextQuantity = Math.max(1, existingRow.quantity) + 1
+        await stripe.subscriptionItems.update(existingRow.stripe_subscription_item_id, {
+          quantity: nextQuantity,
+          proration_behavior: 'create_prorations',
+        })
+        await logAction(ctx, 'stripe.addon.quantity_increased', { addon, quantity: nextQuantity })
+        return NextResponse.json({ ok: true, quantity: nextQuantity })
+      }
       return NextResponse.json({ error: 'Add-on ist bereits aktiv.' }, { status: 409 })
     }
 
-    const stripe = getStripe()
     await stripe.subscriptionItems.create({
       subscription: stripe_subscription_id,
       price: priceId,
@@ -124,6 +136,19 @@ export async function DELETE(req: NextRequest) {
     }
 
     const stripe = getStripe()
+
+    // Mengen-Add-on mit mehr als einer Einheit: nur EINE Einheit abbuchen,
+    // damit der Kunde nicht versehentlich alle Zusatz-Standorte verliert.
+    if (addon === 'extra_location' && Math.max(1, row.quantity) > 1) {
+      const nextQuantity = Math.max(1, row.quantity) - 1
+      await stripe.subscriptionItems.update(row.stripe_subscription_item_id, {
+        quantity: nextQuantity,
+        proration_behavior: 'create_prorations',
+      })
+      await logAction(ctx, 'stripe.addon.quantity_decreased', { addon, quantity: nextQuantity })
+      return NextResponse.json({ ok: true, quantity: nextQuantity })
+    }
+
     await stripe.subscriptionItems.del(row.stripe_subscription_item_id, {
       proration_behavior: 'create_prorations',
     })

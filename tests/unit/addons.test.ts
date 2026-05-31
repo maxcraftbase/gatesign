@@ -7,7 +7,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { hasAddon, addonRequiredError, ADDON_REGISTRY } from '@/lib/addons'
+import { hasAddon, addonRequiredError, getAddonQuantity, ADDON_REGISTRY } from '@/lib/addons'
 import type { PlanName } from '@/lib/subscription'
 
 const COMPANY_ID = 'company-123'
@@ -89,6 +89,65 @@ describe('hasAddon — Drucker ist NICHT über den Plan gebündelt', () => {
 
   it('printer.includedIn ist leer (Registry-Invariante)', () => {
     expect(ADDON_REGISTRY.printer.includedIn).toEqual([])
+  })
+})
+
+describe('getAddonQuantity — Mengen-Modell (extra_location)', () => {
+  beforeEach(() => vi.restoreAllMocks())
+
+  /** Mockt company_addons mit explizit gesetzten Mengen pro addon_key. */
+  function mockAddons(rows: { addon_key: string; quantity?: number }[]) {
+    global.fetch = vi.fn().mockImplementation(async (url: string | URL) => {
+      const u = url.toString()
+      if (u.includes('/rest/v1/company_addons')) {
+        return new Response(JSON.stringify(rows.map(r => ({
+          company_id: COMPANY_ID,
+          addon_key: r.addon_key,
+          stripe_subscription_item_id: 'si_x',
+          billing_cycle: 'monthly',
+          active_since: '2026-01-01T00:00:00Z',
+          ...(r.quantity === undefined ? {} : { quantity: r.quantity }),
+        }))), { status: 200 })
+      }
+      throw new Error(`Unmocked fetch: ${u}`)
+    }) as unknown as typeof fetch
+  }
+
+  it('liefert 0, wenn das Add-on nicht gekauft ist', async () => {
+    mockAddons([])
+    expect(await getAddonQuantity(COMPANY_ID, 'extra_location')).toBe(0)
+  })
+
+  it('liefert die gekaufte Menge zurück', async () => {
+    mockAddons([{ addon_key: 'extra_location', quantity: 3 }])
+    expect(await getAddonQuantity(COMPANY_ID, 'extra_location')).toBe(3)
+  })
+
+  it('behandelt eine fehlende quantity-Spalte als 1 (Default vor Migration 007)', async () => {
+    mockAddons([{ addon_key: 'extra_location' }])  // keine quantity im JSON
+    expect(await getAddonQuantity(COMPANY_ID, 'extra_location')).toBe(1)
+  })
+
+  it('floored ungültige Werte (0/negativ) auf 1', async () => {
+    mockAddons([{ addon_key: 'extra_location', quantity: 0 }])
+    expect(await getAddonQuantity(COMPANY_ID, 'extra_location')).toBe(1)
+  })
+
+  it('fällt auf den Select OHNE quantity zurück, wenn die Spalte fehlt (PostgREST 400)', async () => {
+    // Simuliert den Deploy-vor-Migration-Zustand: erster Select (mit quantity) → 400,
+    // zweiter Select (ohne quantity) → 200. Ergebnis: extra_location aktiv, Menge = 1.
+    global.fetch = vi.fn().mockImplementation(async (url: string | URL) => {
+      const u = url.toString()
+      if (u.includes('/rest/v1/company_addons')) {
+        if (u.includes('quantity')) return new Response('column does not exist', { status: 400 })
+        return new Response(JSON.stringify([{
+          company_id: COMPANY_ID, addon_key: 'extra_location',
+          stripe_subscription_item_id: 'si_x', billing_cycle: 'monthly', active_since: '2026-01-01T00:00:00Z',
+        }]), { status: 200 })
+      }
+      throw new Error(`Unmocked fetch: ${u}`)
+    }) as unknown as typeof fetch
+    expect(await getAddonQuantity(COMPANY_ID, 'extra_location')).toBe(1)
   })
 })
 

@@ -1,8 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAdminContext } from '@/lib/admin-auth'
 import { generateSlug } from '@/lib/company'
+import { getAddonQuantity } from '@/lib/addons'
 import { getCompanyPlan, PLAN_LIMITS } from '@/lib/subscription'
 import { supabaseUrl, serviceKey } from '@/lib/supabase-server'
+
+/**
+ * Effektives Terminal-Limit = Basis-Limit des Plans + gekaufte Zusatz-Standorte.
+ * Bei `null` (Enterprise = unbegrenzt) bleibt es unbegrenzt; Add-ons sind dort egal.
+ */
+async function getEffectiveTerminalLimit(companyId: string): Promise<{ plan: string; limit: number | null }> {
+  const planInfo = await getCompanyPlan(companyId)
+  const plan = planInfo?.plan ?? 'solo'
+  const baseLimit = planInfo ? planInfo.terminal_limit : PLAN_LIMITS['solo'].terminal_limit
+  if (baseLimit === null) return { plan, limit: null }
+  const extra = await getAddonQuantity(companyId, 'extra_location')
+  return { plan, limit: baseLimit + extra }
+}
 
 export async function GET() {
   const ctx = await getAdminContext()
@@ -15,12 +29,8 @@ export async function GET() {
   if (!res.ok) return NextResponse.json({ error: 'Fehler beim Laden' }, { status: 500 })
   const terminals = await res.json()
 
-  const planInfo = await getCompanyPlan(ctx.company.id)
-  return NextResponse.json({
-    terminals,
-    plan: planInfo?.plan ?? 'solo',
-    terminal_limit: planInfo ? planInfo.terminal_limit : 1,
-  })
+  const { plan, limit } = await getEffectiveTerminalLimit(ctx.company.id)
+  return NextResponse.json({ terminals, plan, terminal_limit: limit })
 }
 
 export async function POST(req: NextRequest) {
@@ -31,9 +41,8 @@ export async function POST(req: NextRequest) {
   const { name } = await req.json() as { name?: string }
   if (!name?.trim()) return NextResponse.json({ error: 'Name erforderlich' }, { status: 400 })
 
-  // Check plan limit
-  const planInfo = await getCompanyPlan(ctx.company.id)
-  const limit = planInfo ? planInfo.terminal_limit : PLAN_LIMITS['solo'].terminal_limit
+  // Check plan limit (Basis-Limit + gekaufte Zusatz-Standorte)
+  const { plan, limit } = await getEffectiveTerminalLimit(ctx.company.id)
   if (limit !== null) {
     const countRes = await fetch(
       `${supabaseUrl}/rest/v1/terminals?company_id=eq.${ctx.company.id}&is_active=eq.true&select=id`,
@@ -43,7 +52,7 @@ export async function POST(req: NextRequest) {
     if (total >= limit) {
       return NextResponse.json({
         error: 'plan_limit_reached',
-        plan: planInfo?.plan ?? 'solo',
+        plan,
         limit,
       }, { status: 403 })
     }

@@ -126,17 +126,46 @@ export interface CompanyAddonRow {
   stripe_subscription_item_id: string | null
   billing_cycle: BillingCycle
   active_since: string
+  /** Gekaufte Menge (Stripe-Item-Quantity). Für extra_location = Anzahl Zusatz-Standorte. */
+  quantity: number
 }
 
 /** Liest alle aktiven Add-ons einer Company aus der DB. */
 export async function getCompanyAddons(companyId: string): Promise<CompanyAddonRow[]> {
-  const res = await fetch(
-    `${supabaseUrl}/rest/v1/company_addons?company_id=eq.${companyId}&select=company_id,addon_key,stripe_subscription_item_id,billing_cycle,active_since`,
-    { headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}` }, cache: 'no-store' },
+  const base = `${supabaseUrl}/rest/v1/company_addons?company_id=eq.${companyId}`
+  const headers = { apikey: serviceKey, Authorization: `Bearer ${serviceKey}` }
+
+  // `quantity` kommt erst mit Migration 007. Schlägt der Select fehl (Spalte
+  // existiert noch nicht → PostgREST 400), lesen wir ohne sie und behandeln
+  // quantity als 1 — so kann der Code unabhängig vom Migrations-Zeitpunkt
+  // deployen, ohne den Add-on-Lookup (und damit den Drucker) zu brechen.
+  let res = await fetch(
+    `${base}&select=company_id,addon_key,stripe_subscription_item_id,billing_cycle,active_since,quantity`,
+    { headers, cache: 'no-store' },
   )
+  if (!res.ok) {
+    res = await fetch(
+      `${base}&select=company_id,addon_key,stripe_subscription_item_id,billing_cycle,active_since`,
+      { headers, cache: 'no-store' },
+    )
+  }
   if (!res.ok) return []
   const rows: CompanyAddonRow[] = await res.json()
-  return rows.filter(r => ALL_ADDON_KEYS.includes(r.addon_key))
+  return rows
+    .filter(r => ALL_ADDON_KEYS.includes(r.addon_key))
+    .map(r => ({ ...r, quantity: Math.max(1, r.quantity ?? 1) }))
+}
+
+/**
+ * Gekaufte Menge eines Add-ons (0 wenn nicht gekauft).
+ * Plan-Bundling spielt hier bewusst keine Rolle: Mengen-Add-ons (extra_location)
+ * sind in keinem Plan gebündelt — gebündelte Pläne (Enterprise) heben das Limit
+ * ohnehin komplett auf (terminal_limit = null), bevor diese Funktion zählt.
+ */
+export async function getAddonQuantity(companyId: string, addonKey: AddonKey): Promise<number> {
+  const rows = await getCompanyAddons(companyId)
+  const row = rows.find(r => r.addon_key === addonKey)
+  return row ? Math.max(1, row.quantity) : 0
 }
 
 /**
@@ -197,7 +226,7 @@ export function addonPriceId(addonKey: AddonKey, cycle: BillingCycle): string | 
 /** Synchronisiert die DB mit dem aktuellen Stripe-Stand (Insert/Delete-Diff). */
 export async function syncCompanyAddons(
   companyId: string,
-  desired: { addon_key: AddonKey; stripe_subscription_item_id: string; billing_cycle: BillingCycle }[],
+  desired: { addon_key: AddonKey; stripe_subscription_item_id: string; billing_cycle: BillingCycle; quantity?: number }[],
 ) {
   const existing = await getCompanyAddons(companyId)
   const desiredKeys = new Set(desired.map(d => d.addon_key))
@@ -222,6 +251,7 @@ export async function syncCompanyAddons(
       addon_key: d.addon_key,
       stripe_subscription_item_id: d.stripe_subscription_item_id,
       billing_cycle: d.billing_cycle,
+      quantity: Math.max(1, d.quantity ?? 1),
       updated_at: new Date().toISOString(),
       ...(existingKeys.has(d.addon_key) ? {} : { active_since: new Date().toISOString() }),
     }))

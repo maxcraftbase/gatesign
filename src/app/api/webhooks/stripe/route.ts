@@ -139,7 +139,7 @@ async function handleSubscriptionUpserted(sub: Stripe.Subscription, eventId: str
     body: JSON.stringify({ subscription_status: status }),
   })
 
-  // 5. Add-ons in company_addons syncen
+  // 5. Add-ons in company_addons syncen (inkl. Stripe-Item-Quantity, z. B. mehrere Zusatz-Standorte)
   await syncCompanyAddons(
     companyId,
     addonItems
@@ -148,6 +148,7 @@ async function handleSubscriptionUpserted(sub: Stripe.Subscription, eventId: str
         addon_key: a.addonKey!,
         stripe_subscription_item_id: a.item.id,
         billing_cycle: basePlan!.cycle,
+        quantity: a.item.quantity ?? 1,
       })),
   )
 

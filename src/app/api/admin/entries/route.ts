@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAdminContext } from '@/lib/admin-auth'
-import { hasAddon } from '@/lib/addons'
+import { getActiveAddons } from '@/lib/addons'
 import { supabaseUrl, anonKey, serviceKey } from '@/lib/supabase-server'
 
 export async function GET(req: NextRequest) {
@@ -32,7 +32,7 @@ export async function GET(req: NextRequest) {
       allowedTerminalIds = accessRows.map(r => r.terminal_id)
       // Member with no assigned terminals sees nothing
       if (allowedTerminalIds.length === 0) {
-        return NextResponse.json({ entries: [], total: 0, page, limit, companyName: ctx.company.name, logoUrl: '', contactPersons: [], companyPdfUrl: '', terminals: [], printerActive: false })
+        return NextResponse.json({ entries: [], total: 0, page, limit, companyName: ctx.company.name, logoUrl: '', contactPersons: [], companyPdfUrl: '', terminals: [], printerActive: false, auditExportActive: false, translationActive: false, brandingActive: false })
       }
     }
 
@@ -145,10 +145,19 @@ export async function GET(req: NextRequest) {
 
     const kpis = { todayCount, currentlyOnSite, truckTodayCount, briefingRate }
 
-    // Drucker-Add-on aktiv? Steuert Karten-Nr.-Spalte + „Nur Anwesende"-Filter im Client.
-    const printerActive = await hasAddon(ctx.company.id, 'printer')
+    // Add-on-Flags fürs Client-Gating (Karten-Spalte, Export-Button, Notiz-Übersetzung).
+    // Ein Plan- + ein Add-on-Lookup für alle vier Keys.
+    const addons = await getActiveAddons(ctx.company.id, ['printer', 'audit_export', 'briefing_translation', 'custom_branding'])
 
-    return NextResponse.json({ entries: data, total, page, limit, companyName: ctx.company.name, logoUrl, contactPersons, companyPdfUrl, terminals: terminalsForFilter, kpis, printerActive })
+    return NextResponse.json({
+      entries: data, total, page, limit,
+      companyName: ctx.company.name, logoUrl, contactPersons, companyPdfUrl,
+      terminals: terminalsForFilter, kpis,
+      printerActive: Boolean(addons.printer),
+      auditExportActive: Boolean(addons.audit_export),
+      translationActive: Boolean(addons.briefing_translation),
+      brandingActive: Boolean(addons.custom_branding),
+    })
   } catch (err) {
     console.error('[entries] unexpected error:', err)
     return NextResponse.json({ error: 'Interner Fehler.' }, { status: 500 })

@@ -1,10 +1,11 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { useParams } from 'next/navigation'
 import {
   Download, RefreshCw, FileText, Search, LogOut, FileSpreadsheet,
   ChevronDown, Truck, Users as UsersIcon,
-  ShieldCheck, MapPin, ClipboardList, CheckCircle2,
+  ShieldCheck, MapPin, ClipboardList, CheckCircle2, Lock,
 } from 'lucide-react'
 import { type Entry, VISITOR_TYPE_LABELS, formatDate } from '@/types/entry'
 import { EntryModal } from '@/components/admin/EntryModal'
@@ -252,7 +253,12 @@ export function AdminEntriesClient() {
   const [terminalFilter, setTerminalFilter] = useState('')
   const [presentOnly, setPresentOnly] = useState(false)
   const [printerActive, setPrinterActive] = useState(false)
+  // Add-on-Gating: fail-closed (false), bis die /entries-Antwort die Flags liefert.
+  const [auditExportActive, setAuditExportActive] = useState(false)
+  const [translationActive, setTranslationActive] = useState(false)
   const [terminals, setTerminals] = useState<{ id: string; name: string }[]>([])
+  const params = useParams<{ slug?: string }>()
+  const billingHref = params?.slug ? `/${params.slug}/admin/billing` : '/'
   const [checkingOut, setCheckingOut] = useState<string | null>(null)
   const [lastRefresh, setLastRefresh] = useState<Date>(() => new Date())
   const [, setNow] = useState(() => Date.now())
@@ -296,6 +302,8 @@ export function AdminEntriesClient() {
         setCompanyPdfUrl(data.companyPdfUrl ?? '')
         if (data.terminals) setTerminals(data.terminals)
         setPrinterActive(Boolean(data.printerActive))
+        setAuditExportActive(Boolean(data.auditExportActive))
+        setTranslationActive(Boolean(data.translationActive))
         setPage(p)
         setLastRefresh(new Date())
       })
@@ -345,6 +353,8 @@ export function AdminEntriesClient() {
           setTotal(data.total ?? 0)
           setKpis(data.kpis ?? null)
           setPrinterActive(Boolean(data.printerActive))
+          setAuditExportActive(Boolean(data.auditExportActive))
+          setTranslationActive(Boolean(data.translationActive))
           setLastRefresh(new Date())
           setSelectedEntry(prev => {
             if (!prev) return prev
@@ -499,21 +509,41 @@ export function AdminEntriesClient() {
                 <ChevronDown className={`w-3.5 h-3.5 transition-transform ${exportMenuOpen ? 'rotate-180' : ''}`} strokeWidth={2.25} />
               </button>
               {exportMenuOpen && (
-                <div className="absolute right-0 top-full mt-1.5 w-48 bg-white border border-slate-200 rounded-xl shadow-lg py-1 z-30">
-                  <button
-                    onClick={() => { setExportMenuOpen(false); window.open('/api/admin/export', '_blank') }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
-                  >
-                    <Download className="w-4 h-4 text-slate-400" strokeWidth={1.75} />
-                    CSV-Datei
-                  </button>
-                  <button
-                    onClick={() => { setExportMenuOpen(false); window.open('/api/admin/export/xlsx', '_blank') }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
-                  >
-                    <FileSpreadsheet className="w-4 h-4 text-slate-400" strokeWidth={1.75} />
-                    Excel (.xlsx)
-                  </button>
+                <div className="absolute right-0 top-full mt-1.5 w-60 bg-white border border-slate-200 rounded-xl shadow-lg py-1 z-30">
+                  {auditExportActive ? (
+                    <>
+                      <button
+                        onClick={() => { setExportMenuOpen(false); window.open('/api/admin/export', '_blank') }}
+                        className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
+                      >
+                        <Download className="w-4 h-4 text-slate-400" strokeWidth={1.75} />
+                        CSV-Datei
+                      </button>
+                      <button
+                        onClick={() => { setExportMenuOpen(false); window.open('/api/admin/export/xlsx', '_blank') }}
+                        className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
+                      >
+                        <FileSpreadsheet className="w-4 h-4 text-slate-400" strokeWidth={1.75} />
+                        Excel (.xlsx)
+                      </button>
+                    </>
+                  ) : (
+                    <div className="px-3 py-2.5">
+                      <div className="flex items-center gap-2 text-slate-700 mb-1">
+                        <Lock className="w-4 h-4 text-slate-400" strokeWidth={1.75} />
+                        <span className="text-sm font-semibold">Audit-Export</span>
+                      </div>
+                      <p className="text-xs text-slate-500 mb-2.5 leading-relaxed">
+                        Excel- und CSV-Export ist ein Add-on — ideal für DSGVO-Anfragen und Compliance.
+                      </p>
+                      <a
+                        href={billingHref}
+                        className="block text-center text-xs font-semibold px-3 py-1.5 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition-colors"
+                      >
+                        Im Tarif freischalten
+                      </a>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -611,6 +641,7 @@ export function AdminEntriesClient() {
           companyPdfUrl={companyPdfUrl}
           contactPersons={contactPersons}
           signatureData={signatureData}
+          translationActive={translationActive}
           onClose={() => setSelectedEntry(null)}
           onNoteUpdated={handleNoteUpdated}
         />

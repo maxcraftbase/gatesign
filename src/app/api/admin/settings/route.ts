@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getAdminContext } from '@/lib/admin-auth'
 import { logAction } from '@/lib/audit'
 import { checkAdminRateLimit } from '@/lib/rate-limit'
+import { getActiveAddons } from '@/lib/addons'
 import { supabaseUrl, anonKey } from '@/lib/supabase-server'
 
 export async function GET() {
@@ -25,7 +26,19 @@ export async function GET() {
     for (const row of settingsRows) settings[row.key] = row.value
 
     const briefings = await briefingsRes.json()
-    return NextResponse.json({ settings, briefings })
+
+    // Add-on-Flags fürs Client-Gating: Logo-Upload (Custom Branding) und
+    // Hinweis-Übersetzung (KI-Briefing-Übersetzung).
+    const addons = await getActiveAddons(ctx.company.id, ['custom_branding', 'briefing_translation'])
+
+    return NextResponse.json({
+      settings,
+      briefings,
+      addons: {
+        custom_branding: Boolean(addons.custom_branding),
+        briefing_translation: Boolean(addons.briefing_translation),
+      },
+    })
   } catch (err) {
     console.error('[settings] GET error:', err)
     return NextResponse.json({ error: 'Interner Fehler.' }, { status: 500 })

@@ -7,7 +7,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { hasAddon, addonRequiredError, getAddonQuantity, ADDON_REGISTRY } from '@/lib/addons'
+import { hasAddon, addonRequiredError, getAddonQuantity, getActiveAddons, ADDON_REGISTRY } from '@/lib/addons'
 import type { PlanName } from '@/lib/subscription'
 
 const COMPANY_ID = 'company-123'
@@ -148,6 +148,52 @@ describe('getAddonQuantity — Mengen-Modell (extra_location)', () => {
       throw new Error(`Unmocked fetch: ${u}`)
     }) as unknown as typeof fetch
     expect(await getAddonQuantity(COMPANY_ID, 'extra_location')).toBe(1)
+  })
+})
+
+describe('getActiveAddons — Batch-Gating (ein Plan- + ein Add-on-Lookup)', () => {
+  beforeEach(() => vi.restoreAllMocks())
+
+  it('löst Plan-Bundling + Käufe gemischt korrekt auf', async () => {
+    // Business → audit_export gebündelt; printer nur durch Kauf.
+    mockDb('business', ['printer'])
+    const flags = await getActiveAddons(COMPANY_ID, ['audit_export', 'printer', 'custom_branding'])
+    expect(flags.audit_export).toBe(true)   // gebündelt in business
+    expect(flags.printer).toBe(true)        // explizit gekauft
+    expect(flags.custom_branding).toBe(false) // nur enterprise, nicht gekauft
+  })
+
+  it('liefert nur die angefragten Keys zurück', async () => {
+    mockDb('enterprise', [])
+    const flags = await getActiveAddons(COMPANY_ID, ['printer'])
+    expect(Object.keys(flags)).toEqual(['printer'])
+    expect(flags.printer).toBe(false)  // auch in Enterprise nicht gebündelt
+  })
+
+  it('macht max. einen companies- und einen company_addons-Lookup', async () => {
+    mockDb('enterprise', [])
+    const fetchSpy = global.fetch as unknown as ReturnType<typeof vi.fn>
+    await getActiveAddons(COMPANY_ID, ['audit_export', 'custom_branding', 'briefing_translation', 'printer'])
+    const urls = fetchSpy.mock.calls.map(c => String(c[0]))
+    expect(urls.filter(u => u.includes('/rest/v1/companies')).length).toBe(1)
+    expect(urls.filter(u => u.includes('/rest/v1/company_addons')).length).toBe(1)
+  })
+
+  it('expliziter plan-Parameter spart den companies-Lookup komplett', async () => {
+    mockDb(null, [])  // companies würde leer liefern
+    const fetchSpy = global.fetch as unknown as ReturnType<typeof vi.fn>
+    const flags = await getActiveAddons(COMPANY_ID, ['audit_export'], 'enterprise')
+    expect(flags.audit_export).toBe(true)
+    const urls = fetchSpy.mock.calls.map(c => String(c[0]))
+    expect(urls.some(u => u.includes('/rest/v1/companies'))).toBe(false)
+  })
+
+  it('fragt companies gar nicht ab, wenn kein Key Plan-Bundling nutzt (z. B. nur printer)', async () => {
+    mockDb('business', [])
+    const fetchSpy = global.fetch as unknown as ReturnType<typeof vi.fn>
+    await getActiveAddons(COMPANY_ID, ['printer'])
+    const urls = fetchSpy.mock.calls.map(c => String(c[0]))
+    expect(urls.some(u => u.includes('/rest/v1/companies'))).toBe(false)
   })
 })
 

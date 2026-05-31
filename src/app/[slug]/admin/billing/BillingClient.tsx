@@ -8,6 +8,7 @@ import {
 } from 'lucide-react'
 import { clsx } from 'clsx'
 import { Button } from '@/components/ui/Button'
+import { PrintBridgeManager } from '@/components/admin/PrintBridgeManager'
 import { ADDON_REGISTRY, ALL_ADDON_KEYS, type AddonKey } from '@/lib/addons'
 import type { PlanName, BillingCycle } from '@/lib/subscription'
 
@@ -433,6 +434,19 @@ export function BillingClient({
           </p>
         )}
       </section>
+
+      {/* Print-Bridge-Verwaltung — nur wenn Drucker-Add-on aktiv */}
+      {state.activeAddons.includes('printer') && (
+        <section>
+          <header className="mb-4">
+            <h3 className="text-lg font-semibold text-slate-900">Drucker einrichten</h3>
+            <p className="text-sm text-slate-500">
+              Koppeln Sie den Besucherkarten-Drucker über die Print-Bridge auf Ihrem Terminal-Rechner.
+            </p>
+          </header>
+          <PrintBridgeManager />
+        </section>
+      )}
 
       <p className="text-xs text-slate-400">
         Zahlungen werden sicher über Stripe abgewickelt. Sie können jederzeit über das Kundenportal kündigen.

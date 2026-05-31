@@ -43,6 +43,9 @@ export async function POST(req: NextRequest) {
         body: JSON.stringify({
           checked_out_at: new Date().toISOString(),
           checkout_method: 'auto_close',
+          // departed_at mitschreiben (kanonisches „Gelände verlassen"-Feld), damit
+          // automatisch geschlossene Karten nicht ewig als „auf Gelände" zählen.
+          departed_at: new Date().toISOString(),
         }),
       },
     )

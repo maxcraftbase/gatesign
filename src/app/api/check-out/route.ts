@@ -95,6 +95,9 @@ export async function POST(req: NextRequest) {
         body: JSON.stringify({
           checked_out_at: new Date().toISOString(),
           checkout_method: 'card_number',
+          // departed_at mitschreiben: kanonisches „Gelände verlassen"-Feld, hält die
+          // Admin-KPI „Auf Gelände" konsistent mit dem Self-Service-Checkout.
+          departed_at: new Date().toISOString(),
         }),
       },
     )

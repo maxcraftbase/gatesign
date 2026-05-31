@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAdminContext } from '@/lib/admin-auth'
+import { hasAddon } from '@/lib/addons'
 import { supabaseUrl, anonKey, serviceKey } from '@/lib/supabase-server'
 
 export async function GET(req: NextRequest) {
@@ -12,6 +13,7 @@ export async function GET(req: NextRequest) {
     const search = searchParams.get('search')?.trim() ?? ''
     const type = searchParams.get('type') ?? ''
     const terminalFilter = searchParams.get('terminal') ?? ''
+    const presentOnly = searchParams.get('present') === '1'
     const SORTABLE = ['created_at', 'driver_name', 'company_name'] as const
     const sortRaw = searchParams.get('sort') ?? 'created_at'
     const sortCol = (SORTABLE as readonly string[]).includes(sortRaw) ? sortRaw : 'created_at'
@@ -30,13 +32,13 @@ export async function GET(req: NextRequest) {
       allowedTerminalIds = accessRows.map(r => r.terminal_id)
       // Member with no assigned terminals sees nothing
       if (allowedTerminalIds.length === 0) {
-        return NextResponse.json({ entries: [], total: 0, page, limit, companyName: ctx.company.name, logoUrl: '', contactPersons: [], companyPdfUrl: '', terminals: [] })
+        return NextResponse.json({ entries: [], total: 0, page, limit, companyName: ctx.company.name, logoUrl: '', contactPersons: [], companyPdfUrl: '', terminals: [], printerActive: false })
       }
     }
 
     const params = new URLSearchParams({
       company_id: `eq.${ctx.company.id}`,
-      select: 'id,created_at,departed_at,driver_name,company_name,license_plate,trailer_plate,phone,language,visitor_type,briefing_accepted,briefing_accepted_at,has_signature,reference_number,contact_person,staff_note,staff_note_translated,assigned_contact,terminal_id,terminals(name)',
+      select: 'id,created_at,departed_at,driver_name,company_name,license_plate,trailer_plate,phone,language,visitor_type,briefing_accepted,briefing_accepted_at,has_signature,reference_number,contact_person,staff_note,staff_note_translated,assigned_contact,terminal_id,card_number,card_date,checked_out_at,checkout_method,terminals(name)',
       order: `${sortCol}.${sortDir}`,
       limit: String(limit),
       offset: String(offset),
@@ -48,6 +50,13 @@ export async function GET(req: NextRequest) {
     }
     if (type && ['truck', 'visitor', 'service'].includes(type)) {
       params.set('visitor_type', `eq.${type}`)
+    }
+
+    // „Nur Anwesende" (Drucker-Add-on): offene Karten-Check-ins, die noch nicht
+    // ausgecheckt wurden.
+    if (presentOnly) {
+      params.set('card_number', 'not.is.null')
+      params.set('checked_out_at', 'is.null')
     }
 
     // Apply terminal filter: either from member restrictions or from explicit filter param
@@ -136,7 +145,10 @@ export async function GET(req: NextRequest) {
 
     const kpis = { todayCount, currentlyOnSite, truckTodayCount, briefingRate }
 
-    return NextResponse.json({ entries: data, total, page, limit, companyName: ctx.company.name, logoUrl, contactPersons, companyPdfUrl, terminals: terminalsForFilter, kpis })
+    // Drucker-Add-on aktiv? Steuert Karten-Nr.-Spalte + „Nur Anwesende"-Filter im Client.
+    const printerActive = await hasAddon(ctx.company.id, 'printer')
+
+    return NextResponse.json({ entries: data, total, page, limit, companyName: ctx.company.name, logoUrl, contactPersons, companyPdfUrl, terminals: terminalsForFilter, kpis, printerActive })
   } catch (err) {
     console.error('[entries] unexpected error:', err)
     return NextResponse.json({ error: 'Interner Fehler.' }, { status: 500 })

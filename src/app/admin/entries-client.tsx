@@ -56,18 +56,38 @@ function KpiCard({
   )
 }
 
+// Grid-Templates: mit Karten-Nr.-Spalte (Drucker-Add-on) bzw. ohne.
+// Müssen statische Strings sein, damit Tailwind sie erkennt.
+const GRID_WITH_CARD = 'grid-cols-[56px_104px_84px_minmax(0,1fr)_110px_168px]'
+const GRID_NO_CARD = 'grid-cols-[110px_90px_minmax(0,1fr)_120px_180px]'
+
 // Desktop: Tabellen-Row · Mobile: kompakte Karte
 function EntryRow({
-  entry, onClick, onCheckout, checkingOut,
+  entry, onClick, onCheckout, checkingOut, printerActive,
 }: {
   entry: Entry
   onClick: (e: Entry) => void
   onCheckout: (e: React.MouseEvent, id: string) => void
   checkingOut: string | null
+  printerActive: boolean
 }) {
   const typeInfo = entry.visitor_type ? VISITOR_TYPE_LABELS[entry.visitor_type] : null
-  const showCheckout = entry.visitor_type === 'visitor' || entry.visitor_type === 'service'
-  const isCheckedOut = !!entry.departed_at
+  const hasCard = printerActive && entry.card_number != null
+  // checked_out_at (Karten-Checkout) und departed_at (Gelände verlassen) werden
+  // beim Checkout gemeinsam gesetzt — beide als „abgemeldet" werten.
+  const goneAt = entry.checked_out_at ?? entry.departed_at ?? null
+  const isCheckedOut = !!goneAt
+  const isAutoClosed = entry.checkout_method === 'auto_close'
+  // Checkout-Button: Besucher/Dienstleister wie bisher + jeder Karten-Besucher.
+  const showCheckout = entry.visitor_type === 'visitor' || entry.visitor_type === 'service' || hasCard
+
+  const cardCell = hasCard ? (
+    <span className="inline-flex items-center justify-center min-w-[2.25rem] font-mono text-sm font-bold text-indigo-700 bg-indigo-50 border border-indigo-100 rounded-md px-1.5 py-0.5 tabular-nums">
+      {entry.card_number}
+    </span>
+  ) : (
+    <span className="text-slate-300 text-xs">—</span>
+  )
 
   const briefedBadge = entry.briefing_accepted && (
     <span className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-700 text-[11px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap">
@@ -78,9 +98,9 @@ function EntryRow({
 
   const action = showCheckout && (
     isCheckedOut ? (
-      <span className="inline-flex items-center gap-1 bg-slate-100 text-slate-600 text-[11px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap">
+      <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap ${isAutoClosed ? 'bg-amber-50 text-amber-700' : 'bg-slate-100 text-slate-600'}`}>
         <LogOut className="w-3 h-3" strokeWidth={2.5} />
-        {new Date(entry.departed_at!).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}
+        {isAutoClosed ? 'Auto · ' : ''}{new Date(goneAt!).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}
       </span>
     ) : (
       <button
@@ -99,8 +119,11 @@ function EntryRow({
       {/* Desktop: Tabellen-Row im Grid */}
       <div
         onClick={() => onClick(entry)}
-        className="hidden md:grid grid-cols-[110px_90px_minmax(0,1fr)_120px_180px] gap-3 items-center bg-white border border-slate-200 hover:border-indigo-200 hover:bg-slate-50/30 rounded-xl px-4 py-3 cursor-pointer transition-colors"
+        className={`hidden md:grid ${printerActive ? GRID_WITH_CARD : GRID_NO_CARD} gap-3 items-center bg-white border border-slate-200 hover:border-indigo-200 hover:bg-slate-50/30 rounded-xl px-4 py-3 cursor-pointer transition-colors`}
       >
+        {/* Karten-Nr. (nur Drucker-Add-on) */}
+        {printerActive && <span>{cardCell}</span>}
+
         {/* Zeit */}
         <span className="text-xs text-slate-500 tabular-nums whitespace-nowrap">
           {formatDate(entry.created_at)}
@@ -163,6 +186,11 @@ function EntryRow({
       >
         <div className="flex items-start justify-between gap-2">
           <div className="flex items-center gap-2 min-w-0">
+            {hasCard && (
+              <span className="inline-flex items-center justify-center font-mono text-xs font-bold text-indigo-700 bg-indigo-50 border border-indigo-100 rounded-md px-1.5 py-0.5 tabular-nums shrink-0">
+                {entry.card_number}
+              </span>
+            )}
             {typeInfo && (
               <span className={`inline-flex items-center text-[10px] font-semibold px-2 py-0.5 rounded-full shrink-0 ${typeInfo.color}`}>
                 {typeInfo.label}
@@ -222,6 +250,8 @@ export function AdminEntriesClient() {
   const [search, setSearch] = useState('')
   const [typeFilter, setTypeFilter] = useState('')
   const [terminalFilter, setTerminalFilter] = useState('')
+  const [presentOnly, setPresentOnly] = useState(false)
+  const [printerActive, setPrinterActive] = useState(false)
   const [terminals, setTerminals] = useState<{ id: string; name: string }[]>([])
   const [checkingOut, setCheckingOut] = useState<string | null>(null)
   const [lastRefresh, setLastRefresh] = useState<Date>(() => new Date())
@@ -236,22 +266,24 @@ export function AdminEntriesClient() {
       const res = await fetch(`/api/admin/entries/${id}/checkout`, { method: 'PATCH' })
       if (res.ok) {
         const now = new Date().toISOString()
-        setEntries(prev => prev.map(entry => entry.id === id ? { ...entry, departed_at: now } : entry))
+        const patch = { departed_at: now, checked_out_at: now, checkout_method: 'admin' }
+        setEntries(prev => prev.map(entry => entry.id === id ? { ...entry, ...patch } : entry))
         setKpis(prev => prev ? { ...prev, currentlyOnSite: Math.max(0, prev.currentlyOnSite - 1) } : prev)
-        if (selectedEntry?.id === id) setSelectedEntry(e => e ? { ...e, departed_at: now } : e)
+        if (selectedEntry?.id === id) setSelectedEntry(e => e ? { ...e, ...patch } : e)
       }
     } catch { /* ignore */ } finally {
       setCheckingOut(null)
     }
   }
 
-  const loadEntries = useCallback((p: number, q: string, type: string, terminal: string, sortCol: string, sortDir: 'asc' | 'desc') => {
+  const loadEntries = useCallback((p: number, q: string, type: string, terminal: string, sortCol: string, sortDir: 'asc' | 'desc', present: boolean) => {
     setLoading(true)
     setError('')
     const qs = new URLSearchParams({ page: String(p), sort: sortCol, dir: sortDir })
     if (q.trim()) qs.set('search', q.trim())
     if (type) qs.set('type', type)
     if (terminal) qs.set('terminal', terminal)
+    if (present) qs.set('present', '1')
     fetch(`/api/admin/entries?${qs}`)
       .then(res => { if (!res.ok) throw new Error('Failed'); return res.json() })
       .then(data => {
@@ -263,6 +295,7 @@ export function AdminEntriesClient() {
         if (data.contactPersons) setContactPersons(data.contactPersons)
         setCompanyPdfUrl(data.companyPdfUrl ?? '')
         if (data.terminals) setTerminals(data.terminals)
+        setPrinterActive(Boolean(data.printerActive))
         setPage(p)
         setLastRefresh(new Date())
       })
@@ -277,10 +310,10 @@ export function AdminEntriesClient() {
     mountedRef.current = true
     const isSearchChange = !isMount && search !== searchRef.current
     searchRef.current = search
-    const t = setTimeout(() => loadEntries(1, search, typeFilter, terminalFilter, 'created_at', 'desc'), isSearchChange ? 350 : 0)
+    const t = setTimeout(() => loadEntries(1, search, typeFilter, terminalFilter, 'created_at', 'desc', presentOnly), isSearchChange ? 350 : 0)
     return () => clearTimeout(t)
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search, typeFilter, terminalFilter])
+  }, [search, typeFilter, terminalFilter, presentOnly])
 
   useEffect(() => {
     let active = true
@@ -302,6 +335,7 @@ export function AdminEntriesClient() {
       if (search.trim()) qs.set('search', search.trim())
       if (typeFilter) qs.set('type', typeFilter)
       if (terminalFilter) qs.set('terminal', terminalFilter)
+      if (presentOnly) qs.set('present', '1')
       fetch(`/api/admin/entries?${qs}`)
         .then(res => res.ok ? res.json() : null)
         .then(data => {
@@ -310,6 +344,7 @@ export function AdminEntriesClient() {
           setEntries(newEntries)
           setTotal(data.total ?? 0)
           setKpis(data.kpis ?? null)
+          setPrinterActive(Boolean(data.printerActive))
           setLastRefresh(new Date())
           setSelectedEntry(prev => {
             if (!prev) return prev
@@ -320,7 +355,7 @@ export function AdminEntriesClient() {
         .catch(() => {})
     }, 30_000)
     return () => clearInterval(id)
-  }, [search, typeFilter, terminalFilter, page])
+  }, [search, typeFilter, terminalFilter, presentOnly, page])
 
   // „vor X s"-Anzeige live updaten
   useEffect(() => {
@@ -345,7 +380,7 @@ export function AdminEntriesClient() {
   }
 
   const totalPages = Math.max(1, Math.ceil(total / 50))
-  const refresh = () => loadEntries(page, search, typeFilter, terminalFilter, 'created_at', 'desc')
+  const refresh = () => loadEntries(page, search, typeFilter, terminalFilter, 'created_at', 'desc', presentOnly)
 
   return (
     <div>
@@ -428,6 +463,22 @@ export function AdminEntriesClient() {
             </select>
           )}
 
+          {/* „Nur Anwesende" — offene Besucherkarten (nur Drucker-Add-on) */}
+          {printerActive && (
+            <button
+              onClick={() => setPresentOnly(v => !v)}
+              className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
+                presentOnly
+                  ? 'bg-indigo-600 border-indigo-600 text-white'
+                  : 'bg-white border-slate-200 text-slate-600 hover:border-slate-400'
+              }`}
+              title="Nur Besucher mit offener Karte anzeigen"
+            >
+              <MapPin className="w-4 h-4" strokeWidth={2} />
+              Nur Anwesende
+            </button>
+          )}
+
           {/* Actions */}
           <div className="flex items-center gap-1 flex-shrink-0 lg:ml-auto">
             <button
@@ -476,7 +527,7 @@ export function AdminEntriesClient() {
             <span>Live · letzter Refresh vor {formatRelative(lastRefresh)}</span>
           </div>
           <span className="tabular-nums">
-            {total} {search || typeFilter || terminalFilter ? 'gefiltert' : 'Einträge'}
+            {total} {search || typeFilter || terminalFilter || presentOnly ? 'gefiltert' : 'Einträge'}
           </span>
         </div>
       </div>
@@ -496,11 +547,11 @@ export function AdminEntriesClient() {
         <div className="bg-white rounded-2xl border border-slate-200 p-12 text-center">
           <ClipboardList className="w-10 h-10 text-slate-300 mx-auto mb-3" strokeWidth={1.5} />
           <p className="text-slate-500 font-medium">
-            {search || typeFilter || terminalFilter ? 'Keine Treffer in dieser Auswahl.' : 'Noch keine Check-ins.'}
+            {search || typeFilter || terminalFilter || presentOnly ? 'Keine Treffer in dieser Auswahl.' : 'Noch keine Check-ins.'}
           </p>
-          {(search || typeFilter || terminalFilter) && (
+          {(search || typeFilter || terminalFilter || presentOnly) && (
             <button
-              onClick={() => { setSearch(''); setTypeFilter(''); setTerminalFilter('') }}
+              onClick={() => { setSearch(''); setTypeFilter(''); setTerminalFilter(''); setPresentOnly(false) }}
               className="text-sm text-indigo-600 hover:text-indigo-700 font-semibold mt-3"
             >
               Filter zurücksetzen
@@ -510,7 +561,8 @@ export function AdminEntriesClient() {
       ) : (
         <div className="flex flex-col gap-1.5">
           {/* Desktop: Tabellen-Header */}
-          <div className="hidden md:grid grid-cols-[110px_90px_minmax(0,1fr)_120px_180px] gap-3 px-4 py-2 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+          <div className={`hidden md:grid ${printerActive ? GRID_WITH_CARD : GRID_NO_CARD} gap-3 px-4 py-2 text-[11px] font-semibold text-slate-400 uppercase tracking-wider`}>
+            {printerActive && <span>Nr.</span>}
             <span>Zeit</span>
             <span>Typ</span>
             <span>Person · Firma</span>
@@ -524,6 +576,7 @@ export function AdminEntriesClient() {
               onClick={setSelectedEntry}
               onCheckout={handleCheckout}
               checkingOut={checkingOut}
+              printerActive={printerActive}
             />
           ))}
         </div>
@@ -533,7 +586,7 @@ export function AdminEntriesClient() {
       {totalPages > 1 && (
         <div className="flex items-center justify-center gap-3 mt-6">
           <button
-            onClick={() => loadEntries(page - 1, search, typeFilter, terminalFilter, 'created_at', 'desc')}
+            onClick={() => loadEntries(page - 1, search, typeFilter, terminalFilter, 'created_at', 'desc', presentOnly)}
             disabled={page <= 1}
             className="px-4 py-2 rounded-lg border border-slate-200 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >
@@ -541,7 +594,7 @@ export function AdminEntriesClient() {
           </button>
           <span className="text-sm text-slate-500 tabular-nums">Seite {page} von {totalPages}</span>
           <button
-            onClick={() => loadEntries(page + 1, search, typeFilter, terminalFilter, 'created_at', 'desc')}
+            onClick={() => loadEntries(page + 1, search, typeFilter, terminalFilter, 'created_at', 'desc', presentOnly)}
             disabled={page >= totalPages}
             className="px-4 py-2 rounded-lg border border-slate-200 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
           >

@@ -10,6 +10,7 @@ import { LanguageSelect } from '@/components/kiosk/LanguageSelect'
 import { VisitorTypeSelect } from '@/components/kiosk/VisitorTypeSelect'
 import { CombinedFormStep, type CheckInFormData } from '@/components/kiosk/CombinedFormStep'
 import { SuccessScreen } from '@/components/kiosk/SuccessScreen'
+import { CheckoutFlow } from '@/components/kiosk/CheckoutFlow'
 
 const EMPTY_FORM: CheckInFormData = { name: '', company: '', plate: '', trailerPlate: '', phone: '', reference: '', contactPerson: '' }
 
@@ -58,6 +59,9 @@ export function KioskClient({ slug, terminalSlug, terminalName: initialTerminalN
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [adminModalOpen, setAdminModalOpen] = useState(false)
+  // Drucker-Add-on State
+  const [printerAddonActive, setPrinterAddonActive] = useState(false)
+  const [cardNumber, setCardNumber] = useState<number | null>(null)
 
   const adminTapCount = useRef(0)
   const adminTapTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -151,6 +155,8 @@ export function KioskClient({ slug, terminalSlug, terminalName: initialTerminalN
           if (isValidUrl(data[`briefing_pdf_${key}`])) urls[key] = data[`briefing_pdf_${key}`]
         }
         setPdfUrls(urls)
+        // Drucker-Add-on aktiv? Setting kommt von /api/settings als String 'true'/'false'
+        setPrinterAddonActive(data.printer_addon_active === 'true')
       })
       .catch(() => {})
   }, [slug, terminalSlug])
@@ -205,6 +211,9 @@ export function KioskClient({ slug, terminalSlug, terminalName: initialTerminalN
         setLoading(false)
         return
       }
+      // Tagesnummer aus Response speichern (Drucker-Add-on) — wird im SuccessScreen angezeigt
+      const data = await res.json() as { card_number?: number }
+      setCardNumber(typeof data.card_number === 'number' ? data.card_number : null)
       setLoading(false)
       setStep(5)
     } catch {
@@ -219,6 +228,7 @@ export function KioskClient({ slug, terminalSlug, terminalName: initialTerminalN
     setVisitorType('truck')
     setFormData(EMPTY_FORM)
     setError('')
+    setCardNumber(null)
   }
 
   function handleAdminTap() {
@@ -238,7 +248,7 @@ export function KioskClient({ slug, terminalSlug, terminalName: initialTerminalN
           <button onClick={handleReset} className="text-slate-900 font-bold text-xl tracking-tight hover:text-slate-600 transition-colors">GateSign</button>
           {terminalName && <span className="text-slate-400 text-sm font-medium">{terminalName}</span>}
         </div>
-        {step > 0 && step < 5 && (
+        {step > 0 && step < 5 && step !== 6 && (
           <div className="flex-1 mx-2">
             <ProgressBar step={step} lang={lang} />
           </div>
@@ -265,7 +275,19 @@ export function KioskClient({ slug, terminalSlug, terminalName: initialTerminalN
         </div>
       )}
 
-      {step === 0 && <WelcomeScreen title={welcomeTitle} subtitle={welcomeSubtitle} companyName={companyName} logoUrl={logoUrl} terminalName={terminalName || undefined} onStart={() => setStep(1)} />}
+      {step === 0 && (
+        <WelcomeScreen
+          title={welcomeTitle}
+          subtitle={welcomeSubtitle}
+          companyName={companyName}
+          logoUrl={logoUrl}
+          terminalName={terminalName || undefined}
+          onCheckIn={() => setStep(1)}
+          onCheckOut={printerAddonActive ? () => setStep(6) : undefined}
+          checkInLabel={printerAddonActive ? translations[lang].mode_checkin : undefined}
+          checkOutLabel={translations[lang].mode_checkout}
+        />
+      )}
       {step === 1 && <LanguageSelect onSelect={handleLanguageSelect} onBack={() => setStep(0)} />}
       {step === 2 && (
         <VisitorTypeSelect
@@ -291,7 +313,16 @@ export function KioskClient({ slug, terminalSlug, terminalName: initialTerminalN
           uppercaseTypes={uppercaseTypes}
           onConfirm={handleBriefingConfirm} onBack={() => setStep(2)} />
       )}
-      {step === 5 && <SuccessScreen lang={lang} onReset={handleReset} />}
+      {step === 5 && <SuccessScreen lang={lang} onReset={handleReset} cardNumber={cardNumber} />}
+      {step === 6 && (
+        <CheckoutFlow
+          lang={lang}
+          slug={slug}
+          terminalSlug={terminalSlug}
+          onBack={() => setStep(0)}
+          onReset={handleReset}
+        />
+      )}
 
       {adminModalOpen && <AdminLoginModal onClose={() => setAdminModalOpen(false)} onSuccess={handleAdminSuccess} />}
     </div>

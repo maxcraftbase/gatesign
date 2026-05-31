@@ -45,3 +45,6 @@ next-env.d.ts
 /test-results/
 /playwright-report/
 tests/e2e/.auth.json
+
+# Persönliches Migrations-Archiv (kein Code, enthält minifizierte Bundles)
+/Claude-Migration-Archiv/

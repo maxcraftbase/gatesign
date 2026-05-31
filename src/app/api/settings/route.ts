@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCompanyBySlug, getTerminalBySlug } from '@/lib/company'
+import { hasAddon } from '@/lib/addons'
 import { supabaseUrl, anonKey } from '@/lib/supabase-server'
 
 export async function GET(req: NextRequest) {
@@ -27,6 +28,9 @@ export async function GET(req: NextRequest) {
         settings.allowed_visitor_types = terminal.allowed_visitor_types ?? '["truck","visitor","service"]'
       }
     }
+
+    // Printer-Add-on Flag — Terminal-UI zeigt Checkout-Button nur wenn aktiv
+    settings.printer_addon_active = (await hasAddon(company.id, 'printer')) ? 'true' : 'false'
 
     return NextResponse.json(settings)
   } catch (err) {

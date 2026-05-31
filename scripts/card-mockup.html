@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8" />
+<title>GateSign · Karten-Layout-Mockups</title>
+<style>
+  /* ---------- Mockup-Rahmen ---------- */
+  :root {
+    --slate-900: #0F172A;
+    --slate-700: #334155;
+    --slate-500: #64748B;
+    --slate-300: #CBD5E1;
+    --slate-200: #E2E8F0;
+    --slate-100: #F1F5F9;
+    --slate-50:  #F8FAFC;
+    --indigo:    #4F46E5;
+    --red:       #DC2626;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif;
+    background: var(--slate-100);
+    color: var(--slate-900);
+    padding: 48px 32px 96px;
+    line-height: 1.5;
+  }
+
+  header { max-width: 1120px; margin: 0 auto 40px; }
+  h1 { font-size: 28px; font-weight: 700; letter-spacing: -0.02em; }
+  .lead {
+    margin-top: 8px;
+    color: var(--slate-500);
+    font-size: 15px;
+    max-width: 720px;
+  }
+
+  .variant {
+    max-width: 1120px;
+    margin: 56px auto;
+    padding: 32px;
+    background: white;
+    border: 1px solid var(--slate-200);
+    border-radius: 16px;
+  }
+
+  .variant-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--slate-200);
+  }
+  .variant-title {
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+  .variant-title span { color: var(--indigo); }
+  .variant-meta {
+    color: var(--slate-500);
+    font-size: 13px;
+    font-variant-numeric: tabular-nums;
+  }
+  .variant-desc {
+    color: var(--slate-700);
+    font-size: 14px;
+    margin-bottom: 24px;
+    max-width: 760px;
+  }
+
+  /* Echte Karte: 1039 × 650 px = 88 × 55 mm @ 300 dpi.
+     Im Mockup zeigen wir das in 0.6× (623 × 390 px) damit Karten auf den Bildschirm passen. */
+  .card-stage {
+    background:
+      repeating-linear-gradient(
+        45deg,
+        var(--slate-100),
+        var(--slate-100) 8px,
+        var(--slate-50) 8px,
+        var(--slate-50) 16px
+      );
+    padding: 32px;
+    display: flex;
+    justify-content: center;
+    border-radius: 8px;
+    overflow: auto;
+  }
+  .card {
+    width: 623px;   /* 1039 × 0.6 */
+    height: 390px;  /* 650 × 0.6 */
+    background: white;
+    box-shadow: 0 8px 24px -8px rgba(15, 23, 42, 0.18), 0 0 0 1px var(--slate-200);
+    border-radius: 6px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* ===================================================================
+     V1 — Asymmetrisch: Tagesnummer links riesig in Rot,
+     rechts gestapelt Name + Firma + Footer
+     =================================================================== */
+  .v1 {
+    display: grid;
+    grid-template-columns: 56% 44%;
+  }
+  .v1__num {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--red);
+    font-weight: 900;
+    font-size: 230px;
+    letter-spacing: -0.05em;
+    line-height: 1;
+    padding-right: 12px;
+    border-right: 1px solid var(--slate-200);
+  }
+  .v1__side {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 24px 22px;
+  }
+  .v1__visitor { }
+  .v1__name {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--slate-900);
+    letter-spacing: -0.01em;
+    line-height: 1.15;
+  }
+  .v1__company {
+    margin-top: 6px;
+    font-size: 19px;
+    font-weight: 400;
+    color: var(--slate-700);
+  }
+  .v1__foot {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    color: var(--slate-500);
+    font-size: 12px;
+    letter-spacing: 0.02em;
+  }
+  .v1__brand {
+    font-weight: 600;
+    color: var(--slate-700);
+    letter-spacing: -0.01em;
+  }
+
+  /* ===================================================================
+     V2 — Symmetrisch: Tagesnummer oben groß zentriert,
+     Name + Firma darunter zweizeilig zentriert
+     =================================================================== */
+  .v2 {
+    display: flex;
+    flex-direction: column;
+  }
+  .v2__num {
+    flex: 0 0 62%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--red);
+    font-weight: 900;
+    font-size: 200px;
+    letter-spacing: -0.05em;
+    line-height: 1;
+  }
+  .v2__divider {
+    height: 1px;
+    background: var(--slate-200);
+    margin: 0 28px;
+  }
+  .v2__info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 16px 24px;
+  }
+  .v2__name {
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--slate-900);
+    letter-spacing: -0.01em;
+  }
+  .v2__company {
+    margin-top: 4px;
+    font-size: 17px;
+    font-weight: 400;
+    color: var(--slate-700);
+  }
+  .v2__foot {
+    position: absolute;
+    left: 20px;
+    right: 20px;
+    bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    color: var(--slate-500);
+    font-size: 11px;
+  }
+
+  /* ===================================================================
+     V3 — Datacard-Look: oben Header-Zeile mit Datum + Karten-Nr.,
+     Name groß mittig, Firma als Sub, unten Footer
+     =================================================================== */
+  .v3 {
+    padding: 22px 26px;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+  .v3__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--slate-200);
+  }
+  .v3__date {
+    color: var(--slate-500);
+    font-size: 13px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .v3__num {
+    color: var(--red);
+    font-weight: 900;
+    font-size: 56px;
+    letter-spacing: -0.03em;
+    line-height: 1;
+  }
+  .v3__body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .v3__label {
+    color: var(--slate-500);
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+  .v3__name {
+    font-size: 38px;
+    font-weight: 800;
+    color: var(--slate-900);
+    letter-spacing: -0.02em;
+    line-height: 1.05;
+  }
+  .v3__company {
+    margin-top: 10px;
+    font-size: 20px;
+    font-weight: 500;
+    color: var(--slate-700);
+  }
+  .v3__foot {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding-top: 12px;
+    border-top: 1px solid var(--slate-200);
+    color: var(--slate-500);
+    font-size: 11px;
+    letter-spacing: 0.02em;
+  }
+  .v3__brand {
+    font-weight: 700;
+    color: var(--slate-700);
+  }
+
+  /* Praktischer Vergleich am Ende */
+  .compare {
+    max-width: 1120px;
+    margin: 64px auto 0;
+    padding: 24px 28px;
+    background: var(--slate-900);
+    color: white;
+    border-radius: 16px;
+  }
+  .compare h2 { font-size: 18px; margin-bottom: 12px; }
+  .compare-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    font-size: 13px;
+    line-height: 1.6;
+  }
+  .compare-grid > div { padding: 8px 0; }
+  .compare strong { color: white; }
+  .compare span { color: var(--slate-300); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Karten-Layout · 3 Vorschläge</h1>
+  <p class="lead">
+    Maßstab: alle Karten sind exakt 88 × 55 mm (Visitenkartenformat, quer). Hier dargestellt auf 60 % Bildschirmgröße.
+    Karten werden auf DK-N55224-Endlosrolle (54 mm) gedruckt — die fehlenden 1 mm pro Seite werden vom
+    Druckkopf-Toleranzbereich abgedeckt. Schwarz für Text, Rot (#DC2626) für die Tagesnummer.
+  </p>
+</header>
+
+<!-- ============== V1 — Asymmetrisch ============== -->
+<section class="variant">
+  <div class="variant-head">
+    <div class="variant-title"><span>V1</span> · Asymmetrisch — Nummer dominiert links</div>
+    <div class="variant-meta">88 × 55 mm · Helvetica/Inter Bold</div>
+  </div>
+  <p class="variant-desc">
+    Tagesnummer als visueller Anker links über die volle Höhe. Rechts klare Hierarchie: Name fett oben,
+    Firma in normaler Stärke darunter, kleine Footer-Zeile mit Datum + Logo. Wirkt selbstbewusst und ist
+    aus 3–4 Metern Entfernung lesbar.
+  </p>
+  <div class="card-stage">
+    <div class="card v1">
+      <div class="v1__num">042</div>
+      <div class="v1__side">
+        <div class="v1__visitor">
+          <div class="v1__name">Max Mustermann</div>
+          <div class="v1__company">Rüther Logistik GmbH</div>
+        </div>
+        <div class="v1__foot">
+          <span>30. 05. 2026</span>
+          <span class="v1__brand">GateSign</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============== V2 — Symmetrisch ============== -->
+<section class="variant">
+  <div class="variant-head">
+    <div class="variant-title"><span>V2</span> · Symmetrisch — Nummer oben, Daten unten</div>
+    <div class="variant-meta">88 × 55 mm · Helvetica/Inter Bold</div>
+  </div>
+  <p class="variant-desc">
+    Klassischer Top-Bottom-Split: Tagesnummer dominiert die oberen ⅔, Name + Firma zentriert unten. Wirkt
+    formal und ist symmetrisch ausbalanciert. Etwas weniger „Statement" als V1.
+  </p>
+  <div class="card-stage">
+    <div class="card v2">
+      <div class="v2__num">042</div>
+      <div class="v2__divider"></div>
+      <div class="v2__info">
+        <div class="v2__name">Max Mustermann</div>
+        <div class="v2__company">Rüther Logistik GmbH</div>
+      </div>
+      <div class="v2__foot">
+        <span>30. 05. 2026</span>
+        <span>GateSign</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============== V3 — Datacard-Look ============== -->
+<section class="variant">
+  <div class="variant-head">
+    <div class="variant-title"><span>V3</span> · Datacard — Profi-Ausweis-Optik</div>
+    <div class="variant-meta">88 × 55 mm · Helvetica/Inter Bold/Black</div>
+  </div>
+  <p class="variant-desc">
+    Wirkt wie ein professioneller Werks-/Konferenz-Ausweis. Name dominiert in der Mitte, Tagesnummer ist
+    der Identifier oben rechts (deutlich, aber nicht überdimensioniert). Header- und Footer-Zeile
+    rahmen die Karte. Beste Wahl wenn die Karte auch repräsentativ wirken soll (Verwaltung, Industrie-Empfang).
+  </p>
+  <div class="card-stage">
+    <div class="card">
+      <div class="v3">
+        <div class="v3__head">
+          <div class="v3__date">Samstag · 30. Mai 2026</div>
+          <div class="v3__num">042</div>
+        </div>
+        <div class="v3__body">
+          <div class="v3__label">Besucher</div>
+          <div class="v3__name">Max Mustermann</div>
+          <div class="v3__company">Rüther Logistik GmbH</div>
+        </div>
+        <div class="v3__foot">
+          <span>Bitte beim Verlassen am Terminal zurückgeben</span>
+          <span class="v3__brand">GateSign</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============== V4 — FINAL (V3 + Host-Logo + ohne GateSign-Branding) ============== -->
+<style>
+  .v4 {
+    padding: 26px 30px;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+  .v4__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 18px;
+    border-bottom: 1px solid var(--slate-200);
+  }
+  .v4__host {
+    font-size: 36px;
+    font-weight: 800;
+    color: var(--slate-900);
+    letter-spacing: -0.02em;
+    line-height: 1;
+    text-transform: uppercase;
+  }
+  .v4__date {
+    color: var(--slate-500);
+    font-size: 13px;
+    letter-spacing: 0.04em;
+    text-align: right;
+  }
+  .v4__body {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 24px;
+    align-items: center;
+    padding: 20px 0;
+  }
+  .v4__visitor { }
+  .v4__label {
+    color: var(--slate-500);
+    font-size: 12px;
+    letter-spacing: 0.10em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .v4__name {
+    font-size: 38px;
+    font-weight: 800;
+    color: var(--slate-900);
+    letter-spacing: -0.02em;
+    line-height: 1.05;
+  }
+  .v4__company {
+    margin-top: 8px;
+    font-size: 19px;
+    font-weight: 500;
+    color: var(--slate-700);
+  }
+  .v4__num {
+    color: var(--red);
+    font-weight: 900;
+    font-size: 140px;
+    letter-spacing: -0.06em;
+    line-height: 0.85;
+    text-align: right;
+  }
+  .v4__foot {
+    padding-top: 14px;
+    border-top: 1px solid var(--slate-200);
+    color: var(--slate-500);
+    font-size: 12px;
+    letter-spacing: 0.02em;
+    text-align: center;
+  }
+
+  /* Variant mit Bild-Logo statt Text-Logo (für custom_branding) */
+  .v4__host--logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .v4__host--logo img {
+    height: 38px;
+    width: auto;
+  }
+
+  .label-final {
+    display: inline-block;
+    margin-left: 10px;
+    padding: 2px 8px;
+    background: var(--indigo);
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    border-radius: 4px;
+    vertical-align: middle;
+  }
+</style>
+
+<section class="variant" style="border-color: var(--indigo); border-width: 2px;">
+  <div class="variant-head">
+    <div class="variant-title">
+      <span>V4</span> · Final — V3 mit Host-Logo statt GateSign-Branding
+      <span class="label-final">empfohlen</span>
+    </div>
+    <div class="variant-meta">88 × 55 mm · Helvetica/Inter Black</div>
+  </div>
+  <p class="variant-desc">
+    Karte gehört der Host-Firma. Firmenname groß oben (oder Logo-Bild, sobald
+    <code>custom_branding</code>-Add-on aktiv), Tagesnummer dominant rechts (für Checkout-Scanning aus
+    Distanz lesbar). Besucher-Name + entsendende Firma im Hauptbereich. Footer ist neutral, ohne
+    GateSign-Branding — der Kunde merkt nicht, welches System dahintersteht.
+  </p>
+
+  <div class="card-stage">
+    <div class="card">
+      <div class="v4">
+        <div class="v4__head">
+          <div class="v4__host">Müller Industrie</div>
+          <div class="v4__date">Samstag<br />30. Mai 2026</div>
+        </div>
+        <div class="v4__body">
+          <div class="v4__visitor">
+            <div class="v4__label">Besucher</div>
+            <div class="v4__name">Max Mustermann</div>
+            <div class="v4__company">Rüther Logistik GmbH</div>
+          </div>
+          <div class="v4__num">042</div>
+        </div>
+        <div class="v4__foot">
+          Bitte beim Verlassen am Terminal zurückgeben
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <p class="variant-desc" style="margin-top: 24px;">
+    <strong>Variante mit hochgeladenem Logo</strong> (sobald Kunde ein PNG/SVG hochlädt):
+  </p>
+
+  <div class="card-stage">
+    <div class="card">
+      <div class="v4">
+        <div class="v4__head">
+          <div class="v4__host v4__host--logo">
+            <!-- Placeholder-Logo: simples SVG-Rechteck mit M -->
+            <svg width="48" height="38" viewBox="0 0 48 38" xmlns="http://www.w3.org/2000/svg">
+              <rect width="48" height="38" rx="6" fill="#0F172A" />
+              <text x="24" y="27" text-anchor="middle" font-family="Helvetica" font-weight="900" font-size="22" fill="#fff">M</text>
+            </svg>
+            <span>Müller Industrie</span>
+          </div>
+          <div class="v4__date">Samstag<br />30. Mai 2026</div>
+        </div>
+        <div class="v4__body">
+          <div class="v4__visitor">
+            <div class="v4__label">Besucher</div>
+            <div class="v4__name">Max Mustermann</div>
+            <div class="v4__company">Rüther Logistik GmbH</div>
+          </div>
+          <div class="v4__num">042</div>
+        </div>
+        <div class="v4__foot">
+          Bitte beim Verlassen am Terminal zurückgeben
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============== Vergleichs-Tabelle ============== -->
+<section class="compare">
+  <h2>Schneller Vergleich</h2>
+  <div class="compare-grid">
+    <div>
+      <strong>V1 Asymmetrisch</strong><br />
+      <span>Tagesnummer = visuelles Statement.</span><br />
+      <span>Beste Lesbarkeit auf Distanz.</span><br />
+      <span>Modern, selbstbewusst.</span>
+    </div>
+    <div>
+      <strong>V2 Symmetrisch</strong><br />
+      <span>Klassisch, formal, ruhig.</span><br />
+      <span>Sicheres Layout.</span><br />
+      <span>Wirkt etwas konventionell.</span>
+    </div>
+    <div>
+      <strong>V3 Datacard</strong><br />
+      <span>Repräsentativer Ausweis-Look.</span><br />
+      <span>Reichhaltigster Inhalt.</span><br />
+      <span>Tagesnummer subtiler.</span>
+    </div>
+  </div>
+</section>
+
+</body>
+</html>

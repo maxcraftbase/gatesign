@@ -10,7 +10,7 @@ const securityHeaders = [
 ]
 
 const nextConfig: NextConfig = {
-  serverExternalPackages: ['pdfkit'],
+  serverExternalPackages: ['pdfkit', 'satori', '@resvg/resvg-js'],
   async headers() {
     return [
       {

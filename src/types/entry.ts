@@ -19,6 +19,11 @@ export interface Entry {
   terminal_id: string | null
   terminal_name: string | null
   departed_at?: string | null
+  // Drucker-Add-on: Besucherkarte
+  card_number?: number | null
+  card_date?: string | null
+  checked_out_at?: string | null
+  checkout_method?: string | null
 }
 
 export const VISITOR_TYPE_LABELS: Record<string, { label: string; color: string }> = {

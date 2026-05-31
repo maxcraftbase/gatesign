@@ -1,17 +1,19 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { Download, Printer, X, Languages } from 'lucide-react'
+import { Download, Printer, X, Languages, Lock } from 'lucide-react'
 import { type Entry, LANG_FLAGS, LANG_NAMES } from '@/types/entry'
 import { printEntry, downloadPdf } from '@/lib/entry-pdf'
 
-export function EntryModal({ entry, companyName, logoUrl, companyPdfUrl, contactPersons, signatureData, onClose, onNoteUpdated }: {
+export function EntryModal({ entry, companyName, logoUrl, companyPdfUrl, contactPersons, signatureData, translationActive = false, onClose, onNoteUpdated }: {
   entry: Entry
   companyName: string
   logoUrl: string
   companyPdfUrl: string
   contactPersons: string[]
   signatureData: string | null
+  /** Add-on „KI-Briefing-Übersetzung" aktiv? Steuert die automatische Notiz-Übersetzung. */
+  translationActive?: boolean
   onClose: () => void
   onNoteUpdated: (id: string, note: string, translated: string, assignedContact: string | null) => void
 }) {
@@ -45,7 +47,7 @@ export function EntryModal({ entry, companyName, logoUrl, companyPdfUrl, contact
   }
 
   async function handleTranslate() {
-    if (!note.trim()) return
+    if (!note.trim() || !translationActive) return
     setTranslating(true)
     try {
       const res = await fetch('/api/admin/translate-note', {
@@ -64,11 +66,12 @@ export function EntryModal({ entry, companyName, logoUrl, companyPdfUrl, contact
 
   useEffect(() => {
     if (!note.trim()) { void Promise.resolve().then(() => setTranslated('')); return }
+    if (!translationActive) return
     if (note === entry.staff_note) return
     const t = setTimeout(() => { void handleTranslate() }, 1200)
     return () => clearTimeout(t)
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [note])
+  }, [note, translationActive])
 
   void textareaRef
 
@@ -214,10 +217,18 @@ export function EntryModal({ entry, companyName, logoUrl, companyPdfUrl, contact
             ref={textareaRef}
             value={note}
             onChange={e => setNote(e.target.value)}
-            placeholder="Notiz auf Deutsch eingeben — wird automatisch in die Fahrersprache übersetzt…"
+            placeholder={translationActive
+              ? 'Notiz auf Deutsch eingeben — wird automatisch in die Fahrersprache übersetzt…'
+              : 'Notiz auf Deutsch eingeben…'}
             rows={3}
             className="w-full px-4 py-3 rounded-xl border border-slate-200 text-sm outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-100 resize-none"
           />
+          {!translationActive && note.trim() && (
+            <p className="mt-2 text-xs text-slate-400 flex items-center gap-1.5">
+              <Lock className="w-3 h-3 shrink-0" strokeWidth={1.75} />
+              {'Automatische Übersetzung in die Fahrersprache ist das Add-on „KI-Briefing-Übersetzung".'}
+            </p>
+          )}
           {translated && note && (
             <div className="mt-2 px-4 py-3 bg-blue-50 border border-blue-200 rounded-xl">
               <p className="text-xs font-semibold text-blue-400 uppercase tracking-wider mb-1">

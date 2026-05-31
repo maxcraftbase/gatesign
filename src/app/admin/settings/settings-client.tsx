@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { BookOpen, Plus, X, FileText, Trash2, Languages, ChevronDown, ChevronUp, Check, Loader2, AlertCircle, RotateCcw } from 'lucide-react'
 import { SAFETY_RULES, SAFETY_RULE_CATEGORIES } from '@/lib/safety-rules'
 import { IsoSign } from '@/components/IsoSign'
+import { AddonUpsell } from '@/components/admin/AddonUpsell'
 
 const inputCls = 'w-full px-4 py-3 rounded-xl border border-slate-200 text-base outline-none focus:border-slate-900 focus:ring-2 focus:ring-slate-100'
 const labelCls = 'block text-sm font-semibold text-slate-700 mb-1.5'
@@ -158,6 +159,9 @@ export function AdminSettingsClient({ section = 'general' }: { section?: Setting
   const [translateError, setTranslateError] = useState('')
   const [translating, setTranslating] = useState(false)
   const [error, setError] = useState('')
+  // Add-on-Gating: fail-closed (false), bis die /settings-Antwort die Flags liefert.
+  const [brandingActive, setBrandingActive] = useState(false)
+  const [translationActive, setTranslationActive] = useState(false)
   const logoInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -175,6 +179,10 @@ export function AdminSettingsClient({ section = 'general' }: { section?: Setting
           if (data.settings.custom_hints_translations) {
             try { setTranslations(JSON.parse(data.settings.custom_hints_translations)) } catch { /* ignore */ }
           }
+        }
+        if (data.addons) {
+          setBrandingActive(Boolean(data.addons.custom_branding))
+          setTranslationActive(Boolean(data.addons.briefing_translation))
         }
       })
       .catch(() => setError('Fehler beim Laden der Einstellungen.'))
@@ -344,6 +352,7 @@ export function AdminSettingsClient({ section = 'general' }: { section?: Setting
   }
 
   async function handleTranslate(hintsOverride?: string[]) {
+    if (!translationActive) return  // Add-on inaktiv: gar nicht erst die gesperrte Route callen.
     setTranslateError('')
     setTranslateSuccess(false)
     setTranslating(true)
@@ -410,10 +419,15 @@ export function AdminSettingsClient({ section = 'general' }: { section?: Setting
       <div className="bg-white rounded-2xl border border-slate-100 p-6 mb-6">
         <h2 className="text-lg font-bold text-slate-900 mb-5">Allgemein</h2>
 
-        {/* Logo */}
+        {/* Logo (Add-on „Custom Branding") */}
         <div className="mb-5">
           <label className={labelCls}>Logo</label>
-          {settings.logo_url ? (
+          {!brandingActive && !settings.logo_url ? (
+            <AddonUpsell
+              title="Eigenes Logo am Terminal"
+              description={'Logo und Firmenfarben gehören zum Add-on „Custom Branding".'}
+            />
+          ) : settings.logo_url ? (
             <div className="flex items-center gap-4 p-4 bg-slate-50 border border-slate-200 rounded-xl">
               <div className="w-24 h-16 flex items-center justify-center bg-white rounded-lg border border-slate-200 overflow-hidden shrink-0">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -421,13 +435,19 @@ export function AdminSettingsClient({ section = 'general' }: { section?: Setting
               </div>
               <div className="flex-1">
                 <p className="text-sm font-medium text-slate-700 mb-1">Logo hochgeladen</p>
-                <p className="text-xs text-slate-400">Wird im Terminal auf dem Willkommensbildschirm angezeigt.</p>
+                <p className="text-xs text-slate-400">
+                  {brandingActive
+                    ? 'Wird im Terminal auf dem Willkommensbildschirm angezeigt.'
+                    : 'Ersetzen erfordert das Add-on „Custom Branding".'}
+                </p>
               </div>
               <div className="flex flex-col gap-2 shrink-0">
-                <button type="button" onClick={() => logoInputRef.current?.click()}
-                  className="text-xs px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100 transition-colors">
-                  Ersetzen
-                </button>
+                {brandingActive && (
+                  <button type="button" onClick={() => logoInputRef.current?.click()}
+                    className="text-xs px-3 py-1.5 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100 transition-colors">
+                    Ersetzen
+                  </button>
+                )}
                 <button type="button" onClick={handleLogoDelete}
                   className="text-xs px-3 py-1.5 rounded-lg border border-red-100 text-red-500 hover:bg-red-50 transition-colors">
                   Löschen
@@ -735,10 +755,20 @@ export function AdminSettingsClient({ section = 'general' }: { section?: Setting
       <div className="bg-white rounded-2xl border border-slate-100 p-6 mb-6">
         <h2 className="text-lg font-bold text-slate-900 mb-1">Texthinweise</h2>
         <p className="text-sm text-slate-500 mb-5">
-          Individuelle Hinweise — werden im Terminal bei der Belehrung angezeigt und automatisch übersetzt.
+          {translationActive
+            ? 'Individuelle Hinweise — werden im Terminal bei der Belehrung angezeigt und automatisch übersetzt.'
+            : 'Individuelle Hinweise — werden im Terminal bei der Belehrung angezeigt.'}
         </p>
 
-        {translateSuccess && <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-xl px-4 py-2.5 mb-4 text-sm flex items-center gap-2"><Languages className="w-4 h-4" /> Automatisch in alle Sprachen übersetzt.</div>}
+        {!translationActive && (
+          <AddonUpsell
+            className="mb-5"
+            title="Automatische Übersetzung"
+            description={'Hinweise automatisch in alle 10 Sprachen übersetzen — Add-on „KI-Briefing-Übersetzung".'}
+          />
+        )}
+
+        {translateSuccess &&<div className="bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-xl px-4 py-2.5 mb-4 text-sm flex items-center gap-2"><Languages className="w-4 h-4" /> Automatisch in alle Sprachen übersetzt.</div>}
         {translateError && <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-2.5 mb-4 text-sm">{translateError}</div>}
 
         <div className="flex flex-col gap-2 mb-4">
@@ -804,7 +834,7 @@ export function AdminSettingsClient({ section = 'general' }: { section?: Setting
           )}
         </div>
 
-        {getCustomHints().length > 0 && (
+        {translationActive && getCustomHints().length > 0 && (
           <div className="mb-3 flex justify-end">
             <button type="button" onClick={() => void handleTranslate()}
               disabled={translating}

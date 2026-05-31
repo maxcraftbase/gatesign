@@ -192,6 +192,35 @@ export async function hasAddon(companyId: string, addonKey: AddonKey, plan?: Pla
 }
 
 /**
+ * Prüft mehrere Add-ons auf einmal — mit nur EINEM Plan- und EINEM
+ * Add-on-Lookup, statt `hasAddon` je Key erneut beide Queries fahren zu lassen.
+ * Für UI-Gating gedacht (mehrere Buttons gleichzeitig sperren) und für
+ * Routen, die ohnehin mehrere Add-on-Flags zurückgeben (z. B. /admin/entries).
+ *
+ * Liefert ein Objekt, das nur die angefragten Keys enthält (`true` = aktiv).
+ */
+export async function getActiveAddons(
+  companyId: string,
+  keys: AddonKey[],
+  plan?: PlanName,
+): Promise<Partial<Record<AddonKey, boolean>>> {
+  const needsPlan = keys.some(k => (ADDON_REGISTRY[k]?.includedIn.length ?? 0) > 0)
+  // Beide Lookups echt parallel starten (Promises VOR dem await erzeugen).
+  const planPromise: Promise<PlanName | null> = needsPlan
+    ? (plan ? Promise.resolve(plan) : getCompanyPlan(companyId).then(p => p?.plan ?? null))
+    : Promise.resolve(null)
+  const [effectivePlan, rows] = await Promise.all([planPromise, getCompanyAddons(companyId)])
+  const purchased = new Set(rows.map(r => r.addon_key))
+  const out: Partial<Record<AddonKey, boolean>> = {}
+  for (const k of keys) {
+    const addon = ADDON_REGISTRY[k]
+    const bundled = !!(addon && effectivePlan && addon.includedIn.includes(effectivePlan))
+    out[k] = bundled || purchased.has(k)
+  }
+  return out
+}
+
+/**
  * Standard-Antwortkörper für eine gesperrte Add-on-Funktion (HTTP 403).
  * Einheitliche Form `{ error: 'addon_required', addon, message }`, damit das
  * Frontend konsistent eine Upsell-Meldung anzeigen kann.

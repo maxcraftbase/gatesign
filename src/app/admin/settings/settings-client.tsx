@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { Save, BookOpen, Plus, X, FileText, Trash2, Languages, ChevronDown, ChevronUp } from 'lucide-react'
+import { BookOpen, Plus, X, FileText, Trash2, Languages, ChevronDown, ChevronUp, Check, Loader2, AlertCircle, RotateCcw } from 'lucide-react'
 import { SAFETY_RULES, SAFETY_RULE_CATEGORIES } from '@/lib/safety-rules'
 import { IsoSign } from '@/components/IsoSign'
 
@@ -54,6 +54,50 @@ interface Settings {
   uppercase_types: string
 }
 
+// Keys, die über eigene Endpunkte sofort persistiert werden (Logo/Briefing-Uploads).
+// Diese lösen die „Ungespeichert"-Leiste NICHT aus.
+const AUTO_PERSISTED_KEYS: (keyof Settings)[] = [
+  'logo_url', 'briefing_pdf_truck', 'briefing_pdf_visitor', 'briefing_pdf_service',
+]
+
+const DEFAULT_SETTINGS: Settings = {
+  company_name: '',
+  logo_url: '',
+  welcome_title: 'Willkommen / Welcome',
+  welcome_subtitle: 'Bitte melden Sie sich hier an — Please register here',
+  signature_required: 'false',
+  signature_required_types: '[]',
+  reference_required_types: '[]',
+  site_info: '',
+  hours_weekday: '',
+  hours_fri: '',
+  fri_closed: 'true',
+  hours_sat: '',
+  sat_closed: 'true',
+  hours_sun: '',
+  sun_closed: 'true',
+  active_safety_rules: '[]',
+  rule_visitor_types: '{}',
+  custom_hints: '[]',
+  custom_hints_types: '[]',
+  hints_pdf_url: '',
+  briefing_pdf_truck: '',
+  briefing_pdf_visitor: '',
+  briefing_pdf_service: '',
+  settings_password: '',
+  contact_persons: '[]',
+  digest_attachment_format: 'both',
+  plate_show_types: '["truck","visitor","service"]',
+  plate_required_types: '["truck","visitor","service"]',
+  company_show_types: '["truck","visitor","service"]',
+  company_required_types: '["truck","visitor","service"]',
+  phone_show_types: '["truck","visitor","service"]',
+  phone_required_types: '[]',
+  contact_person_show_types: '["visitor","service"]',
+  contact_person_required_types: '[]',
+  uppercase_types: '[]',
+}
+
 function DayRow({ label, closedKey, hoursKey, settings, setSettings }: {
   label: string
   closedKey: keyof Settings
@@ -100,46 +144,12 @@ const SECTION_META: Record<SettingsSection, { title: string; subtitle: string }>
 }
 
 export function AdminSettingsClient({ section = 'general' }: { section?: SettingsSection } = {}) {
-  const [settings, setSettings] = useState<Settings>({
-    company_name: '',
-    logo_url: '',
-    welcome_title: 'Willkommen / Welcome',
-    welcome_subtitle: 'Bitte melden Sie sich hier an — Please register here',
-    signature_required: 'false',
-    signature_required_types: '[]',
-    reference_required_types: '[]',
-    site_info: '',
-    hours_weekday: '',
-    hours_fri: '',
-    fri_closed: 'true',
-    hours_sat: '',
-    sat_closed: 'true',
-    hours_sun: '',
-    sun_closed: 'true',
-    active_safety_rules: '[]',
-    rule_visitor_types: '{}',
-    custom_hints: '[]',
-    custom_hints_types: '[]',
-    hints_pdf_url: '',
-    briefing_pdf_truck: '',
-    briefing_pdf_visitor: '',
-    briefing_pdf_service: '',
-    settings_password: '',
-    contact_persons: '[]',
-    digest_attachment_format: 'both',
-    plate_show_types: '["truck","visitor","service"]',
-    plate_required_types: '["truck","visitor","service"]',
-    company_show_types: '["truck","visitor","service"]',
-    company_required_types: '["truck","visitor","service"]',
-    phone_show_types: '["truck","visitor","service"]',
-    phone_required_types: '[]',
-    contact_person_show_types: '["visitor","service"]',
-    contact_person_required_types: '[]',
-    uppercase_types: '[]',
-  })
+  const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS)
+  // Zuletzt gespeicherter Stand — Vergleich entscheidet, ob die Save-Bar erscheint.
+  const [savedSettings, setSavedSettings] = useState<Settings>(DEFAULT_SETTINGS)
+  const [saving, setSaving] = useState(false)
   const [newHint, setNewHint] = useState('')
   const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
   const [uploadingLogo, setUploadingLogo] = useState(false)
   const [uploadingBriefing, setUploadingBriefing] = useState<Record<string, boolean>>({})
   const [translations, setTranslations] = useState<Record<string, string[]>>({})
@@ -148,7 +158,6 @@ export function AdminSettingsClient({ section = 'general' }: { section?: Setting
   const [translateError, setTranslateError] = useState('')
   const [translating, setTranslating] = useState(false)
   const [error, setError] = useState('')
-  const [success, setSuccess] = useState(false)
   const logoInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -160,7 +169,9 @@ export function AdminSettingsClient({ section = 'general' }: { section?: Setting
           if (!data.settings.signature_required_types && data.settings.signature_required === 'true') {
             data.settings.signature_required_types = '["truck","visitor","service"]'
           }
-          setSettings(prev => ({ ...prev, ...data.settings }))
+          const merged = { ...DEFAULT_SETTINGS, ...data.settings }
+          setSettings(merged)
+          setSavedSettings(merged)
           if (data.settings.custom_hints_translations) {
             try { setTranslations(JSON.parse(data.settings.custom_hints_translations)) } catch { /* ignore */ }
           }
@@ -169,6 +180,45 @@ export function AdminSettingsClient({ section = 'general' }: { section?: Setting
       .catch(() => setError('Fehler beim Laden der Einstellungen.'))
       .finally(() => setLoading(false))
   }, [])
+
+  // Ungespeichert, sobald irgendein Feld (außer den auto-persistierten Uploads) abweicht.
+  const dirty = (Object.keys(settings) as (keyof Settings)[]).some(
+    k => !AUTO_PERSISTED_KEYS.includes(k) && settings[k] !== savedSettings[k]
+  )
+
+  useEffect(() => {
+    if (!dirty) return
+    const handler = (e: BeforeUnloadEvent) => { e.preventDefault() }
+    window.addEventListener('beforeunload', handler)
+    return () => window.removeEventListener('beforeunload', handler)
+  }, [dirty])
+
+  async function handleSave() {
+    setSaving(true)
+    setError('')
+    try {
+      const res = await fetch('/api/admin/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ settings, briefings: [] }),
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        setError(data.error ?? 'Fehler beim Speichern.')
+      } else {
+        setSavedSettings(settings)
+        if (getCustomHints().length > 0) await handleTranslate()
+      }
+    } catch {
+      setError('Netzwerkfehler.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  function discard() {
+    setSettings(savedSettings)
+  }
 
   function getCustomHints(): string[] {
     try { return JSON.parse(settings.custom_hints) as string[] } catch { return [] }
@@ -317,33 +367,6 @@ export function AdminSettingsClient({ section = 'general' }: { section?: Setting
     }
   }
 
-  async function handleSave() {
-    setSaving(true)
-    setError('')
-    setSuccess(false)
-    try {
-      const res = await fetch('/api/admin/settings', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ settings, briefings: [] }),
-      })
-      if (!res.ok) {
-        const data = await res.json()
-        setError(data.error ?? 'Fehler beim Speichern.')
-      } else {
-        setSuccess(true)
-        setTimeout(() => setSuccess(false), 3000)
-        if (getCustomHints().length > 0) {
-          await handleTranslate()
-        }
-      }
-    } catch {
-      setError('Netzwerkfehler.')
-    } finally {
-      setSaving(false)
-    }
-  }
-
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -377,16 +400,10 @@ export function AdminSettingsClient({ section = 'general' }: { section?: Setting
               Einrichtungsanleitung
             </a>
           )}
-          <button onClick={handleSave} disabled={saving}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 text-white font-semibold hover:bg-indigo-700 disabled:opacity-50 transition-colors">
-            <Save className="w-4 h-4" />
-            {saving ? 'Speichern…' : 'Speichern'}
-          </button>
         </div>
       </div>
 
       {error && <div className="bg-red-50 border border-red-200 text-red-700 rounded-xl px-4 py-3 mb-4 text-sm">{error}</div>}
-      {success && <div className="bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-xl px-4 py-3 mb-4 text-sm">Erfolgreich gespeichert.</div>}
 
       {section === 'general' && (<>
       {/* Allgemein */}
@@ -857,13 +874,31 @@ export function AdminSettingsClient({ section = 'general' }: { section?: Setting
 
       </>)}
 
-      <div className="flex justify-end pb-8">
-        <button onClick={handleSave} disabled={saving}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 text-white font-semibold hover:bg-indigo-700 disabled:opacity-50 transition-colors">
-          <Save className="w-4 h-4" />
-          {saving ? 'Speichern…' : 'Speichern'}
-        </button>
-      </div>
+      {/* Platzhalter, damit die Save-Bar keinen Inhalt verdeckt */}
+      <div className={dirty ? 'h-24' : 'h-8'} />
+
+      {dirty && (
+        <div className="fixed inset-x-0 bottom-0 z-40 px-4 pb-4 pointer-events-none">
+          <div className="max-w-3xl mx-auto flex items-center justify-between gap-4 rounded-2xl bg-slate-900 text-white px-5 py-3 shadow-xl shadow-slate-900/20 pointer-events-auto">
+            <span className="flex items-center gap-2 text-sm font-medium">
+              <AlertCircle className="w-4 h-4 text-amber-400" />
+              Nicht gespeicherte Änderungen
+            </span>
+            <div className="flex items-center gap-2">
+              <button type="button" onClick={discard} disabled={saving}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold text-slate-300 hover:text-white hover:bg-white/10 disabled:opacity-50 transition-colors">
+                <RotateCcw className="w-4 h-4" />
+                Verwerfen
+              </button>
+              <button type="button" onClick={handleSave} disabled={saving}
+                className="flex items-center gap-2 px-5 py-2 rounded-xl bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 transition-colors">
+                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                {saving ? 'Speichern…' : 'Speichern'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

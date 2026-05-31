@@ -21,6 +21,27 @@ export interface PrintJobPayload {
 
 export type JobStatusUpdate = 'printed' | 'failed' | 'paper_out'
 
+/**
+ * fetch mit einem stillen Retry bei transientem Netzwerk-Fehler.
+ *
+ * Hintergrund: Beim 3-Sekunden-Polling über Railways Reverse-Proxy wird die
+ * Keep-alive-Verbindung serverseitig nach kurzer Idle-Zeit geschlossen. undici
+ * bemerkt das erst beim nächsten Request → ein einzelnes "fetch failed"
+ * (TypeError). Ein sofortiger Retry auf frischer Verbindung greift zuverlässig.
+ * Echte Ausfälle (Backend offline) scheitern auch im Retry → Fehler bleibt sichtbar.
+ */
+async function fetchRetry(input: string, init?: RequestInit, retries = 1): Promise<Response> {
+  try {
+    return await fetch(input, init)
+  } catch (err) {
+    if (retries > 0 && err instanceof TypeError) {
+      await new Promise(resolve => setTimeout(resolve, 250))
+      return fetchRetry(input, init, retries - 1)
+    }
+    throw err
+  }
+}
+
 /** Tauscht den Pairing-Code gegen einen API-Token. */
 export async function pairBridge(opts: {
   baseUrl: string
@@ -28,7 +49,7 @@ export async function pairBridge(opts: {
   printerTarget: string
   printerModel: string
 }): Promise<PairResponse> {
-  const res = await fetch(`${opts.baseUrl}/api/print-agent/pair`, {
+  const res = await fetchRetry(`${opts.baseUrl}/api/print-agent/pair`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -49,7 +70,7 @@ export async function pairBridge(opts: {
  * oder bei Auth-Failure (HTTP 401 — Caller muss neu pairen).
  */
 export async function pollNextJob(cfg: BridgeConfig): Promise<PrintJobPayload | null | 'unauthorized'> {
-  const res = await fetch(`${cfg.baseUrl}/api/print-agent/jobs`, {
+  const res = await fetchRetry(`${cfg.baseUrl}/api/print-agent/jobs`, {
     headers: { Authorization: `Bearer ${cfg.apiToken}` },
   })
   if (res.status === 204) return null
@@ -68,7 +89,7 @@ export async function reportStatus(opts: {
   status: JobStatusUpdate
   errorMessage?: string
 }): Promise<void> {
-  const res = await fetch(`${opts.cfg.baseUrl}/api/print-agent/jobs/${opts.jobId}/status`, {
+  const res = await fetchRetry(`${opts.cfg.baseUrl}/api/print-agent/jobs/${opts.jobId}/status`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
